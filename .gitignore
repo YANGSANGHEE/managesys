@@ -1,37 +1,47 @@
-HELP.md
-.gradle
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+################################
+# OS
+################################
+.DS_Store
+Thumbs.db
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
-
-### IntelliJ IDEA ###
-.idea
-*.iws
+################################
+# IntelliJ / IDE (전부 제외)
+################################
+.idea/
+**/.idea/
 *.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
+################################
+# Backend (Spring Boot / Gradle)
+################################
+back-end/.gradle/
+back-end/build/
+back-end/out/
 
-### VS Code ###
-.vscode/
+################################
+# Gradle Wrapper (반드시 포함)
+################################
+!back-end/gradle/
+!back-end/gradlew
+!back-end/gradlew.bat
+!back-end/settings.gradle
+!back-end/build.gradle
+
+################################
+# Frontend (Vue)
+################################
+front-end/node_modules/
+front-end/dist/
+front-end/.env
+front-end/.env.*
+
+################################
+# Logs
+################################
+*.log
+logs/
+
+################################
+# Temp
+################################
+tmp/
