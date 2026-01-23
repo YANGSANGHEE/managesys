@@ -1,26 +1,34 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="flex dashboard-layout">
+  <SideBar/>
+    <div class="contents-wrap">
+      <HeaderEle/>
+        <div class="contents">
+          <router-view/>
+        </div>
+      <FooterEle/>
+    </div>
+  </div>
 </template>
-
+<style scoped>
+@import "./style/flex.css";
+@import "./style/reset.css";
+@import "./style/common.css";
+</style>
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import SideBar from './components/SideBar.vue'
+// import MainPage from "@/components/MainPage.vue"; // 더 이상 직접 사용하지 않으므로 주석 처리 또는 삭제
+import FooterEle from "@/components/FooterEle.vue";
+import HeaderEle from "@/components/HeaderEle.vue";
+
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    HeaderEle : HeaderEle,
+    SideBar: SideBar,
+    // MainPage:MainPage,
+    FooterEle : FooterEle
   }
 }
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
