@@ -21,7 +21,7 @@ public class CustomUserDetails implements UserDetails {
     }
 
     public String getRoleCode() {
-        return user.getRoleCode();
+        return user.getDeptId();
     }
 
     @Override
@@ -31,17 +31,17 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return user.getPasswordHash();
+        return user.getPassword();
     }
 
     @Override
     public boolean isEnabled() {
-        return "Y".equals(user.getUseAt());
+        return "Y".equals(user.getUseYn());
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(user.getRoleCode()));
+        return List.of(new SimpleGrantedAuthority(user.getDeptId()));
     }
 
     @Override public boolean isAccountNonExpired() { return true; }

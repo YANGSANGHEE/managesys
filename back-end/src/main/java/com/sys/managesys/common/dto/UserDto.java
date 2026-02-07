@@ -12,7 +12,7 @@ import lombok.ToString;
 public class UserDto {
     private Long userId;          // USER_ID
     private String loginId;        // LOGIN_ID
-    private String passwordHash;   // PASSWORD_HASH
-    private String roleCode;       // ROLE_CODE
-    private String useAt;           // USE_AT (Y/N)
+    private String deptId;       // DEPT_ID
+    private String password;   // PASSWORD
+    private String useYn;           // USE_YN (Y/N)
 }

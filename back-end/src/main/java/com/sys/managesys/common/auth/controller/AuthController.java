@@ -26,7 +26,25 @@ import java.util.Map;
 public class AuthController {
     @Resource(name = "authService")
     private final AuthService authService;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-//    @PostMapping("/login")
+    @PostMapping("/login")
+    public LoginResponse login(@RequestBody LoginRequest request) {
+        return authService.login(request);
+    }
 
+    /**
+     * 비밀번호 해시 생성 유틸리티 (개발용)
+     * 사용법: GET /api/auth/generate-hash?password=ocean123!
+     */
+//    @GetMapping("/generate-hash")
+//    public Map<String, String> generateHash(@RequestParam String password) {
+//        String hashedPassword = passwordEncoder.encode(password);
+//        boolean matches = passwordEncoder.matches(password, hashedPassword);
+//
+//        Map<String, String> result = new HashMap<>();
+//        result.put("originalPassword", password);
+//        result.put("hashedPassword", hashedPassword);
+//        return result;
+//    }
 }
