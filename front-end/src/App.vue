@@ -1,14 +1,17 @@
 <template>
-  <div class="flex dashboard-layout">
-  <SideBar/>
+  <router-view v-if="$route.meta.isPublic" />
+
+  <div v-else class="flex dashboard-layout">
+    <SideBar/>
     <div class="contents-wrap">
       <HeaderEle/>
-        <div class="contents">
-          <router-view/>
-        </div>
+      <div class="contents">
+        <router-view/>
+      </div>
       <FooterEle/>
     </div>
   </div>
+
 </template>
 <style scoped>
 @import "./style/flex.css";

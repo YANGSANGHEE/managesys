@@ -30,7 +30,7 @@ import {
 } from 'lucide-vue-next';
 
 const menuItems = [
-  { path: '/', label: '공지사항', icon: Bell },
+  { path: '/notice', label: '공지사항', icon: Bell },
   { path: '/customers', label: '고객관리', icon: LayoutDashboard },
   { path: '/targets', label: '가망고객', icon: Target },
   { path: '/hr', label: '인사관리', icon: Users },

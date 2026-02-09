@@ -5,11 +5,24 @@
       <div class="user-info">
         <strong style="padding-right: 10px">더원컴퍼니님</strong>
       </div>
-      <button class="logout-btn">로그아웃</button>
+      <button @click="handleLogout" class="logout-btn">로그아웃</button>
     </div>
   </header>
 </template>
 <script setup>
+import { useRouter } from 'vue-router';
+const router = useRouter();
+// 로그아웃 처리 함수
+const handleLogout = () => {
+  if (confirm('로그아웃 하시겠습니까?')) {
+    // 1. 저장된 토큰 삭제
+    // localStorage.removeItem('accessToken');
+
+    // 2. 로그인 페이지로 이동
+    // (이때 App.vue의 조건문에 의해 사이드바도 같이 사라집니다)
+    router.push('/login');
+  }
+};
 
 </script>
 
