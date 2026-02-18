@@ -1,23 +1,49 @@
 import { createApp } from 'vue'
-import { createPinia } from 'pinia' // 추가
+import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import axios from 'axios' // axios 추가
+import axios from 'axios'
+import { useAuthStore } from '@/store/auth';
 
-// 1. Axios 기본 URL 설정 (백엔드 주소)
-axios.defaults.baseURL = 'http://localhost:8085'; // application.properties 포트 8085 확인
+const app = createApp(App);
+const pinia = createPinia();
 
-// 2. 요청 인터셉터 설정 (모든 요청 전에 실행됨)
+app.use(pinia); // 1. Pinia를 먼저 앱에 등록
+app.use(router);
+
+// 2. Pinia 등록 후 스토어 가져오기 (에러 방지)
+const authStore = useAuthStore();
+
+// 3. Axios 기본 설정
+axios.defaults.baseURL = 'http://localhost:8085';
+
+// 4. Axios 인터셉터 통합 설정
 axios.interceptors.request.use(config => {
+    // 로딩 시작
+    authStore.setLoading(true);
+
+    // 토큰 추가
     const token = localStorage.getItem('accessToken');
     if (token) {
-        // 토큰이 있으면 헤더에 'Bearer 토큰값' 형식으로 추가
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
+}, error => {
+    authStore.setLoading(false);
+    return Promise.reject(error);
 });
 
-const app = createApp(App);
-app.config.globalProperties.$axios = axios; // 전역 사용 설정 (선택사항)
-app.use(createPinia());
-app.use(router).mount('#app');
+axios.interceptors.response.use(response => {
+    // 응답 성공 시 로딩 종료
+    authStore.setLoading(false);
+    return response;
+}, error => {
+    // 응답 에러 시 로딩 종료
+    authStore.setLoading(false);
+    return Promise.reject(error);
+});
+
+// 전역 변수 설정 (선택 사항)
+app.config.globalProperties.$axios = axios;
+
+app.mount('#app');

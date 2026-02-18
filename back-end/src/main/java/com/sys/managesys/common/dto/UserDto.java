@@ -8,13 +8,13 @@ import lombok.*;
 @AllArgsConstructor
 @ToString
 public class UserDto {
-    private Long userId;          // USER_ID
+    private Long userId;
     private String userName;
     private String userRole;
     private Integer isLeader;
-    private String loginId;        // LOGIN_ID
-    private String deptId;       // DEPT_ID
-    private String password;   // PASSWORD
-    private String useYn;           // USE_YN (Y/N)
+    private String loginId;
+    private Long deptId;
+    private String password;
+    private String useYn;
     private String deptName;
 }

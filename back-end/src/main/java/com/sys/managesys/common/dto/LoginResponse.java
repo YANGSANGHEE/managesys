@@ -17,6 +17,6 @@ public class LoginResponse {
     private String loginId;    // 로그인 아이디 (admin)
     private String userName;   // 사용자 이름 (홍길동)
     private String userRole;   // 권한 (ADMIN)
-    private String deptId;     // 부서 ID
+    private Long deptId;     // 부서 ID
     private Integer isLeader;  // 리더 여부
 }

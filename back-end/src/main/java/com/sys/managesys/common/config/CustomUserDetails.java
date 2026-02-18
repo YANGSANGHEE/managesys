@@ -28,7 +28,7 @@ public class CustomUserDetails implements UserDetails {
         return user.getIsLeader();
     }
 
-    public String getDeptId() {
+    public long getDeptId() {
         return user.getDeptId();
     }
 

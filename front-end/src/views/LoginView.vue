@@ -42,7 +42,7 @@ const handleLogin = async () => {
 
       authStore.login(data.accessToken, userInfo);
 
-      router.push('/');
+      router.push('/notice');
     }
   } catch (error) {
     console.error(error);
