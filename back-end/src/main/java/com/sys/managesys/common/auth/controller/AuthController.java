@@ -10,18 +10,13 @@ import com.sys.managesys.common.dto.LoginResponse;
 import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("api/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
     @Resource(name = "authService")
@@ -37,14 +32,14 @@ public class AuthController {
      * 비밀번호 해시 생성 유틸리티 (개발용)
      * 사용법: GET /api/auth/generate-hash?password=ocean123!
      */
-//    @GetMapping("/generate-hash")
-//    public Map<String, String> generateHash(@RequestParam String password) {
-//        String hashedPassword = passwordEncoder.encode(password);
-//        boolean matches = passwordEncoder.matches(password, hashedPassword);
-//
-//        Map<String, String> result = new HashMap<>();
-//        result.put("originalPassword", password);
-//        result.put("hashedPassword", hashedPassword);
-//        return result;
-//    }
+    @GetMapping("/generate-hash")
+    public Map<String, String> generateHash(@RequestParam String password) {
+        String hashedPassword = passwordEncoder.encode(password);
+        boolean matches = passwordEncoder.matches(password, hashedPassword);
+
+        Map<String, String> result = new HashMap<>();
+        result.put("originalPassword", password);
+        result.put("hashedPassword", hashedPassword);
+        return result;
+    }
 }

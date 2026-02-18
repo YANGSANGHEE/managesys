@@ -25,7 +25,7 @@ public class JwtProvider {
 
         return Jwts.builder()
                 .setSubject(String.valueOf(user.getUserId()))   // USER_ID
-                .claim("role", user.getRoleCode())              // ROLE_CODE
+                .claim("role", user.getAuthorities())              // ROLE_CODE
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + expireTime))
                 .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()))

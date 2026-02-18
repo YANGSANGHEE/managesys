@@ -3,7 +3,7 @@
     <h1>{{ currentMenu }}</h1>
     <div class="flex justify-between items-center">
       <div class="user-info">
-        <strong style="padding-right: 10px">더원컴퍼니님</strong>
+        <b>{{ authStore.userName }}</b>님
       </div>
       <button @click="handleLogout" class="logout-btn">로그아웃</button>
     </div>
@@ -11,13 +11,15 @@
 </template>
 <script setup>
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/store/auth';
 const router = useRouter();
+const authStore = useAuthStore();
 // 로그아웃 처리 함수
 const handleLogout = () => {
   if (confirm('로그아웃 하시겠습니까?')) {
     // 1. 저장된 토큰 삭제
-    // localStorage.removeItem('accessToken');
-
+    localStorage.removeItem('accessToken');
+    authStore.logout();
     // 2. 로그인 페이지로 이동
     // (이때 App.vue의 조건문에 의해 사이드바도 같이 사라집니다)
     router.push('/login');

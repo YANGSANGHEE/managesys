@@ -3,15 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "start": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "ag-grid-community": "^35.1.0",
+    "ag-grid-vue3": "^35.1.0",
     "axios": "^1.13.5",
     "core-js": "^3.8.3",
     "lucide-vue-next": "^0.563.0",
     "package": "^1.0.1",
+    "pinia": "^3.0.4",
     "vue": "^3.2.13",
     "vue-router": "^4.6.4"
   },

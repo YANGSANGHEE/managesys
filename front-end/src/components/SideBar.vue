@@ -33,7 +33,7 @@ const menuItems = [
   { path: '/notice', label: '공지사항', icon: Bell },
   { path: '/customers', label: '고객관리', icon: LayoutDashboard },
   { path: '/targets', label: '가망고객', icon: Target },
-  { path: '/hr', label: '인사관리', icon: Users },
+  { path: '/userManagement', label: '인사관리', icon: Users },
   { path: '/support', label: '고객센터', icon: LifeBuoy },
   { path: '/settlement', label: '정산관리', icon: Wallet },
   { path: '/extra', label: '부가서비스', icon: PlusCircle },

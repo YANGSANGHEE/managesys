@@ -25,7 +25,6 @@ public class SecurityConfig {
         http
                 /* REST API 형식에서는 CSRF 비활성화 : 현재 MVC  + SPA  형식 */
                 .csrf(csrf -> csrf.disable())
-
                 /* 세션 사용 안할꺼임 : JWT 토근 발급받아서 진행 */
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -37,7 +36,7 @@ public class SecurityConfig {
 
                 /* 로그인 페이지만 권한 체크 안함*/
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/**", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -66,7 +65,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000", "http://localhost:8080"));
+        configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:3000",
+                "http://localhost:8080",
+                "http://localhost:5173",
+                "http://localhost:8085"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

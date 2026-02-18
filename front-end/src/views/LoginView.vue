@@ -1,27 +1,55 @@
-//참고
-<!--<script setup>-->
-<!--// import { ref } from 'vue';-->
-<!--// import { useRouter } from 'vue-router';-->
-<!--// import axios from 'axios'; // axios 설치 필요: npm install axios-->
+<script setup>
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { useAuthStore } from '@/store/auth'; // 1. 스토어 임포트
 
-<!--// const router = useRouter();-->
-<!--// const loginData = ref({ userId: '', password: '' });-->
+const router = useRouter();
+const authStore = useAuthStore();
 
-<!--// const handleLogin = async () => {-->
-<!--//   try {-->
-<!--//     // AuthController의 /api/auth/login 호출-->
-<!--//     const response = await axios.post('http://localhost:8080/api/auth/login', loginData.value);-->
-<!--//-->
-<!--//     // 토큰 저장 (예: localStorage)-->
-<!--//     localStorage.setItem('accessToken', response.data.token);-->
-<!--//     localStorage.setItem('userName', '더원컴퍼니'); // 실제 데이터로 대체 가능-->
-<!--//-->
-<!--//     router.push('/'); // 로그인 성공 시 메인으로 이동-->
-<!--//   } catch (error) {-->
-<!--//     alert('로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.');-->
-<!--//   }-->
-<!--// };-->
-<!--</script>-->
+// 백엔드 LoginRequest DTO와 필드명을 일치시켜야 함 (userId -> loginId)
+const loginData = ref({
+  loginId: '',
+  password: ''
+});
+
+const handleLogin = async () => {
+  if (!loginData.value.loginId || !loginData.value.password) {
+    alert("아이디와 비밀번호를 입력해주세요.");
+    return;
+  }
+
+  try {
+    // 백엔드 로그인 API 호출
+    const response = await axios.post('/api/auth/login', loginData.value);
+
+// 1. 응답 데이터 받기
+    const data = response.data;
+
+    if (data.accessToken) {
+      // 2. 토큰 저장
+      localStorage.setItem('accessToken', data.accessToken);
+
+      // 3. [핵심] 사용자 정보 객체로 묶어서 저장
+      const userInfo = {
+        userId: data.userId,
+        loginId: data.loginId,
+        userName: data.userName,
+        userRole: data.userRole,
+        deptId: data.deptId,
+        isLeader: data.isLeader
+      };
+
+      authStore.login(data.accessToken, userInfo);
+
+      router.push('/');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('로그인 실패: 아이디 혹은 비밀번호를 확인하세요.');
+  }
+};
+</script>
 
 <template>
   <div class="login-split-container flex">
@@ -43,17 +71,17 @@
         <h2>로그인</h2>
         <p class="form-desc">계정에 로그인하여 서비스를 이용하세요.</p>
 
-        <form class="flex-col gap-20">
+        <form class="flex-col gap-20" @submit.prevent="handleLogin">
           <div class="input-group">
             <label for="userId">아이디</label>
-            <input type="text" id="userId" placeholder="아이디를 입력하세요" class="custom-input">
+            <input type="text" id="userId" v-model="loginData.loginId" placeholder="아이디를 입력하세요" class="custom-input">
           </div>
           <div class="input-group">
             <label for="password">비밀번호</label>
-            <input type="password" id="password" placeholder="비밀번호를 입력하세요" class="custom-input">
+            <input type="password" v-model="loginData.password" id="password" placeholder="비밀번호를 입력하세요" class="custom-input">
           </div>
 
-          <button type="button" class="login-btn-lg">로그인</button>
+          <button type="submit" class="login-btn-lg">로그인</button>
         </form>
       </div>
     </div>
