@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sys.managesys.common.mapper.NoticeMapper">
+
+    <select id="selectNoticeList" resultType="com.sys.managesys.common.dto.NoticeDto">
+        SELECT N.NOTICE_ID AS noticeId,
+               N.TITLE AS title,
+               N.CONTENT AS content,
+               N.NOTICE_TYPE AS noticeType,
+               N.VIEW_CNT AS viewCnt,
+               N.IS_FIXED AS isFixed,
+               N.CREATED_AT AS createdAt,
+               U.USER_NAME AS creatorName
+          FROM TB_NOTICE N
+          LEFT JOIN TB_USER U ON N.CREATOR_ID = U.USER_ID
+         WHERE N.USE_YN = 'Y'
+         ORDER BY N.IS_FIXED DESC, N.CREATED_AT DESC
+    </select>
+
+    <insert id="insertNotice" parameterType="com.sys.managesys.common.dto.NoticeDto">
+        INSERT INTO TB_NOTICE
+        (
+            TITLE,
+            CONTENT,
+            IS_FIXED,
+            NOTICE_TYPE,  CREATOR_ID,
+            CREATED_AT,
+            USE_YN
+        )
+        VALUES
+        (
+            #{title},
+            #{content},
+            #{isFixed},
+            #{noticeType}, #{creatorId},
+            NOW(),
+            'Y'
+        )
+    </insert>
+
+    <update id="updateNotice" parameterType="com.sys.managesys.common.dto.NoticeDto">
+        UPDATE TB_NOTICE
+           SET TITLE = #{title},
+               CONTENT = #{content},
+               IS_FIXED = #{isFixed},
+               NOTICE_TYPE = #{noticeType},
+               UPDATED_AT = NOW()
+         WHERE NOTICE_ID = #{noticeId}
+    </update>
+
+    <update id="deleteNotice" parameterType="int">
+        UPDATE TB_NOTICE
+           SET USE_YN = 'N'
+         WHERE NOTICE_ID = #{noticeId}
+    </update>
+
+    <update id="deleteNoticeBatch" parameterType="map">
+        UPDATE TB_NOTICE
+        SET USE_YN = 'N'
+        WHERE NOTICE_ID IN
+        <foreach item="id" collection="noticeIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>
