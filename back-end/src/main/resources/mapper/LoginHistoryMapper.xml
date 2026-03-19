@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sys.managesys.common.mapper.LoginHistoryMapper">
+
+    <!-- TB_USER_LOGIN_HISTORY: USER_ID, EVENT_TYPE('LOGIN'|'LOGOUT'), IP_ADDRESS, CREATED_AT -->
+    <insert id="insert">
+        INSERT INTO TB_USER_LOGIN_HISTORY (USER_ID, EVENT_TYPE, IP_ADDRESS, CREATED_AT)
+        VALUES (#{userId}, #{action}, #{ipAddress}, CURRENT_TIMESTAMP)
+    </insert>
+</mapper>

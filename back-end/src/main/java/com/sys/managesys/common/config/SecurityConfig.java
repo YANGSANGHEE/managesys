@@ -34,9 +34,9 @@ public class SecurityConfig {
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(basic -> basic.disable())
 
-                /* 로그인 페이지만 권한 체크 안함*/
+                /* 로그인·해시생성·로그아웃(만료 토큰으로도 기록 가능) 비인증 허용 */
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/**", "/error").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/generate-hash", "/api/auth/logout", "/error").permitAll()
                         .anyRequest().authenticated()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))

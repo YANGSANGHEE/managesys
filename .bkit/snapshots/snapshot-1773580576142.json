@@ -1,0 +1,293 @@
+{
+  "timestamp": "2026-03-15T13:16:16.141Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-03-15T12:32:13.924Z",
+    "activeFeatures": [
+      "controller",
+      "front-end",
+      "router",
+      "dto",
+      "mapper"
+    ],
+    "primaryFeature": "controller",
+    "features": {
+      "controller": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T10:52:14.264Z",
+          "lastUpdated": "2026-03-15T12:22:28.153Z"
+        },
+        "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\controller\\CodeController.java"
+      },
+      "front-end": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T11:02:08.159Z",
+          "lastUpdated": "2026-03-15T12:32:13.924Z"
+        },
+        "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\components\\CommonCodeManagement.vue"
+      },
+      "router": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T11:03:22.810Z",
+          "lastUpdated": "2026-03-15T12:23:32.961Z"
+        },
+        "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\router\\index.js"
+      },
+      "dto": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T12:21:39.263Z",
+          "lastUpdated": "2026-03-15T12:21:43.765Z"
+        },
+        "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\dto\\CommonCodeDto.java"
+      },
+      "mapper": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T12:21:53.714Z",
+          "lastUpdated": "2026-03-15T12:21:53.714Z"
+        },
+        "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\mapper\\CommonCodeMapper.java"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": []
+    },
+    "session": {
+      "startedAt": "2026-03-15T10:16:33.407Z",
+      "onboardingCompleted": false,
+      "lastActivity": "2026-03-15T12:32:13.924Z"
+    },
+    "history": [
+      {
+        "timestamp": "2026-03-15T10:52:14.264Z",
+        "feature": "controller",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:02:08.159Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:02:27.623Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:02:43.732Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:03:22.810Z",
+        "feature": "router",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:06:59.344Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:07:19.304Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:07:35.110Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:08:10.986Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:08:25.615Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:08:34.968Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:08:41.353Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:57:56.067Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:58:03.372Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:58:18.431Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:58:24.976Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:11:50.929Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:11:58.599Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:15:33.979Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:15:38.218Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:15:51.508Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:15:55.996Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:21:39.263Z",
+        "feature": "dto",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:21:43.766Z",
+        "feature": "dto",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:21:53.714Z",
+        "feature": "mapper",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:22:28.153Z",
+        "feature": "controller",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:23:27.050Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:23:32.961Z",
+        "feature": "router",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:23:37.663Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:23:43.567Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:32:00.072Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:32:04.564Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T12:32:13.924Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}

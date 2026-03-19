@@ -50,6 +50,18 @@ public class UserManagementService {
         userMapper.deleteUser(userId);
     }
 
+    /** 비밀번호를 {아이디}1234! 로 초기화 (BCrypt 암호화 적용). 로그인 시 재설정 유도 플래그 설정. */
+    @Transactional
+    public void resetPassword(Long userId) {
+        if (userId == null) throw new IllegalArgumentException("사용자 ID가 없습니다.");
+        UserDto user = userMapper.findByUserId(userId);
+        if (user == null) throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
+        String initPassword = user.getLoginId() + "1234!";
+        String encoded = passwordEncoder.encode(initPassword);
+        userMapper.updatePassword(userId, encoded);
+        userMapper.updatePasswordResetYn(userId, "Y");
+    }
+
     public boolean isIdDuplicate(String loginId) {
         return userMapper.countByLoginId(loginId) > 0;
     }

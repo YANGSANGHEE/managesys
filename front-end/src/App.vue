@@ -5,8 +5,9 @@
       <p> Loading...</p>
     </div>
 
-    <router-view v-if="$route.meta.isPublic" />
-
+    <template v-if="isPublicLayout">
+      <router-view />
+    </template>
     <div v-else class="flex dashboard-layout">
       <SideBar />
       <div class="contents-wrap">
@@ -17,17 +18,37 @@
         <FooterEle />
       </div>
     </div>
+
+    <!-- 비밀번호 초기화 계정 로그인 시 강제 재설정 모달 (전역, 닫기 불가) -->
+    <ChangePasswordModal
+      v-if="authStore.mustChangePassword"
+      @done="authStore.clearMustChangePassword()"
+    />
   </div>
 </template>
 
 <script setup>
+import { onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import SideBar from './components/SideBar.vue';
 import FooterEle from "@/components/FooterEle.vue";
 import HeaderEle from "@/components/HeaderEle.vue";
+import ChangePasswordModal from './components/ChangePasswordModal.vue';
 
-// Pinia 스토어 호출
 const authStore = useAuthStore();
+const route = useRoute();
+
+// 로그인·비밀번호 재설정 페이지: 사이드바/헤더 없이 전체 화면만 표시 (탈출 UI 제거)
+const isPublicLayout = computed(() => !!route.meta?.isPublic || !!route.meta?.isResetPassword);
+
+onMounted(() => {
+  const token = localStorage.getItem('accessToken');
+  if (token) {
+    // 로컬 스토리지에 토큰이 있다면 스토어 상태를 다시 로그인 상태로 변경
+    authStore.rehydrate(); // 스토어에 미리 만들어둔 복구 함수 호출
+  }
+});
 </script>
 
 <style>
@@ -50,6 +71,8 @@ const authStore = useAuthStore();
 
 .contents {
   flex: 1;
+  min-height: 0;
+  overflow: hidden;
   padding: 0; /* 필요에 따라 조절 */
   background-color: #f4f7f6;
 }

@@ -1,0 +1,45 @@
+{
+  "timestamp": "2026-03-15T10:59:15.183Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-03-15T10:52:14.264Z",
+    "activeFeatures": [
+      "controller"
+    ],
+    "primaryFeature": "controller",
+    "features": {
+      "controller": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T10:52:14.264Z",
+          "lastUpdated": "2026-03-15T10:52:14.264Z"
+        },
+        "lastFile": "C:/Users/ocean-nopc/Desktop/project/managesys/back-end/src/main/java/com/sys/managesys/common/auth/controller/CustomerController.java"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": []
+    },
+    "session": {
+      "startedAt": "2026-03-15T10:16:33.407Z",
+      "onboardingCompleted": false,
+      "lastActivity": "2026-03-15T10:52:14.264Z"
+    },
+    "history": [
+      {
+        "timestamp": "2026-03-15T10:52:14.264Z",
+        "feature": "controller",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}

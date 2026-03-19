@@ -1,0 +1,48 @@
+package com.sys.managesys.common.mapper;
+
+import com.sys.managesys.common.dto.*;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+
+@Mapper
+public interface CustomerMapper {
+
+    List<CustomerDto> selectCustomerList(CustomerDto searchDto);
+
+    CustomerDto selectCustomerById(@Param("custId") Long custId);
+
+    int insertCustomer(CustomerDto customer);
+
+    int updateCustomer(CustomerDto customer);
+
+    int updateVoucherReturnYn(@Param("custId") Long custId, @Param("voucherReturnYn") String voucherReturnYn);
+
+    List<CustProductDto> selectProductsByCustId(@Param("custId") Long custId);
+
+    CustPaymentDto selectPaymentByCustId(@Param("custId") Long custId);
+
+    List<CustGiftDto> selectGiftsByCustId(@Param("custId") Long custId);
+
+    List<CustMnpDto> selectMnpsByCustId(@Param("custId") Long custId);
+
+    int insertPayment(CustPaymentDto payment);
+
+    int insertGift(CustGiftDto gift);
+
+    int insertProduct(CustProductDto product);
+
+    int insertMnp(CustMnpDto mnp);
+
+    int deletePaymentByCustId(@Param("custId") Long custId);
+
+    int deleteGiftsByCustId(@Param("custId") Long custId);
+
+    int deleteProductsByCustId(@Param("custId") Long custId);
+
+    int deleteMnpsByCustId(@Param("custId") Long custId);
+
+    /** 고객 삭제 (TB_CUSTOMER 삭제 시 FK ON DELETE CASCADE로 TB_CUST_* 테이블 연쇄 삭제) */
+    int deleteByCustId(@Param("custId") Long custId);
+}

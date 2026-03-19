@@ -1,0 +1,26 @@
+---
+description: 메모리 뱅크 사용 - 프로젝트 맥락을 memory-bank 폴더의 마크다운에서 읽고 필요 시 갱신
+alwaysApply: true
+---
+
+# Memory Bank 규칙
+
+이 프로젝트는 **Memory Bank**를 사용합니다. 프로젝트 루트의 `memory-bank/` 폴더에 맥락이 정리되어 있습니다.
+
+## 파일 역할
+- **projectbrief.md** – 프로젝트 목표, 범위, 제약
+- **productContext.md** – 제품/서비스 목적, 사용자, 가치
+- **systemPatterns.md** – 아키텍처, 인증, API·데이터 패턴
+- **techContext.md** – 기술 스택, 실행 방법, 주요 경로
+- **activeContext.md** – 현재 작업 초점, 최근 결정, 다음 할 일
+- **progress.md** – 완료/진행 중 작업, 알려진 이슈, 다음 마일스톤
+
+## AI 동작
+1. **대화 시작 시**: 새 세션이거나 맥락이 필요하면 `memory-bank/` 내 관련 파일을 읽어 프로젝트·기술·현재 포커스를 파악한다.
+2. **작업 중**: 아키텍처 변경, 기술 선택, 중요한 결정이 있으면 해당 내용을 적절한 memory-bank 파일에 반영한다.
+3. **작업 완료/진행 시**: 완료한 작업은 `progress.md`에, 현재 초점·다음 할 일은 `activeContext.md`에 간단히 갱신한다.
+
+## 적용 원칙
+- 사용자가 “맥락 반영해줘”, “메모리 뱅크 업데이트” 등을 요청하면 위 파일들을 읽고 필요한 부분을 수정한다.
+- 새 기능/모듈을 추가할 때는 projectbrief, systemPatterns, techContext가 여전히 맞는지 확인하고, 바뀐 부분만 수정한다.
+- 모든 답변은 한글로 작성한다(프로젝트 규칙).

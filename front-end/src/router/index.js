@@ -1,19 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/store/auth'
 import NoticeEle from '@/components/NoticeEle.vue'
-import MainPage from '@/components/MainPage.vue'
 import UserManagement from '@/components/UserManagement.vue'
-// 로그인 컴포넌트를 임포트하세요 (파일 경로는 본인의 프로젝트에 맞게 수정)
 import LoginView from '@/views/LoginView.vue'
+import ResetPasswordView from '@/views/ResetPasswordView.vue'
 
 const routes = [
   {
     path: '/login',
     name: 'Login',
     component: LoginView,
-    meta: {
-      title: '로그인'
-      , isPublic: true
-    }
+    meta: { title: '로그인', isPublic: true }
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: ResetPasswordView,
+    meta: { title: '비밀번호 재설정', isResetPassword: true }
   },
   {
     path: '/notice',
@@ -29,15 +32,31 @@ const routes = [
   },
   {
     path: '/customers',
-    name: 'Customers',
-    component: MainPage,
-    meta: { title: '고객관리' }
+    redirect: { name: 'CustomersIndividual' }
+  },
+  {
+    path: '/customers/individual',
+    name: 'CustomersIndividual',
+    component: () => import('@/components/IndividualCustomerManagement.vue'),
+    meta: { title: '개인고객관리' }
+  },
+  {
+    path: '/customers/partner',
+    name: 'CustomersPartner',
+    component: () => import('@/components/PartnerCustomerManagement.vue'),
+    meta: { title: '협력점 고객관리' }
   },
   {
     path: '/targets',
     name: 'Targets',
     component: () => import('@/components/PlaceholderPage.vue'),
     meta: { title: '가망고객' }
+  },
+  {
+    path: '/commonCode',
+    name: 'CommonCode',
+    component: () => import('@/components/CommonCodeManagement.vue'),
+    meta: { title: '공통코드관리' }
   }
 ]
 
@@ -46,17 +65,32 @@ const router = createRouter({
   routes
 })
 
-// 네비게이션 가드 추가 (이동할 때마다 실행)
+// 라우터 가드: 비로그인 → /login, 공통코드 ADMIN 전용
+// mustChangePassword 처리: App.vue 전역 모달이 담당 (페이지 이동 불필요)
 router.beforeEach((to, from, next) => {
-  // 토큰이 있는지 확인
-  const isAuthenticated = localStorage.getItem('accessToken');
+  const authStore = useAuthStore()
+  const hasToken = !!localStorage.getItem('accessToken')
+  if (hasToken) authStore.rehydrate()
 
-  // 로그인 페이지로 가는 게 아닌데, 토큰이 없다면?
-  if (to.name !== 'Login' && !isAuthenticated) {
-    next({ name: 'Login' }); // 로그인 페이지로 튕겨내기
-  } else {
-    next(); // 통과
+  const user = authStore.user
+  const isLoginPath = to.name === 'Login'
+
+  if (!hasToken) {
+    if (!isLoginPath) next({ name: 'Login' })
+    else next()
+    return
   }
-});
+  // 인사관리: 최고관리자(ADMIN)만 접근 가능
+  if (to.path === '/userManagement' && user?.userRole !== 'ADMIN') {
+    next({ path: '/notice' })
+    return
+  }
+  // 공통코드관리: 최고관리자(ADMIN), 매니저(MANAGER)만 접근 가능
+  if (to.path === '/commonCode' && user?.userRole !== 'ADMIN' && user?.userRole !== 'MANAGER') {
+    next({ path: '/notice' })
+    return
+  }
+  next()
+})
 
 export default router

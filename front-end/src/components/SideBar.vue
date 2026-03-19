@@ -5,39 +5,67 @@
     </div>
 
     <nav class="nav-menu">
-      <router-link
-          v-for="item in menuItems"
-          :key="item.path"
-          :to="item.path"
-          class="nav-item"
-      >
-        <component :is="item.icon" :size="20" class="menu-icon" />
-        <span>{{ item.label }}</span>
+      <!-- 공지사항 -->
+      <router-link to="/notice" class="nav-item">
+        <Bell :size="20" class="menu-icon" />
+        <span>공지사항</span>
+      </router-link>
+
+      <!-- 고객관리 (토글: 클릭 시 접기/펼치기) -->
+      <div class="nav-group">
+        <button
+          type="button"
+          class="nav-group-title"
+          :class="{ open: customersOpen }"
+          @click="customersOpen = !customersOpen"
+          aria-expanded="customersOpen"
+        >
+          <LayoutDashboard :size="20" class="menu-icon" />
+          <span>고객관리</span>
+          <ChevronDown :size="18" class="chevron" />
+        </button>
+        <div v-show="customersOpen" class="nav-group-inner">
+          <router-link to="/customers/individual" class="nav-item sub">개인고객</router-link>
+          <router-link to="/customers/partner" class="nav-item sub">협력점 고객</router-link>
+        </div>
+      </div>
+
+      <!-- 인사관리 (최고관리자만) -->
+      <router-link v-if="isAdmin" to="/userManagement" class="nav-item">
+        <Users :size="20" class="menu-icon" />
+        <span>인사관리</span>
+      </router-link>
+
+      <!-- 공통코드관리 (최고관리자, 매니저) -->
+      <router-link v-if="isAdmin || isManager" to="/commonCode" class="nav-item">
+        <Settings2 :size="20" class="menu-icon" />
+        <span>공통코드관리</span>
       </router-link>
     </nav>
   </aside>
 </template>
 
 <script setup>
-import {
-  Bell,
-  LayoutDashboard,
-  Target,
-  Users,
-  LifeBuoy,
-  Wallet,
-  PlusCircle
-} from 'lucide-vue-next';
+import { ref, computed, watch } from 'vue';
+import { useRoute } from 'vue-router';
+import { Bell, LayoutDashboard, Users, ChevronDown, Settings2 } from 'lucide-vue-next';
+import { useAuthStore } from '@/store/auth';
 
-const menuItems = [
-  { path: '/notice', label: '공지사항', icon: Bell },
-  { path: '/customers', label: '고객관리', icon: LayoutDashboard },
-  { path: '/targets', label: '가망고객', icon: Target },
-  { path: '/userManagement', label: '인사관리', icon: Users },
-  { path: '/support', label: '고객센터', icon: LifeBuoy },
-  { path: '/settlement', label: '정산관리', icon: Wallet },
-  { path: '/extra', label: '부가서비스', icon: PlusCircle },
-];
+const authStore = useAuthStore();
+const isAdmin = computed(() => authStore.user?.userRole === 'ADMIN');
+const isManager = computed(() => authStore.user?.userRole === 'MANAGER');
+
+const customersOpen = ref(true);
+
+// 고객관리 하위 페이지에 있으면 토글 열린 상태 유지
+const route = useRoute();
+watch(
+  () => route.path,
+  (path) => {
+    if (path.startsWith('/customers')) customersOpen.value = true;
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
@@ -89,8 +117,57 @@ const menuItems = [
   font-weight: bold;
 }
 
+.nav-item.sub {
+  padding-left: 44px;
+  font-size: 14px;
+}
+
+.nav-group {
+  margin-bottom: 8px;
+}
+
+.nav-group-title {
+  width: 100%;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #666;
+  font-weight: 600;
+  font-size: 14px;
+  background: none;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s;
+}
+
+.nav-group-title:hover {
+  background: #f0f4ff;
+}
+
+.nav-group-title .chevron {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+
+.nav-group-title.open .chevron {
+  transform: rotate(180deg);
+}
+
+.nav-group-inner {
+  overflow: hidden;
+}
+
+.nav-group .nav-item.sub.router-link-active {
+  background: #3d5afe !important;
+  color: white !important;
+  font-weight: 600;
+}
+
 /* Vue Router 활성화 클래스 (현재 페이지 강조) */
-.router-link-active:not(.logo) {
+.router-link-active:not(.logo):not(.sub) {
   background: #3d5afe !important;
   color: white !important;
   font-weight: 600;

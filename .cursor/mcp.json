@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "mariadb": {
+      "command": "npx",
+      "args": ["-y", "@oleander/mcp-server-mariadb"],
+      "env": {
+        "MARIADB_HOST": "localhost",
+        "MARIADB_PORT": "3307",
+        "MARIADB_USER": "root",
+        "MARIADB_PASS": "1234",
+        "MARIADB_DB": "managesys"
+      }
+    }
+  }
+}

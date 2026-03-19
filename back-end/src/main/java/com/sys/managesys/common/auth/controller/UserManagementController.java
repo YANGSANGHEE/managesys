@@ -3,6 +3,7 @@ package com.sys.managesys.common.auth.controller;
 import com.sys.managesys.common.auth.service.UserManagementService;
 import com.sys.managesys.common.dto.UserDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
@@ -39,6 +40,13 @@ public class UserManagementController {
     public void deleteUser(@RequestBody UserDto userDto) {
         // ID만 담긴 객체를 받아 처리
         userService.remove(userDto.getUserId());
+    }
+
+    /** 비밀번호를 1234로 초기화 (BCrypt 암호화 후 저장). PASSWORD_RESET_YN = 'Y' 설정. */
+    @PostMapping(value = "/reset-password", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<Map<String, String>> resetPassword(@RequestBody UserDto userDto) {
+        userService.resetPassword(userDto.getUserId());
+        return ResponseEntity.ok(Collections.singletonMap("message", "비밀번호가 초기화되었습니다."));
     }
 
     @PostMapping("/check-id")

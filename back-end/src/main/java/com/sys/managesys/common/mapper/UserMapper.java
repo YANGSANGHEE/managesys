@@ -32,6 +32,15 @@ public interface UserMapper {
     // 직원 삭제 (물리 삭제 시)
     int deleteUser(@Param("userId") Long userId);
 
+    /** 비밀번호만 변경 (BCrypt 암호화된 값으로 업데이트) */
+    int updatePassword(@Param("userId") Long userId, @Param("password") String password);
+
+    /** 비밀번호 변경 + 재설정 필수 플래그 해제 (로그인 후 재설정 시) */
+    int updatePasswordAndClearReset(@Param("userId") Long userId, @Param("password") String password);
+
+    /** 비밀번호 초기화 여부 플래그 설정 (관리자 초기화 시 'Y') */
+    int updatePasswordResetYn(@Param("userId") Long userId, @Param("passwordResetYn") String passwordResetYn);
+
     // --- [3. 추가 기능: 중복 체크 및 부서 팝업] ---
 
     // 아이디 중복 확인 (로그인 ID가 몇 개 있는지 카운트)

@@ -18,9 +18,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
 
+    /** 로그인·로그아웃·해시생성만 JWT 검증 제외. /api/auth/change-password 는 인증 필요. */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().startsWith("/api/auth/");
+        String uri = request.getRequestURI();
+        if (!uri.startsWith("/api/auth/")) return false;
+        return "/api/auth/login".equals(uri) || "/api/auth/logout".equals(uri) || uri.startsWith("/api/auth/generate-hash");
     }
 
     @Override
@@ -37,20 +40,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(7);
 
             if (jwtProvider.validateToken(token)) {
-
+                Boolean mustChange = jwtProvider.getMustChangePasswordFromToken(token);
+                String uri = request.getRequestURI();
+                boolean allowChangeOrLogout = "/api/auth/change-password".equals(uri) || "/api/auth/logout".equals(uri);
+                if (Boolean.TRUE.equals(mustChange) && !allowChangeOrLogout) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.getWriter().write("{\"message\":\"비밀번호 재설정 후 이용 가능합니다.\"}");
+                    response.setContentType("application/json;charset=UTF-8");
+                    return;
+                }
                 Long userId = jwtProvider.getUserId(token);
-                UserDetails userDetails =
-                        userDetailsService.loadUserById(userId);
-
+                UserDetails userDetails = userDetailsService.loadUserById(userId);
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
-
-                SecurityContextHolder.getContext()
-                        .setAuthentication(auth);
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }
 

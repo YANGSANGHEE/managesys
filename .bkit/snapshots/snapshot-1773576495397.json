@@ -1,0 +1,163 @@
+{
+  "timestamp": "2026-03-15T12:08:15.397Z",
+  "reason": "compaction",
+  "status": {
+    "version": "2.0",
+    "lastUpdated": "2026-03-15T11:58:24.976Z",
+    "activeFeatures": [
+      "controller",
+      "front-end",
+      "router"
+    ],
+    "primaryFeature": "controller",
+    "features": {
+      "controller": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T10:52:14.264Z",
+          "lastUpdated": "2026-03-15T10:52:14.264Z"
+        },
+        "lastFile": "C:/Users/ocean-nopc/Desktop/project/managesys/back-end/src/main/java/com/sys/managesys/common/auth/controller/CustomerController.java"
+      },
+      "front-end": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T11:02:08.159Z",
+          "lastUpdated": "2026-03-15T11:58:24.976Z"
+        },
+        "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\components\\PartnerCustomerManagement.vue"
+      },
+      "router": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-15T11:03:22.810Z",
+          "lastUpdated": "2026-03-15T11:03:22.810Z"
+        },
+        "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\router\\index.js"
+      }
+    },
+    "pipeline": {
+      "currentPhase": 1,
+      "level": "Dynamic",
+      "phaseHistory": []
+    },
+    "session": {
+      "startedAt": "2026-03-15T10:16:33.407Z",
+      "onboardingCompleted": false,
+      "lastActivity": "2026-03-15T11:58:24.976Z"
+    },
+    "history": [
+      {
+        "timestamp": "2026-03-15T10:52:14.264Z",
+        "feature": "controller",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:02:08.159Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:02:27.623Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:02:43.732Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:03:22.810Z",
+        "feature": "router",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:06:59.344Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:07:19.304Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:07:35.110Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:08:10.986Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:08:25.615Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:08:34.968Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:08:41.353Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:57:56.067Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:58:03.372Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:58:18.431Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-15T11:58:24.976Z",
+        "feature": "front-end",
+        "phase": "do",
+        "action": "updated"
+      }
+    ]
+  }
+}

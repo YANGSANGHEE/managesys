@@ -19,4 +19,6 @@ public class LoginResponse {
     private String userRole;   // 권한 (ADMIN)
     private Long deptId;     // 부서 ID
     private Integer isLeader;  // 리더 여부
+    /** 비밀번호 초기화된 계정 여부 (true면 로그인 후 재설정 모달 표시) */
+    private Boolean mustChangePassword;
 }

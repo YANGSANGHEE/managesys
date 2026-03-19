@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sys.managesys.common.mapper.CommonCodeMapper">
+
+    <!-- 드롭다운용: USE_YN='Y' 만 -->
+    <select id="selectByGroupCode" resultType="com.sys.managesys.common.dto.CommonCodeDto">
+        SELECT
+            CODE_VALUE AS codeValue,
+            CODE_NAME  AS codeName,
+            SORT_ORDER AS sortOrder
+        FROM TB_COMMON_CODE
+        WHERE GROUP_CODE = #{groupCode}
+          AND (USE_YN IS NULL OR USE_YN = 'Y')
+        ORDER BY SORT_ORDER ASC, CODE_VALUE ASC
+    </select>
+
+    <!-- ─── 그룹코드 CRUD ─────────────────────────────────────────────── -->
+    <select id="selectAllGroups" resultType="com.sys.managesys.common.dto.GroupCodeDto">
+        SELECT
+            GROUP_CODE AS groupCode,
+            GROUP_NAME AS groupName,
+            USE_YN     AS useYn,
+            REMARK     AS remark
+        FROM TB_GROUP_CODE
+        <where>
+            <if test="groupName != null and groupName != ''">
+                AND GROUP_NAME LIKE CONCAT('%', #{groupName}, '%')
+            </if>
+        </where>
+        ORDER BY GROUP_CODE ASC
+    </select>
+
+    <insert id="insertGroupCode" parameterType="com.sys.managesys.common.dto.GroupCodeDto">
+        INSERT INTO TB_GROUP_CODE (GROUP_CODE, GROUP_NAME, USE_YN, REMARK)
+        VALUES (#{groupCode}, #{groupName}, COALESCE(#{useYn}, 'Y'), #{remark})
+    </insert>
+
+    <update id="updateGroupCode" parameterType="com.sys.managesys.common.dto.GroupCodeDto">
+        UPDATE TB_GROUP_CODE
+        SET GROUP_NAME = #{groupName},
+            USE_YN     = #{useYn},
+            REMARK     = #{remark}
+        WHERE GROUP_CODE = #{groupCode}
+    </update>
+
+    <delete id="deleteGroupCode">
+        DELETE FROM TB_GROUP_CODE WHERE GROUP_CODE = #{groupCode}
+    </delete>
+
+    <select id="countCodesByGroupCode" resultType="int">
+        SELECT COUNT(*) FROM TB_COMMON_CODE WHERE GROUP_CODE = #{groupCode}
+    </select>
+
+    <!-- ─── 상세코드 CRUD ─────────────────────────────────────────────── -->
+    <select id="selectAllByGroupCode" resultType="com.sys.managesys.common.dto.CommonCodeDto">
+        SELECT
+            GROUP_CODE AS groupCode,
+            CODE_VALUE AS codeValue,
+            CODE_NAME  AS codeName,
+            SORT_ORDER AS sortOrder,
+            USE_YN     AS useYn,
+            REMARK     AS remark
+        FROM TB_COMMON_CODE
+        WHERE GROUP_CODE = #{groupCode}
+        ORDER BY SORT_ORDER ASC, CODE_VALUE ASC
+    </select>
+
+    <insert id="insertCode" parameterType="com.sys.managesys.common.dto.CommonCodeDto">
+        INSERT INTO TB_COMMON_CODE (GROUP_CODE, CODE_VALUE, CODE_NAME, SORT_ORDER, USE_YN, REMARK)
+        VALUES (#{groupCode}, #{codeValue}, #{codeName},
+                COALESCE(#{sortOrder}, 1), COALESCE(#{useYn}, 'Y'), #{remark})
+    </insert>
+
+    <update id="updateCode" parameterType="com.sys.managesys.common.dto.CommonCodeDto">
+        UPDATE TB_COMMON_CODE
+        SET CODE_NAME  = #{codeName},
+            SORT_ORDER = #{sortOrder},
+            USE_YN     = #{useYn},
+            REMARK     = #{remark}
+        WHERE GROUP_CODE = #{groupCode}
+          AND CODE_VALUE = #{codeValue}
+    </update>
+
+    <delete id="deleteCode">
+        DELETE FROM TB_COMMON_CODE
+        WHERE GROUP_CODE = #{groupCode}
+          AND CODE_VALUE = #{codeValue}
+    </delete>
+
+</mapper>

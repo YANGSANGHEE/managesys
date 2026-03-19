@@ -17,4 +17,6 @@ public class UserDto {
     private String password;
     private String useYn;
     private String deptName;
+    /** 비밀번호 초기화 여부 (Y: 로그인 시 재설정 필요) */
+    private String passwordResetYn;
 }

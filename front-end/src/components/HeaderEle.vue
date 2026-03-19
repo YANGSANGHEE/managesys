@@ -12,18 +12,19 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import axios from 'axios';
+
 const router = useRouter();
 const authStore = useAuthStore();
-// 로그아웃 처리 함수
+
+// 로그아웃: 서버에 로그아웃 히스토리 저장 후 토큰 삭제·로그인 페이지 이동
 const handleLogout = () => {
-  if (confirm('로그아웃 하시겠습니까?')) {
-    // 1. 저장된 토큰 삭제
-    localStorage.removeItem('accessToken');
-    authStore.logout();
-    // 2. 로그인 페이지로 이동
-    // (이때 App.vue의 조건문에 의해 사이드바도 같이 사라집니다)
-    router.push('/login');
-  }
+  if (!confirm('로그아웃 하시겠습니까?')) return;
+  axios.post('/api/auth/logout')
+    .finally(() => {
+      authStore.logout();
+      router.push('/login');
+    });
 };
 
 </script>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sys.managesys.common.mapper.NoticeMapper">
+
+    <select id="selectByType" resultType="com.sys.managesys.common.dto.NoticeDto">
+        SELECT n.NOTICE_ID    AS noticeId,
+               n.NOTICE_TYPE  AS noticeType,
+               n.TITLE        AS title,
+               n.CONTENT      AS content,
+               n.VIEW_CNT     AS viewCnt,
+               n.IS_FIXED     AS isFixed,
+               n.USE_YN       AS useYn,
+               n.CREATOR_ID   AS creatorId,
+               u.USER_NAME    AS creatorName,
+               DATE_FORMAT(n.CREATED_AT, '%Y-%m-%d') AS createdAt
+        FROM TB_NOTICE n
+                 LEFT JOIN TB_USER u ON n.CREATOR_ID = u.USER_ID
+        WHERE n.NOTICE_TYPE = #{noticeType}
+          AND (n.USE_YN IS NULL OR n.USE_YN = 'Y')
+        ORDER BY n.IS_FIXED DESC, n.CREATED_AT DESC
+    </select>
+
+    <insert id="insertNotice" parameterType="com.sys.managesys.common.dto.NoticeDto">
+        INSERT INTO TB_NOTICE (NOTICE_TYPE, TITLE, CONTENT, IS_FIXED, USE_YN, CREATOR_ID)
+        VALUES (#{noticeType}, #{title}, #{content},
+                COALESCE(#{isFixed}, 'N'), 'Y', #{creatorId})
+    </insert>
+
+    <delete id="deleteNotice">
+        DELETE FROM TB_NOTICE
+        WHERE NOTICE_ID = #{noticeId}
+          AND CREATOR_ID = #{creatorId}
+    </delete>
+
+    <select id="countByNoticeIdAndCreator" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_NOTICE
+        WHERE NOTICE_ID = #{noticeId}
+          AND CREATOR_ID = #{creatorId}
+    </select>
+
+</mapper>

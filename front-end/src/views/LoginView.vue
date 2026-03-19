@@ -2,12 +2,11 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-import { useAuthStore } from '@/store/auth'; // 1. 스토어 임포트
+import { useAuthStore } from '@/store/auth';
 
 const router = useRouter();
 const authStore = useAuthStore();
 
-// 백엔드 LoginRequest DTO와 필드명을 일치시켜야 함 (userId -> loginId)
 const loginData = ref({
   loginId: '',
   password: ''
@@ -20,29 +19,22 @@ const handleLogin = async () => {
   }
 
   try {
-    // 백엔드 로그인 API 호출
     const response = await axios.post('/api/auth/login', loginData.value);
-
-// 1. 응답 데이터 받기
     const data = response.data;
 
     if (data.accessToken) {
-      // 2. 토큰 저장
-      localStorage.setItem('accessToken', data.accessToken);
-
-      // 3. [핵심] 사용자 정보 객체로 묶어서 저장
       const userInfo = {
         userId: data.userId,
         loginId: data.loginId,
         userName: data.userName,
         userRole: data.userRole,
         deptId: data.deptId,
-        isLeader: data.isLeader
+        isLeader: data.isLeader,
+        mustChangePassword: !!data.mustChangePassword
       };
-
       authStore.login(data.accessToken, userInfo);
 
-      router.push('/notice');
+      router.replace('/notice'); // mustChangePassword=true면 App.vue 전역 모달이 자동 표시
     }
   } catch (error) {
     console.error(error);

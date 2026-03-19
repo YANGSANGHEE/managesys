@@ -22,9 +22,7 @@
           <label>권한</label>
           <select v-model="searchQuery.userRole">
             <option value="">전체</option>
-            <option value="ADMIN">ADMIN</option>
-            <option value="MANAGER">MANAGER</option>
-            <option value="MEMBER">MEMBER</option>
+            <option v-for="opt in roleOptions" :key="opt.codeValue" :value="opt.codeValue">{{ opt.codeName }}</option>
           </select>
         </div>
       </div>
@@ -79,9 +77,7 @@
           <div class="form-item">
             <label>권한</label>
             <select v-model="userForm.userRole">
-              <option value="MEMBER">MEMBER</option>
-              <option value="MANAGER">MANAGER</option>
-              <option value="ADMIN">ADMIN</option>
+              <option v-for="opt in roleOptions" :key="opt.codeValue" :value="opt.codeValue">{{ opt.codeName }}</option>
             </select>
           </div>
           <div class="form-item row-flex">
@@ -115,7 +111,7 @@
           </ul>
         </div>
         <div class="modal-footer">
-          <button @click="showDeptModal = false">닫기</button>
+          <button class="btn-cancel" @click="showDeptModal = false">닫기</button>
         </div>
       </div>
     </div>
@@ -165,12 +161,18 @@ const columnDefs = ref([
       editBtn.className = 'btn-table-edit';
       editBtn.onclick = () => openUserModal('edit', params.data);
 
+      const resetBtn = document.createElement('button');
+      resetBtn.innerText = '초기화';
+      resetBtn.className = 'btn-table-reset';
+      resetBtn.onclick = () => resetPassword(params.data.userId, params.data.loginId);
+
       const delBtn = document.createElement('button');
       delBtn.innerText = '삭제';
       delBtn.className = 'btn-table-del';
       delBtn.onclick = () => deleteUser(params.data.userId);
 
       container.appendChild(editBtn);
+      container.appendChild(resetBtn);
       container.appendChild(delBtn);
       return container;
     }
@@ -182,6 +184,9 @@ const onGridReady = (params) => {
   gridApi.value = params.api;
   params.api.sizeColumnsToFit();
 };
+
+// --- 권한 옵션 (공통코드) ---
+const roleOptions = ref([]);
 
 // --- 상태 관리 변수 ---
 const searchQuery = ref({ loginId: '', userName: '', deptName: '', userRole: '', useYn: '' });
@@ -300,6 +305,20 @@ const saveUser = async () => {
   }
 };
 
+// 비밀번호 초기화 ({아이디}1234! 로, 서버에서 BCrypt 암호화)
+const resetPassword = async (userId, loginId) => {
+  if (!userId) return;
+  const initPw = loginId ? `${loginId}1234!` : '아이디1234!';
+  if (!confirm(`해당 직원의 비밀번호를 "${initPw}" 으로 초기화하시겠습니까?\n로그인 후 반드시 새 비밀번호로 변경해야 합니다.`)) return;
+  try {
+    await axios.post('/api/admin/users/reset-password', { userId });
+    alert(`비밀번호가 "${initPw}" 으로 초기화되었습니다.\n해당 직원은 다음 로그인 시 비밀번호 변경이 필요합니다.`);
+    onSearch();
+  } catch (err) {
+    alert(err.response?.data?.message || "초기화 중 오류가 발생했습니다.");
+  }
+};
+
 // 직원 삭제
 const deleteUser = async (userId) => {
   if(!confirm("정말 이 직원을 삭제하시겠습니까?")) return;
@@ -312,7 +331,17 @@ const deleteUser = async (userId) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const res = await axios.post('/api/codes/list', { groupCode: 'USER_ROLE' });
+    roleOptions.value = res.data;
+  } catch (e) {
+    roleOptions.value = [
+      { codeValue: 'MEMBER', codeName: 'MEMBER' },
+      { codeValue: 'MANAGER', codeName: 'MANAGER' },
+      { codeValue: 'ADMIN', codeName: 'ADMIN' },
+    ];
+  }
   onSearch();
 });
 </script>
@@ -335,14 +364,69 @@ onMounted(() => {
 .input-box input:focus { border-color: #3d5afe; outline: none; }
 .search-footer { text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
 
-/* 버튼 공통 스타일 */
-button { padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; }
-.btn-search { background: #3d5afe; color: white; }
-.btn-add { background: #2e7d32; color: white; }
-.btn-reset { background: #eee; color: #666; }
-.btn-primary { background: #3d5afe; color: white; }
-.btn-cancel { background: #f5f5f5; color: #333; }
-.btn-small { padding: 5px 10px; font-size: 12px; background: #666; color: white; }
+/* 버튼 공통 베이스 */
+button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  min-height: 40px;
+  line-height: 1.2;
+}
+button:hover { opacity: 0.92; }
+button:active { transform: scale(0.98); }
+
+/* 검색 영역 버튼 */
+.search-footer button { min-width: 90px; }
+.btn-reset {
+  background: #f1f3f4;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+}
+.btn-reset:hover { background: #e8eaed; color: #202124; }
+.btn-search {
+  background: #3d5afe;
+  color: white;
+  box-shadow: 0 1px 3px rgba(61, 90, 254, 0.3);
+}
+.btn-search:hover { box-shadow: 0 2px 6px rgba(61, 90, 254, 0.4); }
+.btn-add {
+  background: #5a9b5e;
+  color: white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+.btn-add:hover { background: #4d8b51; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); }
+
+/* 모달 내 보조 버튼 (중복확인, 부서검색) */
+.btn-small {
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  min-height: auto;
+  background: #5f6368;
+  color: white;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.btn-small:hover { background: #4a4d52; }
+
+/* 모달 푸터 버튼 */
+.btn-cancel {
+  background: #fff;
+  color: #5f6368;
+  border: 1px solid #dadce0;
+}
+.btn-cancel:hover { background: #f8f9fa; color: #202124; }
+.btn-save {
+  background: #3d5afe;
+  color: white;
+  padding: 10px 24px;
+  box-shadow: 0 1px 3px rgba(61, 90, 254, 0.3);
+}
+.btn-save:hover { box-shadow: 0 2px 6px rgba(61, 90, 254, 0.4); }
 
 /* 모달(팝업) 스타일 */
 .modal-overlay {
@@ -353,7 +437,7 @@ button { padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; t
 .modal-box.mini { width: 350px; }
 .modal-header { background: #3d5afe; color: white; padding: 20px; font-size: 18px; font-weight: 700; }
 .modal-body { padding: 25px; }
-.modal-footer { padding: 15px 25px; background: #f9f9f9; display: flex; justify-content: flex-end; gap: 10px; }
+.modal-footer { padding: 16px 24px; background: #f8f9fa; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #eee; }
 
 /* 폼 아이템 스타일 */
 .form-item { margin-bottom: 20px; }
@@ -387,6 +471,42 @@ button { padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; t
   --ag-row-hover-color: #e3f2fd;
   --ag-selected-row-background-color: #bbdefb;
 }
-:deep(.btn-table-edit) { background: #3d5afe; color: white; padding: 5px; font-size: 12px; border-radius: 4px; }
-:deep(.btn-table-del) { background: #e53935; color: white; padding: 5px; font-size: 12px; border-radius: 4px; }
+:deep(.btn-table-edit) {
+  background: #e8eaf6;
+  color: #3949ab;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 6px;
+}
+:deep(.btn-table-edit:hover) { background: #c5cae9; color: #283593; }
+:deep(.btn-table-reset) {
+  background: #fff3e0;
+  color: #e65100;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 6px;
+}
+:deep(.btn-table-reset:hover) { background: #ffe0b2; color: #bf360c; }
+:deep(.btn-table-del) {
+  background: #ffebee;
+  color: #c62828;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+:deep(.btn-table-del:hover) { background: #ffcdd2; color: #b71c1c; }
 </style>

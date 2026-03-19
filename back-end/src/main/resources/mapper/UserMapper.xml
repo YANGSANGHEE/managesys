@@ -74,6 +74,20 @@
         DELETE FROM TB_USER WHERE USER_ID = #{userId}
     </delete>
 
+    <update id="updatePassword">
+        UPDATE TB_USER SET PASSWORD = #{password} WHERE USER_ID = #{userId}
+    </update>
+
+    <!-- 비밀번호 변경 시 재설정 플래그 해제 (로그인 후 재설정 완료 시) -->
+    <update id="updatePasswordAndClearReset">
+        UPDATE TB_USER SET PASSWORD = #{password}, PASSWORD_RESET_YN = 'N' WHERE USER_ID = #{userId}
+    </update>
+
+    <!-- 관리자 비밀번호 초기화 시 재설정 필수 플래그 설정 -->
+    <update id="updatePasswordResetYn">
+        UPDATE TB_USER SET PASSWORD_RESET_YN = #{passwordResetYn} WHERE USER_ID = #{userId}
+    </update>
+
     <select id="countByLoginId" parameterType="string" resultType="int">
         SELECT COUNT(*) FROM TB_USER WHERE LOGIN_ID = #{loginId}
     </select>

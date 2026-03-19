@@ -5,9 +5,13 @@ import { ref, computed } from 'vue';
 export const useAuthStore = defineStore('auth', () => {
     // 1. 상태(State)
     const token = ref(localStorage.getItem('accessToken') || null);
-    const user = ref(JSON.parse(localStorage.getItem('userInfo')) || null);
+    const user = ref((() => {
+        try {
+            const u = localStorage.getItem('userInfo');
+            return u ? JSON.parse(u) : null;
+        } catch { return null; }
+    })());
 
-    // ▼ 로딩 상태 추가
     const isLoading = ref(false);
 
     function setLoading(status) {
@@ -34,16 +38,41 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('userInfo');
     }
 
-    // [중요] 외부에서 쓸 수 있도록 isLoading과 setLoading을 추가합니다.
+    /** 새로고침 시 localStorage → 스토어 동기화 (mustChangePassword 유지) */
+    function rehydrate() {
+        const t = localStorage.getItem('accessToken');
+        const u = localStorage.getItem('userInfo');
+        token.value = t || null;
+        try {
+            user.value = u ? JSON.parse(u) : null;
+        } catch {
+            user.value = null;
+        }
+    }
+
+    /** PASSWORD_RESET_YN === 'Y' 이면 true. App.vue 모달 표시 및 라우터 가드용. */
+    const mustChangePassword = computed(() => user.value?.mustChangePassword === true);
+
+    /** 비밀번호 재설정 완료 후 플래그 해제 */
+    function clearMustChangePassword() {
+        if (user.value) {
+            user.value = { ...user.value, mustChangePassword: false };
+            localStorage.setItem('userInfo', JSON.stringify(user.value));
+        }
+    }
+
     return {
         token,
         user,
-        isLoading,     // 추가
-        setLoading,   // 추가
+        isLoading,
+        setLoading,
         isAuthenticated,
         userName,
         userRole,
+        mustChangePassword,
         login,
-        logout
+        logout,
+        rehydrate,
+        clearMustChangePassword
     };
 });
