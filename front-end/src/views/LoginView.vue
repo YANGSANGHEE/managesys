@@ -47,7 +47,6 @@ const handleLogin = async () => {
         userName: data.userName,
         userRole: data.userRole,
         deptId: data.deptId,
-        isLeader: data.isLeader,
         mustChangePassword: !!data.mustChangePassword
       };
       authStore.login(data.accessToken, userInfo);
@@ -56,7 +55,11 @@ const handleLogin = async () => {
     }
   } catch (error) {
     console.error(error);
-    alert('로그인 실패: 아이디 혹은 비밀번호를 확인하세요.');
+    if (error.response?.data?.code === 'ACCOUNT_DISABLED') {
+      alert('해당 계정은 사용이 중지된 상태입니다. 관리자에게 문의해주세요.');
+    } else {
+      alert('로그인 실패: 아이디 혹은 비밀번호를 확인하세요.');
+    }
   }
 };
 </script>

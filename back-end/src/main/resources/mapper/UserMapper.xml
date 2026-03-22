@@ -25,7 +25,6 @@
         U.DEPT_ID AS deptId,
         D.DEPT_NAME AS deptName,
         U.USER_ROLE AS userRole,
-        U.IS_LEADER AS isLeader,
         U.USE_YN AS useYn,
         U.CREATED_AT AS createdAt
         FROM TB_USER U
@@ -51,9 +50,9 @@
 
     <insert id="insertUser" parameterType="com.sys.managesys.common.dto.UserDto">
         INSERT INTO TB_USER (
-        LOGIN_ID, PASSWORD, USER_NAME, DEPT_ID, USER_ROLE, IS_LEADER, USE_YN, CREATED_AT
+        LOGIN_ID, PASSWORD, USER_NAME, DEPT_ID, USER_ROLE, USE_YN, CREATED_AT
         ) VALUES (
-        #{loginId}, #{password}, #{userName}, #{deptId}, #{userRole}, #{isLeader}, #{useYn}, NOW()
+        #{loginId}, #{password}, #{userName}, #{deptId}, #{userRole}, #{useYn}, NOW()
         )
     </insert>
 
@@ -64,7 +63,6 @@
             <if test="deptId != null">DEPT_ID = #{deptId},</if>
             <if test="userRole != null">USER_ROLE = #{userRole},</if>
             <if test="password != null">PASSWORD = #{password},</if>
-            <if test="isLeader != null">IS_LEADER = #{isLeader},</if>
             <if test="useYn != null">USE_YN = #{useYn},</if>
         </set>
         WHERE USER_ID = #{userId}

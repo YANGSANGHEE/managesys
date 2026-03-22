@@ -14,6 +14,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +41,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        return authService.login(request, getClientIp(httpRequest), httpRequest.getHeader("User-Agent"));
+    public ResponseEntity<?> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        try {
+            LoginResponse response = authService.login(request, getClientIp(httpRequest), httpRequest.getHeader("User-Agent"));
+            return ResponseEntity.ok(response);
+        } catch (DisabledException e) {
+            return ResponseEntity.status(403).body(Map.of("code", "ACCOUNT_DISABLED"));
+        }
     }
 
     /**

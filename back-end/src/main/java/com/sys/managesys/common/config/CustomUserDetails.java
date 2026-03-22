@@ -24,10 +24,6 @@ public class CustomUserDetails implements UserDetails {
         return user.getUserRole();
     }
 
-    public int getIsLeader() {
-        return user.getIsLeader();
-    }
-
     public long getDeptId() {
         return user.getDeptId();
     }

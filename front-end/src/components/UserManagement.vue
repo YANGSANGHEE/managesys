@@ -82,10 +82,6 @@
           </div>
           <div class="form-item row-flex">
             <div class="check-item">
-              <input type="checkbox" id="isLeader" v-model="userForm.isLeader" :true-value="1" :false-value="0">
-              <label for="isLeader">부서 리더</label>
-            </div>
-            <div class="check-item">
               <input type="checkbox" id="useYn" v-model="userForm.useYn" true-value="Y" false-value="N">
               <label for="useYn">사용 여부</label>
             </div>
@@ -137,11 +133,6 @@ const columnDefs = ref([
     field: "userRole",
     headerName: "권한",
     cellClass: params => 'tag-' + (params.value || '').toLowerCase()
-  },
-  {
-    field: "isLeader",
-    headerName: "리더",
-    valueFormatter: params => params.value === 1 ? 'YES' : '-'
   },
   {
     field: "useYn",
@@ -267,8 +258,7 @@ const resetForm = () => {
     deptId: null,
     deptName: '',
     userRole: 'MEMBER',
-    useYn: 'Y',
-    isLeader: 0
+    useYn: 'Y'
   };
   idChecked.value = false;
 };

@@ -10,7 +10,6 @@ public class UserResponse {
     private Long userId;          // USER_ID
     private String userName;
     private String userRole;
-    private Integer isLeader;
     private String loginId;        // LOGIN_ID
     private String deptId;       // DEPT_ID
     private String useYn;

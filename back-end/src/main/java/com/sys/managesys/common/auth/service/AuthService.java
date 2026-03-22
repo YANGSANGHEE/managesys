@@ -69,7 +69,6 @@ public class AuthService {
                 .userName(userDto.getUserName())        // 이름
                 .userRole(userDto.getUserRole())        // 권한
                 .deptId(userDto.getDeptId())            // 부서
-                .isLeader(userDto.getIsLeader())        // 리더 여부
                 .mustChangePassword(mustChangePassword) // 비밀번호 재설정 필요 여부
                 .build();
     }
