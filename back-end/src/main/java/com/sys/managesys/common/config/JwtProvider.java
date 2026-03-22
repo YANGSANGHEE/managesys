@@ -7,17 +7,17 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
 public class JwtProvider {
-    @Value("${jwt.secret}")
-    private String jwtSecret;
-    private final long expireTime = 1000 * 60 * 60 ; // 토큰 1시간 유지
+    // 서버 시작 시 랜덤 키 생성 → 재시작하면 기존 토큰 전부 무효화
+    private final SecretKey secretKey = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
+    private final long expireTime = 1000 * 60 * 60; // 토큰 1시간 유지
 
     public static final String CLAIM_MUST_CHANGE_PASSWORD = "mustChangePassword";
 
@@ -31,7 +31,7 @@ public class JwtProvider {
                 .claim(CLAIM_MUST_CHANGE_PASSWORD, mustChangePassword)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + expireTime))
-                .signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes()));
+                .signWith(secretKey);
         return builder.compact();
     }
 
@@ -40,7 +40,7 @@ public class JwtProvider {
         if (token == null || token.isBlank()) return false;
         try {
             Claims body = Jwts.parserBuilder()
-                    .setSigningKey(jwtSecret.getBytes())
+                    .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
@@ -55,7 +55,7 @@ public class JwtProvider {
     public Long getUserId(String token) {
         return Long.valueOf(
                 Jwts.parserBuilder()
-                        .setSigningKey(jwtSecret.getBytes())
+                        .setSigningKey(secretKey)
                         .build()
                         .parseClaimsJws(token)
                         .getBody()
@@ -67,7 +67,7 @@ public class JwtProvider {
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(jwtSecret.getBytes())
+                    .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -85,7 +85,7 @@ public class JwtProvider {
         try {
             return Long.valueOf(
                     Jwts.parserBuilder()
-                            .setSigningKey(jwtSecret.getBytes())
+                            .setSigningKey(secretKey)
                             .build()
                             .parseClaimsJws(token)
                             .getBody()

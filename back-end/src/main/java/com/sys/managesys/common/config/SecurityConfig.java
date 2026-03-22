@@ -34,10 +34,12 @@ public class SecurityConfig {
                 .formLogin(formLogin -> formLogin.disable())
                 .httpBasic(basic -> basic.disable())
 
-                /* 로그인·해시생성·로그아웃(만료 토큰으로도 기록 가능) 비인증 허용 */
+                /* 로그인·정적리소스·로그아웃 비인증 허용, /api/** 는 인증 필요 */
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/api/auth/generate-hash", "/api/auth/logout", "/error").permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/assets/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .addFilterBefore(
