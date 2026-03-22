@@ -7,6 +7,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
@@ -14,8 +15,8 @@ import java.util.Date;
 
 @Component
 public class JwtProvider {
-    private final String jwtSecret =
-            "managesys-secret-key-very-long-and-secure-32bytes";// 비밀키 ** .env에서 가져오도록 설정해놓을것
+    @Value("${jwt.secret}")
+    private String jwtSecret;
     private final long expireTime = 1000 * 60 * 60 ; // 토큰 1시간 유지
 
     public static final String CLAIM_MUST_CHANGE_PASSWORD = "mustChangePassword";

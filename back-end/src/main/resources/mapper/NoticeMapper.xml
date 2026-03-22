@@ -35,11 +35,25 @@
           AND CREATOR_ID = #{creatorId}
     </delete>
 
+    <delete id="deleteNoticeById">
+        DELETE FROM TB_NOTICE
+        WHERE NOTICE_ID = #{noticeId}
+    </delete>
+
     <select id="countByNoticeIdAndCreator" resultType="int">
         SELECT COUNT(*)
         FROM TB_NOTICE
         WHERE NOTICE_ID = #{noticeId}
           AND CREATOR_ID = #{creatorId}
     </select>
+
+    <update id="updateNotice" parameterType="com.sys.managesys.common.dto.NoticeDto">
+        UPDATE TB_NOTICE
+        SET TITLE    = #{title},
+            CONTENT  = #{content},
+            IS_FIXED = COALESCE(#{isFixed}, 'N')
+        WHERE NOTICE_ID  = #{noticeId}
+          AND CREATOR_ID = #{creatorId}
+    </update>
 
 </mapper>

@@ -41,7 +41,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        return authService.login(request, getClientIp(httpRequest));
+        return authService.login(request, getClientIp(httpRequest), httpRequest.getHeader("User-Agent"));
     }
 
     /**
@@ -54,7 +54,7 @@ public class AuthController {
         String token = (authHeader != null && authHeader.startsWith("Bearer ")) ? authHeader.substring(7) : null;
         Long userId = jwtProvider.getUserIdFromTokenEvenIfExpired(token);
         if (userId != null) {
-            authService.recordLogout(userId, getClientIp(httpRequest));
+            authService.recordLogout(userId, getClientIp(httpRequest), httpRequest.getHeader("User-Agent"));
         }
     }
 
@@ -70,6 +70,24 @@ public class AuthController {
         Long userId = ((CustomUserDetails) authentication.getPrincipal()).getUserId();
         try {
             authService.changePassword(userId, request.getNewPassword(), request.getNewPasswordConfirm());
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    /**
+     * 내 비밀번호 변경 (자발적 변경 - 현재 비밀번호 검증 포함).
+     */
+    @PostMapping("/change-my-password")
+    public ResponseEntity<?> changeMyPassword(@RequestBody ChangePasswordRequest request, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            return ResponseEntity.status(401).body(Map.of("message", "로그인이 필요합니다."));
+        }
+        Long userId = ((CustomUserDetails) authentication.getPrincipal()).getUserId();
+        try {
+            authService.changeMyPassword(userId, request.getCurrentPassword(), request.getNewPassword(), request.getNewPasswordConfirm());
             return ResponseEntity.ok().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

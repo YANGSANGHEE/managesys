@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
 import { useAuthStore } from '@/store/auth';
@@ -12,10 +12,28 @@ const loginData = ref({
   password: ''
 });
 
+const rememberMe = ref(false);
+
+// 페이지 진입 시 저장된 아이디 복원
+onMounted(() => {
+  const savedId = localStorage.getItem('rememberedLoginId');
+  if (savedId) {
+    loginData.value.loginId = savedId;
+    rememberMe.value = true;
+  }
+});
+
 const handleLogin = async () => {
   if (!loginData.value.loginId || !loginData.value.password) {
     alert("아이디와 비밀번호를 입력해주세요.");
     return;
+  }
+
+  // 기억하기 처리
+  if (rememberMe.value) {
+    localStorage.setItem('rememberedLoginId', loginData.value.loginId);
+  } else {
+    localStorage.removeItem('rememberedLoginId');
   }
 
   try {
@@ -34,7 +52,7 @@ const handleLogin = async () => {
       };
       authStore.login(data.accessToken, userInfo);
 
-      router.replace('/notice'); // mustChangePassword=true면 App.vue 전역 모달이 자동 표시
+      router.replace('/notice');
     }
   } catch (error) {
     console.error(error);
@@ -51,10 +69,10 @@ const handleLogin = async () => {
 <!--      </div>-->
       <div class="brand-message">
         <h1>Welcome<br>Back!</h1>
-        <p>회사소개글,<br>회사명</p>
+        <p>더원컴퍼니와 함께<br>스마트한 업무관리를</p>
       </div>
       <div class="brand-footer">
-        © 2024 회사명 Corp. All rights reserved.
+        © 2024 더원컴퍼니. All rights reserved.
       </div>
     </div>
 
@@ -73,7 +91,12 @@ const handleLogin = async () => {
             <input type="password" v-model="loginData.password" id="password" placeholder="비밀번호를 입력하세요" class="custom-input">
           </div>
 
-          <button type="submit" class="login-btn-lg">로그인</button>
+          <label class="remember-me">
+            <input type="checkbox" v-model="rememberMe" />
+            아이디 기억하기
+          </label>
+
+          <button type="submit" class="login-btn-lg" style="margin-top: 12px;">로그인</button>
         </form>
       </div>
     </div>
@@ -90,9 +113,30 @@ const handleLogin = async () => {
 /* 왼쪽 브랜드 패널 */
 .brand-panel {
   width: 40%;
-  background-color: #3d5afe;/* 기존 포인트 컬러 유지 */
+  position: relative;
+  background: url('@/assets/bg.jpg') center/cover no-repeat;
   color: white;
   padding: 60px;
+  overflow: hidden;
+}
+
+/* 어두운 오버레이: 텍스트 가독성 확보 */
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    160deg,
+    rgba(15, 30, 80, 0.72) 0%,
+    rgba(37, 99, 235, 0.55) 100%
+  );
+  z-index: 0;
+}
+
+/* 패널 내 콘텐츠가 오버레이 위에 오도록 */
+.brand-panel > * {
+  position: relative;
+  z-index: 1;
 }
 .brand-logo {
   font-size: 1.5rem;
@@ -103,7 +147,7 @@ const handleLogin = async () => {
 }
 .logo-icon {
   background: white;
-  color: #3d5afe;
+  color: #2563eb;
   width: 32px;
   height: 32px;
   display: flex;
@@ -171,7 +215,7 @@ const handleLogin = async () => {
 }
 .custom-input:focus {
   outline: none;
-  border-color:#3d5afe;
+  border-color:#2563eb;
 }
 
 /* 추가 옵션 (체크박스, 링크 등) */
@@ -180,11 +224,15 @@ const handleLogin = async () => {
   color: #4b5563;
 }
 .remember-me {
+  display: flex;
+  align-items: center;
   gap: 8px;
   cursor: pointer;
+  font-size: 0.9rem;
+  color: #4b5563;
 }
 .forgot-pw, .signup-link {
-  color: #3d5afe;
+  color: #2563eb;
   font-weight: 600;
   text-decoration: none;
 }
@@ -193,7 +241,7 @@ const handleLogin = async () => {
 .login-btn-lg {
   width: 100%;
   padding: 16px;
-  background-color: #3d5afe;
+  background-color: #2563eb;
   color: white;
   border: none;
   border-radius: 8px;
@@ -203,7 +251,7 @@ const handleLogin = async () => {
   transition: background-color 0.2s;
 }
 .login-btn-lg:hover {
-  background-color: #4338ca;
+  background-color: #1d4ed8;
 }
 
 /* 하단 푸터 */

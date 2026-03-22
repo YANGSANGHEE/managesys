@@ -19,10 +19,12 @@ axios.defaults.baseURL = 'http://localhost:8085';
 
 // 세션 만료(401) 시 로그아웃 API는 한 번만 호출
 let sessionExpiryHandling = false;
+// 동시 요청 카운터: 모든 요청이 끝났을 때만 로딩 해제
+let pendingRequests = 0;
 
 // 4. Axios 인터셉터 통합 설정
 axios.interceptors.request.use(config => {
-    // 로딩 시작
+    pendingRequests++;
     authStore.setLoading(true);
 
     // 토큰 추가
@@ -32,15 +34,18 @@ axios.interceptors.request.use(config => {
     }
     return config;
 }, error => {
-    authStore.setLoading(false);
+    pendingRequests = Math.max(0, pendingRequests - 1);
+    if (pendingRequests === 0) authStore.setLoading(false);
     return Promise.reject(error);
 });
 
 axios.interceptors.response.use(response => {
-    authStore.setLoading(false);
+    pendingRequests = Math.max(0, pendingRequests - 1);
+    if (pendingRequests === 0) authStore.setLoading(false);
     return response;
 }, error => {
-    authStore.setLoading(false);
+    pendingRequests = Math.max(0, pendingRequests - 1);
+    if (pendingRequests === 0) authStore.setLoading(false);
     if (error.response?.status === 401) {
         if (!sessionExpiryHandling) {
             sessionExpiryHandling = true;

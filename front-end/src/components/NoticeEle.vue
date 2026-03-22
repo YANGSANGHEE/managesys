@@ -38,6 +38,11 @@
                 <td v-if="canWrite" class="action-cell" @click.stop>
                   <button
                     v-if="item.creatorId === currentUserId"
+                    class="edit-btn"
+                    @click="openEditModal(item, section)"
+                  >수정</button>
+                  <button
+                    v-if="isAdmin || item.creatorId === currentUserId"
                     class="del-btn"
                     @click="deleteNotice(item, section)"
                   >삭제</button>
@@ -83,6 +88,39 @@
     </div>
 
 
+    <!-- 수정 모달 -->
+    <div v-if="editModal.visible" class="modal-overlay">
+      <div class="modal-box">
+        <h3 class="modal-title">공지 수정</h3>
+        <div class="form-group">
+          <label>제목 <span class="required">*</span></label>
+          <input
+            v-model="editModal.title"
+            type="text"
+            class="form-input"
+            placeholder="제목을 입력하세요"
+            maxlength="200"
+          />
+        </div>
+        <div class="form-group">
+          <label>내용 <span class="required">*</span></label>
+          <div ref="editEditorContainer" class="quill-editor-wrap"></div>
+        </div>
+        <div class="form-group checkbox-row">
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="editModal.isFixed" />
+            상단 고정
+          </label>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="closeEditModal">취소</button>
+          <button class="btn-submit" @click="submitEdit" :disabled="editModal.submitting">
+            {{ editModal.submitting ? '저장 중...' : '저장' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- 보기 모달 -->
     <div v-if="viewModal.visible" class="modal-overlay">
       <div class="modal-box modal-view">
@@ -115,7 +153,9 @@ import 'quill/dist/quill.snow.css';
 
 const authStore = useAuthStore();
 
-const canWrite = computed(() => authStore.user?.userRole === 'ADMIN');
+const isAdmin = computed(() => authStore.user?.userRole === 'ADMIN');
+// 등록/수정/삭제 버튼 컬럼 표시 여부 (ADMIN + MANAGER)
+const canWrite = computed(() => ['ADMIN', 'MANAGER'].includes(authStore.user?.userRole));
 const currentUserId = computed(() => authStore.user?.userId);
 
 // 사내자료실(COMPANY_ROOM) · 협력점 자료실(PARTNER_ROOM) 숨김
@@ -140,26 +180,82 @@ const viewModal = reactive({
 const editorContainer = ref(null);
 let quillInstance = null;
 
-// 모달 열릴 때 Quill 초기화
+const editModal = reactive({
+  visible: false,
+  noticeId: null,
+  noticeType: '',
+  title: '',
+  isFixed: false,
+  submitting: false,
+  _initialContent: '',
+  _section: null,
+});
+
+const editEditorContainer = ref(null);
+let editQuillInstance = null;
+
+function imageHandler(quill) {
+  const input = document.createElement('input');
+  input.setAttribute('type', 'file');
+  input.setAttribute('accept', 'image/*');
+  input.click();
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('이미지 크기는 5MB 이하만 첨부 가능합니다.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const range = quill.getSelection(true);
+      quill.insertEmbed(range.index, 'image', e.target.result);
+      quill.setSelection(range.index + 1);
+    };
+    reader.readAsDataURL(file);
+  };
+}
+
+function makeQuillConfig() {
+  return {
+    theme: 'snow',
+    placeholder: '내용을 입력하세요',
+    modules: {
+      toolbar: {
+        container: [
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ header: [1, 2, 3, false] }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          [{ color: [] }, { background: [] }],
+          ['image'],
+        ],
+      },
+    },
+  };
+}
+
+// 등록 모달 열릴 때 Quill 초기화
 watch(() => createModal.visible, async (visible) => {
   if (visible) {
     await nextTick();
-    quillInstance = new Quill(editorContainer.value, {
-      theme: 'snow',
-      placeholder: '내용을 입력하세요',
-      modules: {
-        toolbar: {
-          container: [
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ header: [1, 2, 3, false] }],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            [{ color: [] }, { background: [] }],
-          ],
-        },
-      },
-    });
+    quillInstance = new Quill(editorContainer.value, makeQuillConfig());
+    quillInstance.getModule('toolbar').addHandler('image', () => imageHandler(quillInstance));
   } else {
     quillInstance = null;
+  }
+});
+
+// 수정 모달 열릴 때 Quill 초기화 및 기존 내용 로드
+watch(() => editModal.visible, async (visible) => {
+  if (visible) {
+    await nextTick();
+    editQuillInstance = new Quill(editEditorContainer.value, makeQuillConfig());
+    editQuillInstance.getModule('toolbar').addHandler('image', () => imageHandler(editQuillInstance));
+    if (editModal._initialContent) {
+      editQuillInstance.clipboard.dangerouslyPasteHTML(editModal._initialContent);
+    }
+  } else {
+    editQuillInstance = null;
   }
 });
 
@@ -218,6 +314,46 @@ async function submitCreate() {
     alert(e.response?.data || '등록 중 오류가 발생했습니다.');
   } finally {
     createModal.submitting = false;
+  }
+}
+
+function openEditModal(item, section) {
+  editModal.noticeId = item.noticeId;
+  editModal.noticeType = item.noticeType;
+  editModal.title = item.title;
+  editModal.isFixed = item.isFixed === 'Y';
+  editModal._initialContent = item.content || '';
+  editModal._section = section;
+  editModal.submitting = false;
+  editModal.visible = true;
+}
+
+function closeEditModal() {
+  editModal.visible = false;
+}
+
+async function submitEdit() {
+  const content = editQuillInstance?.root?.innerHTML?.trim() ?? '';
+  const isEmpty = content === '' || content === '<p><br></p>';
+  if (!editModal.title.trim()) { alert('제목을 입력해주세요.'); return; }
+  if (isEmpty) { alert('내용을 입력해주세요.'); return; }
+
+  const targetSection = editModal._section;
+  editModal.submitting = true;
+  try {
+    await axios.post('/api/notice/update', {
+      noticeId: editModal.noticeId,
+      title: editModal.title.trim(),
+      content,
+      isFixed: editModal.isFixed ? 'Y' : 'N',
+    }, { headers: authHeader() });
+    closeEditModal();
+    if (targetSection) loadSection(targetSection);
+    else sections.forEach(s => loadSection(s));
+  } catch (e) {
+    alert(e.response?.data || '수정 중 오류가 발생했습니다.');
+  } finally {
+    editModal.submitting = false;
   }
 }
 
@@ -282,7 +418,7 @@ async function deleteNotice(item, section) {
 }
 
 .add-btn {
-  background: #3d5afe;
+  background: #2563eb;
   color: white;
   border: none;
   width: 32px;
@@ -298,7 +434,7 @@ async function deleteNotice(item, section) {
   flex-shrink: 0;
 }
 
-.add-btn:hover { background: #2948d4; }
+.add-btn:hover { background: #1d4ed8; }
 
 /* ─── 테이블 ─── */
 .data-table {
@@ -316,14 +452,14 @@ async function deleteNotice(item, section) {
   font-weight: 500;
 }
 
-.col-action { width: 52px; }
+.col-action { width: 130px; }
 
 .data-row {
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.data-row:hover { background: #f5f7ff; }
+.data-row:hover { background: #f0f9ff; }
 
 .data-table td {
   padding: 12px 8px;
@@ -342,7 +478,11 @@ async function deleteNotice(item, section) {
 }
 
 .date-cell { color: #999; font-size: 0.82rem; }
-.action-cell { text-align: center; }
+.action-cell {
+  text-align: center;
+  overflow: visible;
+  white-space: nowrap;
+}
 
 .empty-cell {
   text-align: center;
@@ -352,8 +492,8 @@ async function deleteNotice(item, section) {
 }
 
 .fixed-badge {
-  background: #e8eeff;
-  color: #3d5afe;
+  background: #dbeafe;
+  color: #2563eb;
   font-size: 0.72rem;
   font-weight: 700;
   padding: 2px 6px;
@@ -361,6 +501,21 @@ async function deleteNotice(item, section) {
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+.edit-btn {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.edit-btn:hover { background: #bfdbfe; }
 
 .del-btn {
   background: #fff0f0;
@@ -391,8 +546,8 @@ async function deleteNotice(item, section) {
   background: white;
   border-radius: 20px;
   padding: 32px;
-  width: 680px;
-  max-width: 95vw;
+  width: 70vw;
+  max-width: 70vw;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   max-height: 90vh;
   overflow-y: auto;
@@ -428,7 +583,7 @@ async function deleteNotice(item, section) {
   box-sizing: border-box;
 }
 
-.form-input:focus { border-color: #3d5afe; }
+.form-input:focus { border-color: #2563eb; }
 
 /* ─── Quill 에디터 커스터마이징 ─── */
 :deep(.quill-editor-wrap .ql-toolbar) {
@@ -444,8 +599,8 @@ async function deleteNotice(item, section) {
 }
 
 :deep(.quill-editor-wrap .ql-editor) {
-  min-height: 180px;
-  max-height: 300px;
+  min-height: 300px;
+  max-height: 50vh;
   overflow-y: auto;
   font-family: inherit;
   font-size: 0.92rem;
@@ -496,7 +651,7 @@ async function deleteNotice(item, section) {
 
 .btn-submit {
   padding: 10px 22px;
-  background: #3d5afe;
+  background: #2563eb;
   color: white;
   border: none;
   border-radius: 10px;
@@ -506,7 +661,7 @@ async function deleteNotice(item, section) {
   transition: background 0.2s;
 }
 
-.btn-submit:hover:not(:disabled) { background: #2948d4; }
+.btn-submit:hover:not(:disabled) { background: #1d4ed8; }
 .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ─── 보기 모달 ─── */

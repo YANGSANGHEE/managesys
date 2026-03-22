@@ -69,7 +69,7 @@
         :pagination="true"
         :paginationPageSize="pageSize"
         :paginationPageSizeSelector="[10, 20, 30, 50]"
-        :rowSelection="'multiple'"
+        :rowSelection="{ mode: 'multiRow', checkboxes: false, enableClickSelection: true }"
         @grid-ready="onGridReady"
         @row-clicked="onRowClicked"
       />
@@ -906,6 +906,8 @@ const columnDefs = ref([
       const container = document.createElement('div');
       container.style.display = 'flex';
       container.style.justifyContent = 'center';
+      container.style.alignItems = 'center';
+      container.style.height = '100%';
 
       const delBtn = document.createElement('button');
       delBtn.innerText = '삭제';
@@ -1068,7 +1070,7 @@ function getEmptyCustomer() {
   return {
     custName: '',
     repName: '',
-    custType: 'PERS',
+    custType: '',
     status: 'RECEIPT',
     joinDate: '',
     receiptDate: '',
@@ -1412,7 +1414,7 @@ function mapDetailToForm(detail) {
     custId: c.custId,
     custName: c.custName || '',
     repName: c.repName || '',
-    custType: c.custType || 'PERS',
+    custType: c.custType || '',
     status: c.status || 'RECEIPT',
     joinDate: joinDateStr,
     receiptDate: receiptDateStr,
@@ -1558,7 +1560,7 @@ function onSearchAddress() {
     alert('주소 검색 스크립트를 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
     return;
   }
-  const theme = { bgColor: '#fff', searchBgColor: '#1976d2', queryTextColor: '#333' };
+  const theme = { bgColor: '#fff', searchBgColor: '#2563eb', queryTextColor: '#333' };
   new window.daum.Postcode({
     theme,
     oncomplete: function (data) {
@@ -2014,7 +2016,7 @@ onMounted(async () => {
 
 .input-box input:focus,
 .input-box select:focus {
-  border-color: #3d5afe;
+  border-color: #2563eb;
   outline: none;
 }
 
@@ -2104,7 +2106,7 @@ button {
 }
 
 .btn-search {
-  background: #3d5afe;
+  background: #2563eb;
   color: white;
 }
 
@@ -2162,10 +2164,13 @@ button {
 
 /* 그리드 내 수정/삭제 버튼 (인사관리와 동일 스타일) */
 :deep(.btn-table-edit) {
-  background: #e8eaf6;
-  color: #3949ab;
-  padding: 5px 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 4px 10px;
   font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
   font-weight: 600;
   border-radius: 4px;
   border: none;
@@ -2174,16 +2179,19 @@ button {
 }
 
 :deep(.btn-table-edit:hover) {
-  background: #c5cae9;
-  color: #283593;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 :deep(.btn-table-del) {
   background: #ffebee;
   color: #c62828;
-  padding: 5px 10px;
+  padding: 4px 10px;
   font-size: 12px;
   font-weight: 600;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
   border-radius: 4px;
   border: none;
   cursor: pointer;
@@ -2196,7 +2204,7 @@ button {
 
 :deep(.ag-theme-alpine) {
   --ag-header-background-color: #f8f9fa;
-  --ag-row-hover-color: #e3f2fd;
+  --ag-row-hover-color: #eff6ff;
 }
 
 :deep(.status-done) {
@@ -2251,8 +2259,8 @@ button {
 .excel-filter-item input[type="date"] { padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; width: 130px; min-width: 0; flex-shrink: 0; }
 .excel-filter-item .excel-row-select { width: 100%; max-width: 200px; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
 .modal-excel-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px; border-top: 1px solid #eee; }
-.btn-download { padding: 8px 16px; background: #1976d2; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-.btn-download:hover:not(:disabled) { background: #1565c0; }
+.btn-download { padding: 8px 16px; background: #2563eb; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+.btn-download:hover:not(:disabled) { background: #1d4ed8; }
 .btn-download:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-cancel { padding: 8px 16px; background: #f5f5f5; color: #333; border: none; border-radius: 8px; cursor: pointer; }
 
@@ -2318,7 +2326,7 @@ button {
   font-weight: 700;
   color: #333;
   padding-bottom: 8px;
-  border-bottom: 2px solid #3d5afe;
+  border-bottom: 2px solid #2563eb;
 }
 
 /* 등록 모달 테이블 형식 */
@@ -2359,7 +2367,7 @@ button {
 }
 .reg-table.product-table thead th,
 .reg-table.product-table thead td {
-  background: #e8eaf6;
+  background: #eff6ff;
   font-weight: 600;
 }
 .reg-table .input-with-select,
@@ -2543,8 +2551,8 @@ button {
   cursor: pointer;
 }
 .btn-inline:hover { background: #e8eaed; color: #333; }
-.btn-search-inline { background: #3d5afe; color: #fff; border-color: #3d5afe; }
-.btn-search-inline:hover { background: #334dd4; }
+.btn-search-inline { background: #2563eb; color: #fff; border-color: #2563eb; }
+.btn-search-inline:hover { background: #1d4ed8; }
 
 .input-with-check {
   display: flex;
@@ -2620,9 +2628,9 @@ button {
 
 .modal-reg-footer .btn-test-data {
   padding: 8px 14px;
-  background: #e8eaf6;
-  color: #3949ab;
-  border: 1px solid #c5cae9;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
   border-radius: 8px;
   cursor: pointer;
   font-size: 13px;
@@ -2634,7 +2642,7 @@ button {
 }
 
 .modal-reg-footer .btn-save {
-  background: #3d5afe;
+  background: #2563eb;
   color: white;
 }
 </style>

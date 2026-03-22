@@ -65,12 +65,30 @@ const router = createRouter({
   routes
 })
 
+/** JWT exp claim 체크 (서명 검증 없이 만료 여부만 확인) */
+function isTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return Date.now() >= payload.exp * 1000
+  } catch {
+    return true
+  }
+}
+
 // 라우터 가드: 비로그인 → /login, 공통코드 ADMIN 전용
 // mustChangePassword 처리: App.vue 전역 모달이 담당 (페이지 이동 불필요)
 router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  const hasToken = !!localStorage.getItem('accessToken')
-  if (hasToken) authStore.rehydrate()
+  authStore.setLoading(true)
+
+  const token = localStorage.getItem('accessToken')
+  const hasToken = !!token && !isTokenExpired(token)
+
+  if (!hasToken) {
+    authStore.logout()
+  } else {
+    authStore.rehydrate()
+  }
 
   const user = authStore.user
   const isLoginPath = to.name === 'Login'
@@ -91,6 +109,12 @@ router.beforeEach((to, from, next) => {
     return
   }
   next()
+})
+
+router.afterEach(() => {
+  const authStore = useAuthStore()
+  // 페이지 전환 후 로딩 해제 (axios 요청이 없는 페이지를 위해 약간의 딜레이)
+  setTimeout(() => authStore.setLoading(false), 300)
 })
 
 export default router

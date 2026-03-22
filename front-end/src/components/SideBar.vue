@@ -2,6 +2,7 @@
   <aside class="sidebar">
     <div class="logo-area flex-center">
       <router-link to="/" class="logo"></router-link>
+      <span class="company-name">더원컴퍼니</span>
     </div>
 
     <nav class="nav-menu">
@@ -82,6 +83,8 @@ watch(
 
 .logo-area {
   padding-bottom: 40px;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .logo {
@@ -91,6 +94,13 @@ watch(
   background: url('../assets/logo.png') no-repeat center;
   background-size: contain;
   text-decoration: none;
+}
+
+.company-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 0.03em;
 }
 
 .nav-menu {
@@ -107,13 +117,14 @@ watch(
   align-items: center;
   gap: 12px;
   color: #666;
+  font-size: 14px;
   text-decoration: none;
   transition: all 0.3s ease;
   position: relative;
 }
 
 .nav-item:hover {
-  background: #f0f4ff;
+  background: #eff6ff;
   font-weight: bold;
 }
 
@@ -144,7 +155,7 @@ watch(
 }
 
 .nav-group-title:hover {
-  background: #f0f4ff;
+  background: #eff6ff;
 }
 
 .nav-group-title .chevron {
@@ -161,14 +172,14 @@ watch(
 }
 
 .nav-group .nav-item.sub.router-link-active {
-  background: #3d5afe !important;
+  background: #2563eb !important;
   color: white !important;
   font-weight: 600;
 }
 
 /* Vue Router 활성화 클래스 (현재 페이지 강조) */
 .router-link-active:not(.logo):not(.sub) {
-  background: #3d5afe !important;
+  background: #2563eb !important;
   color: white !important;
   font-weight: 600;
 }

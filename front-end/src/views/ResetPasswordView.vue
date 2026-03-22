@@ -139,7 +139,7 @@ async function onSubmit() {
 }
 .input:focus {
   outline: none;
-  border-color: #3d5afe;
+  border-color: #2563eb;
 }
 .error-msg {
   margin: 0;
@@ -149,7 +149,7 @@ async function onSubmit() {
 .btn-submit {
   margin-top: 8px;
   padding: 14px 20px;
-  background: #3d5afe;
+  background: #2563eb;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -158,7 +158,7 @@ async function onSubmit() {
   cursor: pointer;
 }
 .btn-submit:hover:not(:disabled) {
-  background: #4338ca;
+  background: #1d4ed8;
 }
 .btn-submit:disabled {
   opacity: 0.7;

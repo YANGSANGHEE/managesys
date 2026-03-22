@@ -33,9 +33,10 @@ public class AuthService {
     private final CustomUserDetailsService userDetailsService;
 
     /**
-     * @param clientIp 로그인 요청 클라이언트 IP (null 가능)
+     * @param clientIp  로그인 요청 클라이언트 IP (null 가능)
+     * @param userAgent 로그인 요청 브라우저 User-Agent (null 가능)
      */
-    public LoginResponse login(LoginRequest request, String clientIp) {
+    public LoginResponse login(LoginRequest request, String clientIp, String userAgent) {
         // 로그인 토큰 생성 (아직 인증 전)
         UsernamePasswordAuthenticationToken authToken =
                 new UsernamePasswordAuthenticationToken(
@@ -56,7 +57,7 @@ public class AuthService {
 
         // 로그인 히스토리 저장 (TB_USER_LOGIN_HISTORY)
         try {
-            loginHistoryMapper.insert(userDto.getUserId(), ACTION_LOGIN, clientIp);
+            loginHistoryMapper.insert(userDto.getUserId(), ACTION_LOGIN, clientIp, userAgent);
         } catch (Exception e) {
             log.warn("로그인 히스토리 저장 실패: userId={}, ip={}, error={}", userDto.getUserId(), clientIp, e.getMessage());
         }
@@ -76,10 +77,10 @@ public class AuthService {
     /**
      * 로그아웃 히스토리 저장 (로그아웃 API에서 호출)
      */
-    public void recordLogout(Long userId, String clientIp) {
+    public void recordLogout(Long userId, String clientIp, String userAgent) {
         if (userId == null) return;
         try {
-            loginHistoryMapper.insert(userId, ACTION_LOGOUT, clientIp);
+            loginHistoryMapper.insert(userId, ACTION_LOGOUT, clientIp, userAgent);
         } catch (Exception e) {
             log.warn("로그아웃 히스토리 저장 실패: userId={}, ip={}, error={}", userId, clientIp, e.getMessage());
         }
@@ -101,5 +102,28 @@ public class AuthService {
 
         String encoded = passwordEncoder.encode(newPassword);
         userMapper.updatePasswordAndClearReset(userId, encoded);
+    }
+
+    /**
+     * 내 비밀번호 변경 (자발적 - 현재 비밀번호 검증 필수).
+     *
+     * @throws IllegalArgumentException 현재 비밀번호 불일치, 새 비밀번호 유효성 실패 시
+     */
+    public void changeMyPassword(Long userId, String currentPassword, String newPassword, String newPasswordConfirm) {
+        if (userId == null) throw new IllegalArgumentException("사용자 정보가 없습니다.");
+        if (currentPassword == null || currentPassword.isBlank())
+            throw new IllegalArgumentException("현재 비밀번호를 입력해 주세요.");
+        if (newPassword == null || newPassword.isBlank())
+            throw new IllegalArgumentException("새 비밀번호를 입력해 주세요.");
+        if (!newPassword.equals(newPasswordConfirm))
+            throw new IllegalArgumentException("새 비밀번호가 일치하지 않습니다.");
+
+        UserDto user = userMapper.findByUserId(userId);
+        if (user == null) throw new IllegalArgumentException("사용자 정보를 찾을 수 없습니다.");
+        if (!passwordEncoder.matches(currentPassword, user.getPassword()))
+            throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
+
+        String encoded = passwordEncoder.encode(newPassword);
+        userMapper.updatePassword(userId, encoded);
     }
 }

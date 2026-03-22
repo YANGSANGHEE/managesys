@@ -5,7 +5,7 @@
 <template>
   <footer class="footer-info">
     <p>(우: 47258) 부산 부산진구 가야대로 749-1 | 대표전화: 02-1661-1015</p>
-    <p>Copyright (c)다드림 All rights reserved.</p>
+    <p>Copyright (c) 더원컴퍼니 All rights reserved.</p>
   </footer>
 </template>
 

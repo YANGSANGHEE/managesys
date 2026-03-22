@@ -155,6 +155,8 @@ const columnDefs = ref([
       container.style.display = 'flex';
       container.style.gap = '5px';
       container.style.justifyContent = 'center';
+      container.style.alignItems = 'center';
+      container.style.height = '100%';
 
       const editBtn = document.createElement('button');
       editBtn.innerText = '수정';
@@ -361,7 +363,7 @@ onMounted(async () => {
 .input-box input, .input-box select {
   width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; transition: border-color 0.3s;
 }
-.input-box input:focus { border-color: #3d5afe; outline: none; }
+.input-box input:focus { border-color: #2563eb; outline: none; }
 .search-footer { text-align: right; margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
 
 /* 버튼 공통 베이스 */
@@ -388,7 +390,7 @@ button:active { transform: scale(0.98); }
 }
 .btn-reset:hover { background: #e8eaed; color: #202124; }
 .btn-search {
-  background: #3d5afe;
+  background: #2563eb;
   color: white;
   box-shadow: 0 1px 3px rgba(61, 90, 254, 0.3);
 }
@@ -421,7 +423,7 @@ button:active { transform: scale(0.98); }
 }
 .btn-cancel:hover { background: #f8f9fa; color: #202124; }
 .btn-save {
-  background: #3d5afe;
+  background: #2563eb;
   color: white;
   padding: 10px 24px;
   box-shadow: 0 1px 3px rgba(61, 90, 254, 0.3);
@@ -435,7 +437,7 @@ button:active { transform: scale(0.98); }
 }
 .modal-box { background: white; border-radius: 15px; width: 500px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 .modal-box.mini { width: 350px; }
-.modal-header { background: #3d5afe; color: white; padding: 20px; font-size: 18px; font-weight: 700; }
+.modal-header { background: #2563eb; color: white; padding: 20px; font-size: 18px; font-weight: 700; }
 .modal-body { padding: 25px; }
 .modal-footer { padding: 16px 24px; background: #f8f9fa; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #eee; }
 
@@ -458,7 +460,7 @@ button:active { transform: scale(0.98); }
 .search-input { margin-bottom: 15px; }
 .dept-list { list-style: none; padding: 0; max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; }
 .dept-list li { padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; }
-.dept-list li:hover { background: #e3f2fd; color: #3d5afe; font-weight: 600; }
+.dept-list li:hover { background: #eff6ff; color: #2563eb; font-weight: 600; }
 .no-data { text-align: center; color: #999; padding: 20px !important; }
 
 /* 유효성 메시지 */
@@ -468,14 +470,17 @@ button:active { transform: scale(0.98); }
 /* ag-Grid 커스텀 스타일 */
 :deep(.ag-theme-alpine) {
   --ag-header-background-color: #f8f9fa;
-  --ag-row-hover-color: #e3f2fd;
-  --ag-selected-row-background-color: #bbdefb;
+  --ag-row-hover-color: #eff6ff;
+  --ag-selected-row-background-color: #bfdbfe;
 }
 :deep(.btn-table-edit) {
-  background: #e8eaf6;
-  color: #3949ab;
-  padding: 5px 10px;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 4px 10px;
   font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
   font-weight: 600;
   border-radius: 4px;
   border: none;
@@ -483,12 +488,15 @@ button:active { transform: scale(0.98); }
   transition: all 0.2s ease;
   margin-right: 6px;
 }
-:deep(.btn-table-edit:hover) { background: #c5cae9; color: #283593; }
+:deep(.btn-table-edit:hover) { background: #dbeafe; color: #1e40af; }
 :deep(.btn-table-reset) {
   background: #fff3e0;
   color: #e65100;
-  padding: 5px 10px;
+  padding: 4px 10px;
   font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
   font-weight: 600;
   border-radius: 4px;
   border: none;
@@ -500,8 +508,11 @@ button:active { transform: scale(0.98); }
 :deep(.btn-table-del) {
   background: #ffebee;
   color: #c62828;
-  padding: 5px 10px;
+  padding: 4px 10px;
   font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
   font-weight: 600;
   border-radius: 4px;
   border: none;

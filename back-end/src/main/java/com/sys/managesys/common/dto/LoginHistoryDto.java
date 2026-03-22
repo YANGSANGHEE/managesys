@@ -17,5 +17,6 @@ public class LoginHistoryDto {
     private Long userId;
     private String action;   // LOGIN, LOGOUT
     private String ipAddress;
+    private String userAgent;
     private LocalDateTime createdAt;
 }

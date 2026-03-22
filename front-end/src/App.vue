@@ -1,9 +1,13 @@
 <template>
   <div id="app">
-    <div v-if="authStore.isLoading" class="loading-overlay">
-      <div class="loader"></div>
-      <p> Loading...</p>
-    </div>
+    <transition name="fade">
+      <div v-if="showLoading" class="loading-overlay">
+        <div class="loading-box">
+          <div class="loading-spinner"></div>
+          <p class="loading-text">잠시만 기다려주세요</p>
+        </div>
+      </div>
+    </transition>
 
     <template v-if="isPublicLayout">
       <router-view />
@@ -28,7 +32,7 @@
 </template>
 
 <script setup>
-import { onMounted, computed } from 'vue';
+import { onMounted, computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import SideBar from './components/SideBar.vue';
@@ -42,11 +46,33 @@ const route = useRoute();
 // 로그인·비밀번호 재설정 페이지: 사이드바/헤더 없이 전체 화면만 표시 (탈출 UI 제거)
 const isPublicLayout = computed(() => !!route.meta?.isPublic || !!route.meta?.isResetPassword);
 
+// 로딩 깜박임 방지: 250ms 후 표시, 한번 나타나면 최소 400ms 유지
+const showLoading = ref(false);
+let showTimer = null;
+let hideTimer = null;
+let shownAt = 0;
+
+watch(() => authStore.isLoading, (loading) => {
+  if (loading) {
+    clearTimeout(hideTimer);
+    showTimer = setTimeout(() => {
+      showLoading.value = true;
+      shownAt = Date.now();
+    }, 250);
+  } else {
+    clearTimeout(showTimer);
+    if (showLoading.value) {
+      const elapsed = Date.now() - shownAt;
+      const remaining = Math.max(0, 400 - elapsed);
+      hideTimer = setTimeout(() => { showLoading.value = false; }, remaining);
+    }
+  }
+});
+
 onMounted(() => {
   const token = localStorage.getItem('accessToken');
   if (token) {
-    // 로컬 스토리지에 토큰이 있다면 스토어 상태를 다시 로그인 상태로 변경
-    authStore.rehydrate(); // 스토어에 미리 만들어둔 복구 함수 호출
+    authStore.rehydrate();
   }
 });
 </script>
@@ -77,26 +103,51 @@ onMounted(() => {
   background-color: #f4f7f6;
 }
 
-/* 로딩창 스타일 */
+/* 로딩 오버레이 */
 .loading-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(255, 255, 255, 0.7);
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
-  z-index: 9999; /* 모든 요소보다 위에 표시 */
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(3px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
 
-.loader {
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3d5afe;
+.loading-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* 원형 스피너 */
+.loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid #dbeafe;
+  border-top-color: #2563eb;
   border-radius: 50%;
-  width: 50px; height: 50px;
-  animation: spin 1s linear infinite;
+  animation: spin 0.75s linear infinite;
+}
+
+.loading-text {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  font-weight: 500;
+  letter-spacing: 0.03em;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 페이드 트랜지션 */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
 }
 </style>

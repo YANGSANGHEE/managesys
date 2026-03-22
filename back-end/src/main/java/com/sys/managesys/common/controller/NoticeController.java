@@ -43,7 +43,27 @@ public class NoticeController {
         return ResponseEntity.ok().build();
     }
 
-    /** 삭제 - ADMIN / MANAGER 이면서 자신이 작성한 글만 */
+    /** 수정 - ADMIN / MANAGER 이면서 자신이 작성한 글만 */
+    @PostMapping("/update")
+    public ResponseEntity<?> update(@RequestBody NoticeDto dto,
+                                    @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if ("MEMBER".equals(userDetails.getRoleCode())) {
+            return ResponseEntity.status(403).body("권한이 없습니다.");
+        }
+        if (dto.getTitle() == null || dto.getTitle().isBlank())
+            return ResponseEntity.badRequest().body("제목을 입력해주세요.");
+        if (dto.getContent() == null || dto.getContent().isBlank())
+            return ResponseEntity.badRequest().body("내용을 입력해주세요.");
+        dto.setCreatorId(userDetails.getUserId());
+        int cnt = noticeMapper.countByNoticeIdAndCreator(dto.getNoticeId(), dto.getCreatorId());
+        if (cnt == 0) {
+            return ResponseEntity.status(403).body("자신이 작성한 글만 수정할 수 있습니다.");
+        }
+        noticeMapper.updateNotice(dto);
+        return ResponseEntity.ok().build();
+    }
+
+    /** 삭제 - ADMIN은 모든 글, MANAGER는 자신이 작성한 글만 */
     @PostMapping("/remove")
     public ResponseEntity<?> remove(@RequestBody Map<String, Object> body,
                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -52,11 +72,14 @@ public class NoticeController {
         }
         Long noticeId = Long.parseLong(body.get("noticeId").toString());
         Long userId = userDetails.getUserId();
-        int cnt = noticeMapper.countByNoticeIdAndCreator(noticeId, userId);
-        if (cnt == 0) {
-            return ResponseEntity.status(403).body("자신이 작성한 글만 삭제할 수 있습니다.");
+        boolean isAdmin = "ADMIN".equals(userDetails.getRoleCode());
+        if (!isAdmin) {
+            int cnt = noticeMapper.countByNoticeIdAndCreator(noticeId, userId);
+            if (cnt == 0) {
+                return ResponseEntity.status(403).body("자신이 작성한 글만 삭제할 수 있습니다.");
+            }
         }
-        noticeMapper.deleteNotice(noticeId, userId);
+        noticeMapper.deleteNoticeById(noticeId);
         return ResponseEntity.ok().build();
     }
 }

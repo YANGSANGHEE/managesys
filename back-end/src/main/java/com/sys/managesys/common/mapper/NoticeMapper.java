@@ -11,5 +11,7 @@ public interface NoticeMapper {
     List<NoticeDto> selectByType(String noticeType);
     void insertNotice(NoticeDto dto);
     void deleteNotice(@Param("noticeId") Long noticeId, @Param("creatorId") Long creatorId);
+    void deleteNoticeById(@Param("noticeId") Long noticeId);
     int countByNoticeIdAndCreator(@Param("noticeId") Long noticeId, @Param("creatorId") Long creatorId);
+    void updateNotice(NoticeDto dto);
 }

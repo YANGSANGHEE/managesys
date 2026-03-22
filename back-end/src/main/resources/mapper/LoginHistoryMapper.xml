@@ -5,9 +5,28 @@
 
 <mapper namespace="com.sys.managesys.common.mapper.LoginHistoryMapper">
 
-    <!-- TB_USER_LOGIN_HISTORY: USER_ID, EVENT_TYPE('LOGIN'|'LOGOUT'), IP_ADDRESS, CREATED_AT -->
+    <!-- TB_USER_LOGIN_HISTORY: USER_ID, EVENT_TYPE('LOGIN'|'LOGOUT'), IP_ADDRESS, USER_AGENT, CREATED_AT -->
     <insert id="insert">
-        INSERT INTO TB_USER_LOGIN_HISTORY (USER_ID, EVENT_TYPE, IP_ADDRESS, CREATED_AT)
-        VALUES (#{userId}, #{action}, #{ipAddress}, CURRENT_TIMESTAMP)
+        INSERT INTO TB_USER_LOGIN_HISTORY (USER_ID, EVENT_TYPE, IP_ADDRESS, USER_AGENT, CREATED_AT)
+        VALUES (#{userId}, #{action}, #{ipAddress}, #{userAgent}, CURRENT_TIMESTAMP)
     </insert>
+
+    <!-- 덤프 대상 조회: before 이전 전체 -->
+    <select id="findOlderThan" resultType="LoginHistoryDto">
+        SELECT HISTORY_ID   AS historyId,
+               USER_ID      AS userId,
+               EVENT_TYPE   AS action,
+               IP_ADDRESS   AS ipAddress,
+               USER_AGENT   AS userAgent,
+               CREATED_AT   AS createdAt
+        FROM TB_USER_LOGIN_HISTORY
+        WHERE CREATED_AT &lt; #{before}
+        ORDER BY CREATED_AT ASC
+    </select>
+
+    <!-- before 이전 이력 삭제 -->
+    <delete id="deleteOlderThan">
+        DELETE FROM TB_USER_LOGIN_HISTORY
+        WHERE CREATED_AT &lt; #{before}
+    </delete>
 </mapper>
