@@ -36,11 +36,13 @@
 </template>
 
 <script setup>
-/* global defineEmits */
 import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { useAuthStore } from '@/store/auth';
 
-const emit = defineEmits(['done', 'cancel']);
+const authStore = useAuthStore();
+const router = useRouter();
 
 const form = reactive({
   newPassword: '',
@@ -79,7 +81,9 @@ async function onSubmit() {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
       }
     );
-    emit('done');
+    authStore.logout();
+    alert('비밀번호가 변경되었습니다. 새 비밀번호로 다시 로그인해 주세요.');
+    router.replace('/login');
   } catch (err) {
     const msg = err.response?.data?.message || err.message || '비밀번호 변경에 실패했습니다.';
     errorMsg.value = msg;
