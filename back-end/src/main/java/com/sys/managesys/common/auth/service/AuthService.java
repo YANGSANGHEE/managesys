@@ -96,8 +96,7 @@ public class AuthService {
             throw new IllegalArgumentException("새 비밀번호를 입력해 주세요.");
         if (!newPassword.equals(newPasswordConfirm))
             throw new IllegalArgumentException("새 비밀번호가 일치하지 않습니다.");
-        if (newPassword.length() < 4)
-            throw new IllegalArgumentException("비밀번호는 4자 이상으로 설정해 주세요.");
+        validatePasswordStrength(newPassword);
 
         String encoded = passwordEncoder.encode(newPassword);
         userMapper.updatePasswordAndClearReset(userId, encoded);
@@ -122,7 +121,20 @@ public class AuthService {
         if (!passwordEncoder.matches(currentPassword, user.getPassword()))
             throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
 
+        validatePasswordStrength(newPassword);
+
         String encoded = passwordEncoder.encode(newPassword);
         userMapper.updatePassword(userId, encoded);
+    }
+
+    /** 비밀번호 강도 검증: 8자 이상, 영문+숫자+특수문자 포함 */
+    private void validatePasswordStrength(String password) {
+        if (password.length() < 8)
+            throw new IllegalArgumentException("비밀번호는 8자 이상으로 설정해 주세요.");
+        boolean hasLetter = password.chars().anyMatch(Character::isLetter);
+        boolean hasDigit = password.chars().anyMatch(Character::isDigit);
+        boolean hasSpecial = password.chars().anyMatch(c -> !Character.isLetterOrDigit(c));
+        if (!hasLetter || !hasDigit || !hasSpecial)
+            throw new IllegalArgumentException("비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.");
     }
 }

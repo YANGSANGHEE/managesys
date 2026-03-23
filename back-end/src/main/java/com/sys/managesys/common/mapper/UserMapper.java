@@ -32,6 +32,9 @@ public interface UserMapper {
     // 직원 삭제 (물리 삭제 시)
     int deleteUser(@Param("userId") Long userId);
 
+    // 직원 삭제 전 로그인 이력 삭제 (FK 제약 해소)
+    int deleteLoginHistoryByUserId(@Param("userId") Long userId);
+
     /** 비밀번호만 변경 (BCrypt 암호화된 값으로 업데이트) */
     int updatePassword(@Param("userId") Long userId, @Param("password") String password);
 

@@ -60,6 +60,8 @@ public class CodeController {
 
     @PostMapping("/groups/remove")
     public ResponseEntity<?> groupRemove(@RequestBody Map<String, Object> body) {
+        if (body == null || body.get("groupCode") == null)
+            return ResponseEntity.badRequest().body("그룹코드를 입력해주세요.");
         String groupCode = body.get("groupCode").toString();
         int cnt = commonCodeMapper.countCodesByGroupCode(groupCode);
         if (cnt > 0)
@@ -71,6 +73,7 @@ public class CodeController {
     // ─── 상세코드 CRUD ───────────────────────────────────────────────────────
     @PostMapping("/detail/list")
     public List<CommonCodeDto> detailList(@RequestBody Map<String, Object> body) {
+        if (body == null || body.get("groupCode") == null) return List.of();
         String groupCode = body.get("groupCode").toString();
         return commonCodeMapper.selectAllByGroupCode(groupCode);
     }
@@ -95,6 +98,8 @@ public class CodeController {
 
     @PostMapping("/detail/remove")
     public ResponseEntity<?> detailRemove(@RequestBody Map<String, Object> body) {
+        if (body == null || body.get("groupCode") == null || body.get("codeValue") == null)
+            return ResponseEntity.badRequest().body("그룹코드와 코드값을 입력해주세요.");
         String groupCode = body.get("groupCode").toString();
         String codeValue = body.get("codeValue").toString();
         commonCodeMapper.deleteCode(groupCode, codeValue);

@@ -16,10 +16,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -29,7 +28,6 @@ public class AuthController {
     @Resource(name = "authService")
     private final AuthService authService;
     private final JwtProvider jwtProvider;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     private static String getClientIp(HttpServletRequest request) {
         if (request == null) return null;
@@ -47,6 +45,8 @@ public class AuthController {
             return ResponseEntity.ok(response);
         } catch (DisabledException e) {
             return ResponseEntity.status(403).body(Map.of("code", "ACCOUNT_DISABLED"));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(401).body(Map.of("message", "아이디 또는 비밀번호가 올바르지 않습니다."));
         }
     }
 
@@ -100,18 +100,4 @@ public class AuthController {
         }
     }
 
-    /**
-     * 비밀번호 해시 생성 유틸리티 (개발용)
-     * 사용법: GET /api/auth/generate-hash?password=ocean123!
-     */
-    @GetMapping("/generate-hash")
-    public Map<String, String> generateHash(@RequestParam String password) {
-        String hashedPassword = passwordEncoder.encode(password);
-        boolean matches = passwordEncoder.matches(password, hashedPassword);
-
-        Map<String, String> result = new HashMap<>();
-        result.put("originalPassword", password);
-        result.put("hashedPassword", hashedPassword);
-        return result;
-    }
 }

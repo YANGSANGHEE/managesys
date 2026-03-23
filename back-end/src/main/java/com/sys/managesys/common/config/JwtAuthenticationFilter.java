@@ -18,12 +18,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
     private final CustomUserDetailsService userDetailsService;
 
-    /** 로그인·로그아웃·해시생성만 JWT 검증 제외. /api/auth/change-password 는 인증 필요. */
+    /** 로그인·로그아웃만 JWT 검증 제외. /api/auth/change-password 는 인증 필요. */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
         if (!uri.startsWith("/api/auth/")) return false;
-        return "/api/auth/login".equals(uri) || "/api/auth/logout".equals(uri) || uri.startsWith("/api/auth/generate-hash");
+        return "/api/auth/login".equals(uri) || "/api/auth/logout".equals(uri);
     }
 
     @Override
@@ -45,8 +45,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 boolean allowChangeOrLogout = "/api/auth/change-password".equals(uri) || "/api/auth/logout".equals(uri);
                 if (Boolean.TRUE.equals(mustChange) && !allowChangeOrLogout) {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    response.getWriter().write("{\"message\":\"비밀번호 재설정 후 이용 가능합니다.\"}");
                     response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"message\":\"비밀번호 재설정 후 이용 가능합니다.\"}");
                     return;
                 }
                 Long userId = jwtProvider.getUserId(token);
