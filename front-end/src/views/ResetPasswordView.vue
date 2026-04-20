@@ -10,7 +10,7 @@
             id="newPassword"
             v-model="form.newPassword"
             type="password"
-            placeholder="새 비밀번호 (4자 이상)"
+            placeholder="새 비밀번호 (8자 이상, 영문+숫자+특수문자)"
             autocomplete="new-password"
             class="input"
           />
@@ -55,8 +55,15 @@ async function onSubmit() {
     errorMsg.value = '새 비밀번호와 확인을 모두 입력해 주세요.';
     return;
   }
-  if (form.newPassword.length < 4) {
-    errorMsg.value = '비밀번호는 4자 이상으로 설정해 주세요.';
+  if (form.newPassword.length < 8) {
+    errorMsg.value = '비밀번호는 8자 이상으로 설정해 주세요.';
+    return;
+  }
+  const hasLetter = /[a-zA-Z]/.test(form.newPassword);
+  const hasDigit = /[0-9]/.test(form.newPassword);
+  const hasSpecial = /[^a-zA-Z0-9]/.test(form.newPassword);
+  if (!hasLetter || !hasDigit || !hasSpecial) {
+    errorMsg.value = '비밀번호는 영문, 숫자, 특수문자를 모두 포함해야 합니다.';
     return;
   }
   if (form.newPassword !== form.newPasswordConfirm) {

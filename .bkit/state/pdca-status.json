@@ -1,6 +1,6 @@
 {
-  "version": "2.0",
-  "lastUpdated": "2026-03-15T15:19:35.410Z",
+  "version": "3.0",
+  "lastUpdated": "2026-04-20T14:31:39.487Z",
   "activeFeatures": [
     "controller",
     "front-end",
@@ -23,7 +23,24 @@
         "started": "2026-03-15T10:52:14.264Z",
         "lastUpdated": "2026-03-15T13:23:59.817Z"
       },
-      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\controller\\NoticeController.java"
+      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\controller\\NoticeController.java",
+      "stateMachine": {
+        "currentState": "do",
+        "previousState": null,
+        "stateHistory": [],
+        "retryCount": 0,
+        "maxRetries": 5,
+        "circuitBreakerOpen": false
+      },
+      "metrics": {
+        "qualityScore": null,
+        "conventionCompliance": null,
+        "apiCompliance": null,
+        "cycleTimeMs": null,
+        "iterationEfficiency": null
+      },
+      "phaseTimestamps": {},
+      "automationLevel": 2
     },
     "front-end": {
       "phase": "do",
@@ -34,9 +51,26 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-15T11:02:08.159Z",
-        "lastUpdated": "2026-03-15T15:19:27.844Z"
+        "lastUpdated": "2026-04-20T14:31:39.484Z"
       },
-      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\components\\NoticeEle.vue"
+      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\components\\IndividualCustomerManagement.vue",
+      "stateMachine": {
+        "currentState": "do",
+        "previousState": null,
+        "stateHistory": [],
+        "retryCount": 0,
+        "maxRetries": 5,
+        "circuitBreakerOpen": false
+      },
+      "metrics": {
+        "qualityScore": null,
+        "conventionCompliance": null,
+        "apiCompliance": null,
+        "cycleTimeMs": null,
+        "iterationEfficiency": null
+      },
+      "phaseTimestamps": {},
+      "automationLevel": 2
     },
     "router": {
       "phase": "do",
@@ -47,9 +81,26 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-15T11:03:22.810Z",
-        "lastUpdated": "2026-03-15T15:19:35.410Z"
+        "lastUpdated": "2026-04-20T14:26:23.358Z"
       },
-      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\router\\index.js"
+      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\router\\index.js",
+      "stateMachine": {
+        "currentState": "do",
+        "previousState": null,
+        "stateHistory": [],
+        "retryCount": 0,
+        "maxRetries": 5,
+        "circuitBreakerOpen": false
+      },
+      "metrics": {
+        "qualityScore": null,
+        "conventionCompliance": null,
+        "apiCompliance": null,
+        "cycleTimeMs": null,
+        "iterationEfficiency": null
+      },
+      "phaseTimestamps": {},
+      "automationLevel": 2
     },
     "dto": {
       "phase": "do",
@@ -62,7 +113,24 @@
         "started": "2026-03-15T12:21:39.263Z",
         "lastUpdated": "2026-03-15T13:23:30.126Z"
       },
-      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\dto\\NoticeDto.java"
+      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\dto\\NoticeDto.java",
+      "stateMachine": {
+        "currentState": "do",
+        "previousState": null,
+        "stateHistory": [],
+        "retryCount": 0,
+        "maxRetries": 5,
+        "circuitBreakerOpen": false
+      },
+      "metrics": {
+        "qualityScore": null,
+        "conventionCompliance": null,
+        "apiCompliance": null,
+        "cycleTimeMs": null,
+        "iterationEfficiency": null
+      },
+      "phaseTimestamps": {},
+      "automationLevel": 2
     },
     "mapper": {
       "phase": "do",
@@ -75,7 +143,24 @@
         "started": "2026-03-15T12:21:53.714Z",
         "lastUpdated": "2026-03-15T13:23:44.028Z"
       },
-      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\mapper\\NoticeMapper.java"
+      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\mapper\\NoticeMapper.java",
+      "stateMachine": {
+        "currentState": "do",
+        "previousState": null,
+        "stateHistory": [],
+        "retryCount": 0,
+        "maxRetries": 5,
+        "circuitBreakerOpen": false
+      },
+      "metrics": {
+        "qualityScore": null,
+        "conventionCompliance": null,
+        "apiCompliance": null,
+        "cycleTimeMs": null,
+        "iterationEfficiency": null
+      },
+      "phaseTimestamps": {},
+      "automationLevel": 2
     },
     "service": {
       "phase": "do",
@@ -88,7 +173,24 @@
         "started": "2026-03-15T14:59:01.273Z",
         "lastUpdated": "2026-03-15T14:59:01.273Z"
       },
-      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\auth\\service\\UserManagementService.java"
+      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\back-end\\src\\main\\java\\com\\sys\\managesys\\common\\auth\\service\\UserManagementService.java",
+      "stateMachine": {
+        "currentState": "do",
+        "previousState": null,
+        "stateHistory": [],
+        "retryCount": 0,
+        "maxRetries": 5,
+        "circuitBreakerOpen": false
+      },
+      "metrics": {
+        "qualityScore": null,
+        "conventionCompliance": null,
+        "apiCompliance": null,
+        "cycleTimeMs": null,
+        "iterationEfficiency": null
+      },
+      "phaseTimestamps": {},
+      "automationLevel": 2
     },
     "store": {
       "phase": "do",
@@ -101,7 +203,24 @@
         "started": "2026-03-15T14:59:27.383Z",
         "lastUpdated": "2026-03-15T14:59:27.383Z"
       },
-      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\store\\auth.js"
+      "lastFile": "C:\\Users\\ocean-nopc\\Desktop\\project\\managesys\\front-end\\src\\store\\auth.js",
+      "stateMachine": {
+        "currentState": "do",
+        "previousState": null,
+        "stateHistory": [],
+        "retryCount": 0,
+        "maxRetries": 5,
+        "circuitBreakerOpen": false
+      },
+      "metrics": {
+        "qualityScore": null,
+        "conventionCompliance": null,
+        "apiCompliance": null,
+        "cycleTimeMs": null,
+        "iterationEfficiency": null
+      },
+      "phaseTimestamps": {},
+      "automationLevel": 2
     }
   },
   "pipeline": {
@@ -112,7 +231,7 @@
   "session": {
     "startedAt": "2026-03-15T10:16:33.407Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-15T15:19:35.410Z"
+    "lastActivity": "2026-04-20T14:31:39.487Z"
   },
   "history": [
     {
@@ -672,6 +791,280 @@
       "feature": "router",
       "phase": "do",
       "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T13:58:40.638Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:02:28.819Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:07:07.223Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:07:26.782Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:07:36.897Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:07:48.181Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:07:59.088Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:08:06.848Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:08:14.389Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:14:24.441Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:14:44.613Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:14:54.863Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:15:03.364Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:15:13.355Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:15:23.148Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:15:29.985Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:20:56.923Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:21:12.390Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:21:19.642Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:21:29.177Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:21:36.081Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:21:43.228Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:21:55.816Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:26:23.360Z",
+      "feature": "router",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:27:39.486Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:27:48.045Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:27:54.073Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:28:00.724Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:28:09.752Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:28:18.320Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:28:25.743Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:28:36.186Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:28:45.185Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:28:58.811Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:29:53.305Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:30:03.885Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:30:19.986Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:30:29.358Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:30:45.223Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:31:00.103Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:31:15.425Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:31:26.070Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T14:31:39.486Z",
+      "feature": "front-end",
+      "phase": "do",
+      "action": "updated"
     }
-  ]
+  ],
+  "stateMachine": {
+    "defaultWorkflow": "default",
+    "activeWorkflows": {},
+    "totalTransitions": 0
+  },
+  "automation": {
+    "globalLevel": 2,
+    "trustScore": 40,
+    "pendingApprovals": 0,
+    "lastGateResult": null
+  },
+  "team": {
+    "enabled": true,
+    "stateFile": ".bkit/runtime/agent-state.json",
+    "eventsFile": ".bkit/runtime/agent-events.jsonl"
+  }
 }

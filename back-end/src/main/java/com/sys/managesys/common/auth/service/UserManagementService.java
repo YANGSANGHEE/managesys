@@ -47,6 +47,7 @@ public class UserManagementService {
 
     @Transactional
     public void remove(Long userId) {
+        userMapper.deleteLoginHistoryByUserId(userId);
         userMapper.deleteUser(userId);
     }
 
