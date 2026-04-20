@@ -7,6 +7,10 @@ import ResetPasswordView from '@/views/ResetPasswordView.vue'
 
 const routes = [
   {
+    path: '/',
+    redirect: '/notice'
+  },
+  {
     path: '/login',
     name: 'Login',
     component: LoginView,
@@ -39,6 +43,18 @@ const routes = [
     name: 'CustomersIndividual',
     component: () => import('@/components/IndividualCustomerManagement.vue'),
     meta: { title: '개인고객관리' }
+  },
+  {
+    path: '/customers/individual/new',
+    name: 'CustomersIndividualNew',
+    component: () => import('@/components/IndividualCustomerManagement.vue'),
+    meta: { title: '고객 등록' }
+  },
+  {
+    path: '/customers/individual/:custId',
+    name: 'CustomersIndividualDetail',
+    component: () => import('@/components/IndividualCustomerManagement.vue'),
+    meta: { title: '고객 상세' }
   },
   {
     path: '/customers/partner',

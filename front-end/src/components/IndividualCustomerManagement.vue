@@ -1,10 +1,11 @@
 <template>
   <div class="customer-page">
     <div class="content-header">
-      <h2>개인 고객관리</h2>
+      <h2 v-if="isListPage">개인 고객관리</h2>
+      <h2 v-else>{{ modalMode === 'detail' ? '고객 상세' : '고객 등록' }}</h2>
     </div>
 
-    <section class="search-section card">
+    <section v-if="isListPage" class="search-section card">
       <div class="search-grid">
         <div class="input-box">
           <label>고객명</label>
@@ -60,7 +61,7 @@
       </div>
     </section>
 
-    <section class="grid-section card">
+    <section v-if="isListPage" class="grid-section card">
       <ag-grid-vue
         class="ag-theme-alpine grid-fill"
         :columnDefs="columnDefs"
@@ -70,12 +71,14 @@
         :paginationPageSize="pageSize"
         :paginationPageSizeSelector="[10, 20, 30, 50]"
         :rowSelection="{ mode: 'multiRow', checkboxes: false, enableClickSelection: true }"
+        :rowHeight="24"
+        :headerHeight="28"
         @grid-ready="onGridReady"
         @row-clicked="onRowClicked"
       />
     </section>
 
-    <div v-if="totalCount >= 0" class="pagination-info">
+    <div v-if="isListPage && totalCount >= 0" class="pagination-info">
       총 <strong>{{ totalCount }}</strong> 건
     </div>
 
@@ -116,14 +119,9 @@
       </div>
     </div>
 
-    <!-- 고객 등록 모달 (전체 섹션) -->
-    <div v-if="showCustomerModal" class="modal-overlay" >
-      <div class="modal-customer-reg">
-        <div class="modal-reg-header">
-          <h3>{{ modalMode === 'detail' ? '고객 상세' : '고객 등록' }}</h3>
-          <button type="button" class="modal-close" @click="showCustomerModal = false">&times;</button>
-        </div>
-        <div class="modal-reg-body">
+    <!-- 고객 등록/상세 폼 페이지 (라우트 기반) -->
+    <div v-if="isFormPage" class="form-page card">
+      <div class="form-page-body">
           <!-- 1. 고객 정보 -->
           <section class="reg-section">
             <h4 class="reg-section-title">고객 정보</h4>
@@ -490,16 +488,24 @@
               <thead>
                 <tr>
                   <th>구분</th>
-                  <td colspan="12">
+                  <td colspan="11">
                     <select v-model="productType" @change="onProductTypeChange">
                       <option v-for="opt in productTypeOptions" :key="opt.codeValue" :value="opt.codeValue">{{ opt.codeName }}</option>
                     </select>
                   </td>
                 </tr>
                 <tr>
+                  <th>지역</th>
+                  <td colspan="11">
+                    <select v-model="commonRegion" class="product-region-select">
+                      <option value="">지역선택</option>
+                      <option v-for="o in regionCodes" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
                   <th>상품</th>
                   <th>회사</th>
-                  <th>지역</th>
                   <th>가입번호</th>
                   <th>상품명</th>
                   <th>상품옵션</th>
@@ -520,12 +526,6 @@
                     <select v-model="row.company" class="product-company-select">
                       <option value="">회사 선택</option>
                       <option v-for="o in companyCodes" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
-                    </select>
-                  </td>
-                  <td>
-                    <select v-model="row.region" class="product-region-select">
-                      <option value="">지역선택</option>
-                      <option v-for="o in regionCodes" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
                     </select>
                   </td>
                   <td><input v-model="row.subscriptionNo" type="text" placeholder="가입번호" /></td>
@@ -624,24 +624,32 @@
             </table>
           </section>
         </div>
-        <div class="modal-reg-footer">
-          <button type="button" class="btn-cancel" @click="showCustomerModal = false">취소</button>
+        <div class="form-page-footer">
+          <button type="button" class="btn-cancel" @click="onFormCancel">목록으로</button>
           <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
           <button type="button" class="btn-save" @click="onSaveCustomer">저장</button>
         </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { useAuthStore } from '@/store/auth';
 import { AgGridVue } from 'ag-grid-vue3';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+
+const route = useRoute();
+const router = useRouter();
+// 폼 페이지(등록/상세) 여부 — 라우트 이름으로 분기
+const isFormPage = computed(() =>
+  route.name === 'CustomersIndividualNew' || route.name === 'CustomersIndividualDetail'
+);
+const isListPage = computed(() => !isFormPage.value);
 
 const gridApi = ref(null);
 const rowData = ref([]);
@@ -1057,6 +1065,8 @@ const selectedCounselorUserId = ref(null);
 const productTypeOptions = [{ codeValue: 'S0', codeName: '단독' }, { codeValue: 'D0', codeName: 'DPS' }, { codeValue: 'T0', codeName: 'TPS' }];
 const productType = ref('S0');
 const productRows = ref([createEmptyProductRow()]);
+// 지역은 구분 아래 공통 필드로 이동 (상품 단위 X → 고객 단위로 공통 선택)
+const commonRegion = ref('');
 
 // 비고 textarea 미리 채울 기본 문구 (체크박스 없이 라벨만)
 const DEFAULT_REMARK_TEXT = `진행 통신사 :
@@ -1365,6 +1375,7 @@ async function openCustomerModal() {
   };
   productType.value = 'S0';
   productRows.value = [createEmptyProductRow()];
+  commonRegion.value = '';
   sameAsCustomerForPayment.value = false;
   sameAsPaymentForGift.value = false;
   const auth = useAuthStore();
@@ -1499,6 +1510,7 @@ function mapDetailToForm(detail) {
     if (raw === 'D0' || raw === 'DPS') productType.value = 'D0';
     else if (raw === 'T0' || raw === 'TPS') productType.value = 'T0';
     else productType.value = 'S0';
+    commonRegion.value = products[0].regionName || '';
     const required = getRequiredRowCount();
     productRows.value = products.slice(0, required).map(p => {
       const openVal = p.openDate;
@@ -1524,6 +1536,7 @@ function mapDetailToForm(detail) {
   } else {
     productType.value = 'S0';
     productRows.value = [createEmptyProductRow()];
+    commonRegion.value = '';
   }
   const mnp0 = (detail.mnps && detail.mnps[0]) || {};
   const [mnpSsn1, mnpSsn2] = splitSsn(mnp0.ownerSsnEnc);
@@ -1544,7 +1557,7 @@ function mapDetailToForm(detail) {
 function onRowClicked(params) {
   if (!params.data?.custId) return;
   if (params.column?.getColId() === 'manage' || params.event?.target?.closest('button')) return;
-  openDetailModal(params.data.custId);
+  router.push({ name: 'CustomersIndividualDetail', params: { custId: params.data.custId } });
 }
 
 function copySsn() {
@@ -1632,7 +1645,7 @@ function buildRegisterPayload() {
       .map(r => ({
         compName: r.company || null,
         prodGb: productType.value,
-        regionName: r.region || null,
+        regionName: commonRegion.value || null,
         subscriptionNo: (r.subscriptionNo || '').trim() || null,
         prodName: r.product || null,
         prodOpt: r.productOption || null,
@@ -1852,6 +1865,7 @@ function fillAllFieldsTestData() {
   head.remark = '본사 사은품 비고';
 
   productType.value = 'S0';
+  commonRegion.value = '서울';
   productRows.value = [{
     company: 'SKT',
     region: '서울',
@@ -1913,7 +1927,7 @@ async function onSaveCustomer() {
       alert('등록되었습니다.');
     }
     showCustomerModal.value = false;
-    onSearch();
+    router.push({ name: 'CustomersIndividual' });
   } catch (err) {
     console.error(modalMode.value === 'detail' ? '고객 수정 오류:' : '고객 등록 오류:', err);
     alert(err.response?.data?.message || (modalMode.value === 'detail' ? '수정' : '등록') + ' 중 오류가 발생했습니다.');
@@ -1921,7 +1935,11 @@ async function onSaveCustomer() {
 }
 
 const onCustomerRegister = () => {
-  openCustomerModal();
+  router.push({ name: 'CustomersIndividualNew' });
+};
+
+const onFormCancel = () => {
+  router.push({ name: 'CustomersIndividual' });
 };
 
 const onDelete = async row => {
@@ -1937,9 +1955,24 @@ const onDelete = async row => {
   }
 };
 
-onMounted(async () => {
+async function handleRouteChange() {
   await loadCodes();
-  onSearch();
+  if (route.name === 'CustomersIndividualNew') {
+    await openCustomerModal();
+  } else if (route.name === 'CustomersIndividualDetail') {
+    const custId = Number(route.params.custId);
+    if (custId) await openDetailModal(custId);
+  } else {
+    onSearch();
+  }
+}
+
+onMounted(() => {
+  handleRouteChange();
+});
+
+watch(() => route.fullPath, () => {
+  handleRouteChange();
 });
 </script>
 
@@ -1953,37 +1986,37 @@ onMounted(async () => {
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  padding: 16px 20px;
+  padding: 6px 12px;
   box-sizing: border-box;
 }
 
 .content-header {
   flex-shrink: 0;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
 }
 
 .content-header h2 {
   font-weight: 700;
   color: #333;
-  font-size: 1.35rem;
+  font-size: 0.95rem;
 }
 
 .card {
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
 }
 
 .search-section.card {
-  padding: 12px 16px;
-  margin-bottom: 12px;
+  padding: 6px 10px;
+  margin-bottom: 4px;
   flex-shrink: 0;
 }
 
 .search-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 4px 8px;
   align-items: end;
 }
 
@@ -1991,7 +2024,7 @@ onMounted(async () => {
   grid-column: 1 / -1;
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
 }
 .status-period-wrap .input-box.narrow { flex-shrink: 0; }
@@ -1999,19 +2032,21 @@ onMounted(async () => {
 
 .input-box label {
   display: block;
-  font-size: 12px;
+  font-size: 10px;
   color: #555;
-  margin-bottom: 4px;
+  margin-bottom: 1px;
   font-weight: 600;
 }
 
 .input-box input,
 .input-box select {
   width: 100%;
-  padding: 8px 10px;
+  padding: 3px 6px;
   border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 5px;
+  font-size: 11px;
+  height: 24px;
+  box-sizing: border-box;
 }
 
 .input-box input:focus,
@@ -2020,24 +2055,24 @@ onMounted(async () => {
   outline: none;
 }
 
-.input-box.narrow { max-width: 110px; }
+.input-box.narrow { max-width: 90px; }
 .input-box.period-group { min-width: 0; }
 .input-box.period-group .period-inline {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: nowrap;
   min-width: 0;
 }
 .input-box.period-group .period-type-select {
-  width: 90px;
+  width: 76px;
   flex-shrink: 0;
 }
-.input-box.period-group .period-sep { color: #888; font-size: 13px; flex-shrink: 0; }
+.input-box.period-group .period-sep { color: #888; font-size: 11px; flex-shrink: 0; }
 .input-box.period-group .period-inline input[type="date"] {
   flex: 1 1 120px;
   min-width: 100px;
-  max-width: 160px;
+  max-width: 130px;
 }
 
 .input-box.range .date-range {
@@ -2056,43 +2091,46 @@ onMounted(async () => {
 }
 
 .search-footer {
-  margin-top: 12px;
+  margin-top: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 
 .search-footer .search-buttons {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .search-footer .right-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .page-size-select {
-  padding: 8px 12px;
+  padding: 3px 6px;
   border: 1px solid #dadce0;
-  border-radius: 8px;
-  font-size: 13px;
+  border-radius: 5px;
+  font-size: 11px;
   background: #fff;
-  min-width: 110px;
+  min-width: 84px;
+  height: 24px;
 }
 
 button {
-  padding: 10px 18px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 5px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 11px;
   cursor: pointer;
   transition: all 0.2s ease;
   border: none;
+  height: 24px;
+  line-height: 1;
 }
 
 .btn-reset {
@@ -2139,7 +2177,7 @@ button {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 12px 16px;
+  padding: 4px 8px;
   margin-bottom: 0;
   overflow: hidden;
 }
@@ -2153,8 +2191,8 @@ button {
 
 .pagination-info {
   flex-shrink: 0;
-  margin-top: 8px;
-  font-size: 13px;
+  margin-top: 2px;
+  font-size: 11px;
   color: #555;
 }
 
@@ -2166,16 +2204,17 @@ button {
 :deep(.btn-table-edit) {
   background: #eff6ff;
   color: #2563eb;
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 1px 6px;
+  font-size: 10px;
   line-height: 1;
+  height: 18px;
   display: inline-flex;
   align-items: center;
   font-weight: 600;
-  border-radius: 4px;
+  border-radius: 3px;
   border: none;
   cursor: pointer;
-  margin-right: 6px;
+  margin-right: 3px;
 }
 
 :deep(.btn-table-edit:hover) {
@@ -2186,13 +2225,14 @@ button {
 :deep(.btn-table-del) {
   background: #ffebee;
   color: #c62828;
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 1px 6px;
+  font-size: 10px;
   font-weight: 600;
   line-height: 1;
+  height: 18px;
   display: inline-flex;
   align-items: center;
-  border-radius: 4px;
+  border-radius: 3px;
   border: none;
   cursor: pointer;
 }
@@ -2205,7 +2245,19 @@ button {
 :deep(.ag-theme-alpine) {
   --ag-header-background-color: #f8f9fa;
   --ag-row-hover-color: #eff6ff;
+  --ag-font-size: 11px;
+  --ag-grid-size: 3px;
+  --ag-row-height: 24px;
+  --ag-header-height: 28px;
+  --ag-list-item-height: 22px;
+  --ag-cell-horizontal-padding: 6px;
+  --ag-borders: solid 1px;
+  --ag-border-color: #e5e7eb;
 }
+
+:deep(.ag-theme-alpine .ag-header-cell-label) { font-size: 11px; font-weight: 700; }
+:deep(.ag-theme-alpine .ag-cell) { line-height: 24px; }
+:deep(.ag-theme-alpine .ag-paging-panel) { font-size: 11px; height: 28px; }
 
 :deep(.status-done) {
   color: #2e7d32;
@@ -2264,89 +2316,64 @@ button {
 .btn-download:disabled { opacity: 0.6; cursor: not-allowed; }
 .btn-cancel { padding: 8px 16px; background: #f5f5f5; color: #333; border: none; border-radius: 8px; cursor: pointer; }
 
-.modal-customer-reg {
-  background: #fff;
-  border-radius: 12px;
-  width: 90vw;
-  max-width: 90vw;
-  max-height: 90vh;
+/* 고객 등록/상세 폼 페이지 (라우트 기반) */
+.form-page {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  background: #fff;
 }
 
-.modal-reg-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid #eee;
-  flex-shrink: 0;
-}
-
-.modal-reg-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #333;
-}
-
-.modal-close {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  font-size: 1.5rem;
-  line-height: 1;
-  color: #666;
-  background: none;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.modal-close:hover {
-  background: #f0f0f0;
-  color: #333;
-}
-
-.modal-reg-body {
-  padding: 24px;
+.form-page-body {
+  padding: 8px 12px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
 }
 
 .reg-section {
-  margin-bottom: 24px;
+  margin-bottom: 10px;
 }
 
 .reg-section-title {
-  margin: 0 0 16px 0;
-  font-size: 1rem;
+  margin: 0 0 6px 0;
+  font-size: 12px;
   font-weight: 700;
-  color: #333;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #2563eb;
+  color: #d32f2f;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #d32f2f;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.reg-section-title::before {
+  content: '✔';
+  color: #d32f2f;
+  font-size: 11px;
 }
 
-/* 등록 모달 테이블 형식 */
+/* 등록/상세 테이블 형식 — 컴팩트 */
 .reg-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 11px;
+  table-layout: fixed;
 }
 .reg-table th,
 .reg-table td {
   border: 1px solid #e0e0e0;
-  padding: 10px 12px;
+  padding: 3px 6px;
   vertical-align: middle;
 }
 .reg-table th {
   background: #f5f5f5;
   font-weight: 600;
   color: #555;
-  width: 120px;
+  width: 90px;
   white-space: nowrap;
+  font-size: 11px;
 }
 .reg-table td {
   background: #fff;
@@ -2355,12 +2382,14 @@ button {
 .reg-table select,
 .reg-table textarea {
   width: 100%;
-  padding: 8px 10px;
+  padding: 2px 6px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 4px;
+  font-size: 11px;
+  height: 22px;
   box-sizing: border-box;
 }
+.reg-table textarea { height: auto; }
 .reg-table textarea.remark-textarea {
   min-height: 100px;
   resize: vertical;
@@ -2377,110 +2406,116 @@ button {
   gap: 8px;
 }
 .reg-table .input-with-select .carrier-select,
-.reg-table .auth-fields .auth-type-select { width: 100px; flex-shrink: 0; }
+.reg-table .auth-fields .auth-type-select { width: 80px; flex-shrink: 0; }
 .reg-table .input-with-select input { flex: 1; min-width: 0; }
-.reg-table .input-line { width: 60px; }
+.reg-table .input-line { width: 50px; }
 .reg-table .readonly-cell { background: #f5f5f5; color: #555; }
 .reg-table .amount-with-unit {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
-.reg-table .amount-with-unit input { width: 140px; }
-.reg-table .amount-with-unit .unit { color: #666; font-size: 14px; }
+.reg-table .amount-with-unit input { width: 110px; }
+.reg-table .amount-with-unit .unit { color: #666; font-size: 11px; }
 
 .product-type-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .product-type-row label {
   font-weight: 600;
   color: #555;
-  min-width: 60px;
+  min-width: 48px;
+  font-size: 11px;
 }
 
 .product-type-row select {
-  padding: 10px 14px;
+  padding: 3px 8px;
   border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  min-width: 120px;
+  border-radius: 5px;
+  font-size: 11px;
+  min-width: 100px;
+  height: 22px;
 }
 
 .product-rows {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .product-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
 .product-row-label {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #555;
-  min-width: 56px;
+  min-width: 48px;
 }
 
 .product-row input,
 .product-row select.product-region-select {
-  padding: 8px 10px;
+  padding: 2px 6px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 4px;
+  font-size: 11px;
+  height: 22px;
   min-width: 0;
   flex: 1;
-  max-width: 120px;
+  max-width: 110px;
 }
 .product-row select.product-region-select,
 .product-row select.product-company-select {
-  min-width: 90px;
+  min-width: 80px;
 }
 
 .product-row .input-line {
-  max-width: 70px;
+  max-width: 60px;
 }
 
 .product-row .unit {
-  font-size: 13px;
+  font-size: 11px;
   color: #666;
 }
 
 .form-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px 20px;
+  gap: 6px 10px;
 }
 
 .form-item label {
   display: block;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #555;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .form-item input,
 .form-item select,
 .form-item textarea {
   width: 100%;
-  padding: 8px 10px;
+  padding: 2px 6px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 4px;
+  font-size: 11px;
+  height: 22px;
+  box-sizing: border-box;
 }
 
 .form-item textarea {
   resize: vertical;
-  min-height: 60px;
+  min-height: 50px;
+  height: auto;
 }
 
 .form-item-full { grid-column: 1 / -1; }
@@ -2540,15 +2575,16 @@ button {
 .input-with-btn input { flex: 1; }
 
 .btn-inline {
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: 2px 8px;
+  font-size: 11px;
   font-weight: 600;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid #dadce0;
   background: #f8f9fa;
   color: #5f6368;
   white-space: nowrap;
   cursor: pointer;
+  height: 22px;
 }
 .btn-inline:hover { background: #e8eaed; color: #333; }
 .btn-search-inline { background: #2563eb; color: #fff; border-color: #2563eb; }
@@ -2573,28 +2609,33 @@ button {
 .reg-table .auth-fields input { flex: 1; min-width: 120px; width: auto; max-width: none; }
 
 .remark-textarea {
-  min-height: 140px;
+  min-height: 80px;
   width: 100%;
   box-sizing: border-box;
+  font-size: 11px !important;
+  padding: 4px 6px !important;
+  height: auto !important;
 }
 
 .product-type-only {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 .product-type-only label {
   font-weight: 600;
   color: #555;
-  min-width: 40px;
+  min-width: 36px;
+  font-size: 11px;
 }
 .product-type-only select {
-  padding: 8px 12px;
+  padding: 2px 8px;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  min-width: 100px;
+  border-radius: 4px;
+  font-size: 11px;
+  min-width: 90px;
+  height: 22px;
 }
 
 .input-with-select {
@@ -2602,47 +2643,56 @@ button {
   gap: 8px;
 }
 
-.carrier-select { width: 100px; flex-shrink: 0; }
+.carrier-select { width: 80px; flex-shrink: 0; }
 .input-with-select input { flex: 1; }
 
 .check-label {
   display: flex !important;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   cursor: pointer;
   font-weight: 500;
+  font-size: 11px;
 }
 
 .check-label input { width: auto; }
 .check-label.same-as-check { margin-left: 10px; white-space: nowrap; }
 
-.modal-reg-footer {
-  padding: 16px 24px;
+.form-page-footer {
+  padding: 8px 12px;
   border-top: 1px solid #eee;
   background: #f8f9fa;
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.modal-reg-footer .btn-test-data {
-  padding: 8px 14px;
+.form-page-footer .btn-test-data {
+  padding: 4px 10px;
   background: #eff6ff;
   color: #2563eb;
   border: 1px solid #dbeafe;
-  border-radius: 8px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 11px;
+  height: 26px;
 }
-.modal-reg-footer .btn-cancel {
+.form-page-footer .btn-cancel {
   background: #fff;
   color: #5f6368;
   border: 1px solid #dadce0;
+  padding: 4px 14px;
+  height: 26px;
+  font-size: 11px;
 }
 
-.modal-reg-footer .btn-save {
+.form-page-footer .btn-save {
   background: #2563eb;
   color: white;
+  padding: 4px 16px;
+  height: 26px;
+  font-size: 11px;
+  font-weight: 700;
 }
 </style>
