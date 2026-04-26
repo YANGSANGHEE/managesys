@@ -54,7 +54,8 @@ public class CustomerDto {
     private String acquirer;
     private String contractPeriod;
     private LocalDate openDate;
-    private LocalDate joinDate;      /* 가입일자 (JOIN_DATE) */
+//    private LocalDate joinDate;      /* 가입일자 (JOIN_DATE) */
+    private LocalDate authenticatedDate;    /* 인증일자 (AUTHENTICATED_DT) */
     private LocalDate receiptDate;   /* 접수일 (RECEIPT_DT) */
     private LocalDate cancellationDate; /* 해약일/해지일 (CANCELL_DT) */
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")

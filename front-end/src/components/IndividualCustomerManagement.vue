@@ -63,18 +63,18 @@
 
     <section v-if="isListPage" class="grid-section card">
       <ag-grid-vue
-        class="ag-theme-alpine grid-fill"
-        :columnDefs="columnDefs"
-        :rowData="rowData"
-        :defaultColDef="defaultColDef"
-        :pagination="true"
-        :paginationPageSize="pageSize"
-        :paginationPageSizeSelector="[10, 20, 30, 50]"
-        :rowSelection="{ mode: 'multiRow', checkboxes: false, enableClickSelection: true }"
-        :rowHeight="24"
-        :headerHeight="28"
-        @grid-ready="onGridReady"
-        @row-clicked="onRowClicked"
+          class="ag-theme-alpine grid-fill"
+          :columnDefs="columnDefs"
+          :rowData="rowData"
+          :defaultColDef="defaultColDef"
+          :pagination="true"
+          :paginationPageSize="pageSize"
+          :paginationPageSizeSelector="[10, 20, 30, 50]"
+          :rowSelection="{ mode: 'multiRow', checkboxes: false, enableClickSelection: true }"
+          :rowHeight="24"
+          :headerHeight="28"
+          @grid-ready="onGridReady"
+          @row-clicked="onRowClicked"
       />
     </section>
 
@@ -122,6 +122,7 @@
     <!-- 고객 등록/상세 폼 페이지 (라우트 기반) -->
     <div v-if="isFormPage" class="form-page card">
       <div class="form-page-body">
+        <fieldset :disabled="!canSave" class="contents-fieldset">
           <!-- 1. 고객 정보 -->
           <section class="reg-section">
             <h4 class="reg-section-title">고객 정보</h4>
@@ -160,12 +161,12 @@
                   <th>사업자번호</th>
                   <td :colspan="showSsn ? 1 : 3">
                     <input
-                      :value="form.customer.bizNo"
-                      @input="form.customer.bizNo = formatBizNo($event.target.value)"
-                      type="text"
-                      placeholder="000-00-00000"
-                      maxlength="12"
-                      inputmode="numeric"
+                        :value="form.customer.bizNo"
+                        @input="form.customer.bizNo = formatBizNo($event.target.value)"
+                        type="text"
+                        placeholder="000-00-00000"
+                        maxlength="12"
+                        inputmode="numeric"
                     />
                   </td>
                 </template>
@@ -175,12 +176,12 @@
                   <th>법인번호</th>
                   <td :colspan="showForeignerNo ? 1 : 3">
                     <input
-                      :value="form.customer.corpNo"
-                      @input="form.customer.corpNo = formatCorpNo($event.target.value)"
-                      type="text"
-                      placeholder="123456-1234567"
-                      maxlength="14"
-                      inputmode="numeric"
+                        :value="form.customer.corpNo"
+                        @input="form.customer.corpNo = formatCorpNo($event.target.value)"
+                        type="text"
+                        placeholder="123456-1234567"
+                        maxlength="14"
+                        inputmode="numeric"
                     />
                   </td>
                 </template>
@@ -188,12 +189,12 @@
                   <th>외국인 등록번호</th>
                   <td :colspan="showCorpNo ? 1 : 3">
                     <input
-                      :value="form.customer.foreignerRegNo"
-                      @input="form.customer.foreignerRegNo = formatForeignerRegNo($event.target.value)"
-                      type="text"
-                      placeholder="123456-7890123"
-                      maxlength="14"
-                      inputmode="numeric"
+                        :value="form.customer.foreignerRegNo"
+                        @input="form.customer.foreignerRegNo = formatForeignerRegNo($event.target.value)"
+                        type="text"
+                        placeholder="123456-7890123"
+                        maxlength="14"
+                        inputmode="numeric"
                     />
                   </td>
                 </template>
@@ -217,12 +218,12 @@
                 <th>전화</th>
                 <td>
                   <input
-                    :value="form.customer.telNo"
-                    @input="form.customer.telNo = formatPhone($event.target.value)"
-                    type="text"
-                    placeholder="010-0000-0000"
-                    maxlength="13"
-                    inputmode="numeric"
+                      :value="form.customer.telNo"
+                      @input="form.customer.telNo = formatPhone($event.target.value)"
+                      type="text"
+                      placeholder="010-0000-0000"
+                      maxlength="13"
+                      inputmode="numeric"
                   />
                 </td>
                 <th>핸드폰</th>
@@ -233,12 +234,12 @@
                       <option v-for="c in companyCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
                     </select>
                     <input
-                      :value="form.customer.hpNo"
-                      @input="form.customer.hpNo = formatPhone($event.target.value)"
-                      type="text"
-                      placeholder="010-0000-0000"
-                      maxlength="13"
-                      inputmode="numeric"
+                        :value="form.customer.hpNo"
+                        @input="form.customer.hpNo = formatPhone($event.target.value)"
+                        type="text"
+                        placeholder="010-0000-0000"
+                        maxlength="13"
+                        inputmode="numeric"
                     />
                   </div>
                 </td>
@@ -269,10 +270,10 @@
                 </td>
               </tr>
               <tr>
-                <th>가입일자</th>
-                <td><input v-model="form.customer.joinDate" type="date" placeholder="가입일자" /></td>
                 <th>접수일</th>
                 <td><input v-model="form.customer.receiptDate" type="date" placeholder="접수일" /></td>
+                <th>인증일</th>
+                <td><input v-model="form.customer.joinDate" type="date" placeholder="인증일" /></td>
               </tr>
               <tr v-if="modalMode === 'detail'">
                 <th>상품권 반환여부</th>
@@ -334,25 +335,25 @@
                 <th>계좌번호</th>
                 <td>
                   <input
-                    :value="form.payment.accountCardNo"
-                    @input="form.payment.accountCardNo = formatAccountNo($event.target.value)"
-                    type="text"
-                    placeholder="숫자만 입력"
-                    maxlength="20"
-                    inputmode="numeric"
+                      :value="form.payment.accountCardNo"
+                      @input="form.payment.accountCardNo = formatAccountNo($event.target.value)"
+                      type="text"
+                      placeholder="숫자만 입력"
+                      maxlength="20"
+                      inputmode="numeric"
                   />
                 </td>
                 <th>{{ isForeignerCustomer ? '외국인 등록번호' : '은행 주민번호' }}</th>
                 <td>
                   <template v-if="isForeignerCustomer">
                     <input
-                      :value="form.payment.holderSsn1 + (form.payment.holderSsn2 ? '-' + form.payment.holderSsn2 : '')"
-                      @input="setPaymentHolderIdNo($event.target.value)"
-                      type="text"
-                      placeholder="123456-7890123"
-                      maxlength="14"
-                      inputmode="numeric"
-                      :readonly="sameAsCustomerForPayment"
+                        :value="form.payment.holderSsn1 + (form.payment.holderSsn2 ? '-' + form.payment.holderSsn2 : '')"
+                        @input="setPaymentHolderIdNo($event.target.value)"
+                        type="text"
+                        placeholder="123456-7890123"
+                        maxlength="14"
+                        inputmode="numeric"
+                        :readonly="sameAsCustomerForPayment"
                     />
                   </template>
                   <template v-else>
@@ -385,8 +386,8 @@
                 <td><span class="amount-with-unit"><input :value="formatAmount(form.gift.giftAmount)" @input="form.gift.giftAmount = parseAmount($event.target.value)" type="text" placeholder="0" inputmode="numeric" /><span class="unit">원</span></span></td>
               </tr>
               <tr>
-                <th>추가사은품 금액</th>
-                <td><span class="amount-with-unit"><input :value="formatAmount(form.gift.addGiftAmount)" @input="form.gift.addGiftAmount = parseAmount($event.target.value)" type="text" placeholder="0" inputmode="numeric" /><span class="unit">원</span></span></td>
+                <th>추가입금 금액</th>
+                <td><span class="amount-with-unit"><input :value="formatAmount(form.gift.addDepositAmount)" @input="form.gift.addDepositAmount = parseAmount($event.target.value)" type="text" placeholder="0" inputmode="numeric" /><span class="unit">원</span></span></td>
                 <th>지급예정일</th>
                 <td><input v-model="form.gift.paySchedDate" type="date" /></td>
               </tr>
@@ -419,13 +420,13 @@
                 <th>계좌번호</th>
                 <td>
                   <input
-                    :value="form.gift.accountNo"
-                    @input="form.gift.accountNo = formatAccountNo($event.target.value)"
-                    type="text"
-                    placeholder="숫자만 입력"
-                    maxlength="20"
-                    inputmode="numeric"
-                    :readonly="sameAsPaymentForGift"
+                      :value="form.gift.accountNo"
+                      @input="form.gift.accountNo = formatAccountNo($event.target.value)"
+                      type="text"
+                      placeholder="숫자만 입력"
+                      maxlength="20"
+                      inputmode="numeric"
+                      :readonly="sameAsPaymentForGift"
                   />
                 </td>
               </tr>
@@ -434,13 +435,13 @@
                 <td colspan="3">
                   <template v-if="isForeignerCustomer">
                     <input
-                      :value="form.gift.holderSsn1 + (form.gift.holderSsn2 ? '-' + form.gift.holderSsn2 : '')"
-                      @input="setGiftHolderIdNo($event.target.value)"
-                      type="text"
-                      placeholder="123456-7890123"
-                      maxlength="14"
-                      inputmode="numeric"
-                      :readonly="sameAsPaymentForGift"
+                        :value="form.gift.holderSsn1 + (form.gift.holderSsn2 ? '-' + form.gift.holderSsn2 : '')"
+                        @input="setGiftHolderIdNo($event.target.value)"
+                        type="text"
+                        placeholder="123456-7890123"
+                        maxlength="14"
+                        inputmode="numeric"
+                        :readonly="sameAsPaymentForGift"
                     />
                   </template>
                   <template v-else>
@@ -452,15 +453,6 @@
                   </template>
                 </td>
               </tr>
-              </tbody>
-            </table>
-          </section>
-
-          <!-- 4. 본사 사은품 -->
-          <section class="reg-section">
-            <h4 class="reg-section-title">본사 사은품</h4>
-            <table class="reg-table">
-              <tbody>
               <tr>
                 <th>본사사은품 명</th>
                 <td>
@@ -471,10 +463,10 @@
                 </td>
                 <th>본사사은품 금액</th>
                 <td>
-                  <span class="amount-with-unit">
-                    <input :value="formatAmount(form.headGift.giftAmount)" @input="form.headGift.giftAmount = parseAmount($event.target.value)" type="text" placeholder="0" inputmode="numeric" />
-                    <span class="unit">원</span>
-                  </span>
+                    <span class="amount-with-unit">
+                      <input :value="formatAmount(form.headGift.giftAmount)" @input="form.headGift.giftAmount = parseAmount($event.target.value)" type="text" placeholder="0" inputmode="numeric" />
+                      <span class="unit">원</span>
+                    </span>
                 </td>
               </tr>
               </tbody>
@@ -486,65 +478,70 @@
             <h4 class="reg-section-title">상품 정보</h4>
             <table class="reg-table product-table">
               <thead>
-                <tr>
-                  <th>구분</th>
-                  <td colspan="11">
-                    <select v-model="productType" @change="onProductTypeChange">
-                      <option v-for="opt in productTypeOptions" :key="opt.codeValue" :value="opt.codeValue">{{ opt.codeName }}</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <th>지역</th>
-                  <td colspan="11">
-                    <select v-model="commonRegion" class="product-region-select">
-                      <option value="">지역선택</option>
-                      <option v-for="o in regionCodes" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <th>상품</th>
-                  <th>회사</th>
-                  <th>가입번호</th>
-                  <th>상품명</th>
-                  <th>상품옵션</th>
-                  <th>약정</th>
-                  <th>개통상태</th>
-                  <th>개통일자</th>
-                  <th>해지일자</th>
-                  <th>만기일</th>
-                  <th>셋탑</th>
-                  <th>부가서비스</th>
-                  <th>회선</th>
-                </tr>
+              <tr>
+                <th>구분</th>
+                <td colspan="11">
+                  <select v-model="productType" @change="onProductTypeChange">
+                    <option v-for="opt in productTypeOptions" :key="opt.codeValue" :value="opt.codeValue">{{ opt.codeName }}</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <th>지역</th>
+                <td colspan="11">
+                  <select v-model="commonRegion" class="product-region-select">
+                    <option value="">지역선택</option>
+                    <option v-for="o in regionCodes" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                  </select>
+                </td>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="(row, idx) in productRows" :key="idx">
-                  <th>상품 {{ idx + 1 }}</th>
-                  <td>
-                    <select v-model="row.company" class="product-company-select">
-                      <option value="">회사 선택</option>
-                      <option v-for="o in companyCodes" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
-                    </select>
-                  </td>
-                  <td><input v-model="row.subscriptionNo" type="text" placeholder="가입번호" /></td>
-                  <td><input v-model="row.product" type="text" placeholder="상품" /></td>
-                  <td><input v-model="row.productOption" type="text" placeholder="상품옵션" /></td>
-                  <td><input v-model="row.contract" type="text" placeholder="약정(예: 24개월)" /></td>
-                  <td>
-                    <select v-model="row.openStatus" class="status-select">
-                      <option value="">선택</option>
-                      <option v-for="c in statusCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
-                    </select>
-                  </td>
-                  <td><input v-model="row.openDate" type="date" placeholder="개통일자" /></td>
-                  <td><input v-model="row.cancelDate" type="date" placeholder="해지일자" /></td>
-                  <td class="readonly-cell">{{ computedMaturityDate(row.openDate, row.contract) || '-' }}</td>
-                  <td><input v-model="row.setTop" type="text" placeholder="셋탑박스" /></td>
-                  <td><input v-model="row.vas" type="text" placeholder="부가서비스" /></td>
-                  <td><input v-model.number="row.lineCount" type="number" min="1" class="input-line" /> 회선</td>
-                </tr>
+              <tr v-for="(row, idx) in productRows" :key="idx">
+                <th>상품 {{ idx + 1 }}</th>
+                <td colspan="11">
+                  <div class="product-fields-row">
+                    <div class="product-field">
+                      <span class="product-field-label">회사</span>
+                      <select v-model="row.company" class="product-company-select">
+                        <option value="">회사 선택</option>
+                        <option v-for="o in companyCodes" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                      </select>
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">가입번호</span>
+                      <input v-model="row.subscriptionNo" type="text" placeholder="가입번호" />
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">상품명</span>
+                      <input v-model="row.product" type="text" placeholder="상품" />
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">상품옵션</span>
+                      <input v-model="row.productOption" type="text" placeholder="상품옵션" />
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">개통상태</span>
+                      <select v-model="row.openStatus" class="status-select">
+                        <option value="">선택</option>
+                        <option v-for="c in statusCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
+                      </select>
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">해지일자</span>
+                      <input v-model="row.cancelDate" type="date" placeholder="해지일자" />
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">셋탑</span>
+                      <input v-model="row.setTop" type="text" placeholder="셋탑박스" />
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">부가서비스</span>
+                      <input v-model="row.vas" type="text" placeholder="부가서비스" />
+                    </div>
+                  </div>
+                </td>
+              </tr>
               </tbody>
             </table>
           </section>
@@ -572,13 +569,13 @@
                 <td>
                   <template v-if="isForeignerCustomer">
                     <input
-                      :value="form.mnp.ownerSsn1 + (form.mnp.ownerSsn2 ? '-' + form.mnp.ownerSsn2 : '')"
-                      @input="setMnpOwnerIdNo($event.target.value)"
-                      type="text"
-                      placeholder="123456-7890123"
-                      maxlength="14"
-                      inputmode="numeric"
-                      :readonly="form.mnp.isSameAsCust === 'Y'"
+                        :value="form.mnp.ownerSsn1 + (form.mnp.ownerSsn2 ? '-' + form.mnp.ownerSsn2 : '')"
+                        @input="setMnpOwnerIdNo($event.target.value)"
+                        type="text"
+                        placeholder="123456-7890123"
+                        maxlength="14"
+                        inputmode="numeric"
+                        :readonly="form.mnp.isSameAsCust === 'Y'"
                     />
                   </template>
                   <template v-else>
@@ -616,19 +613,72 @@
             <h4 class="reg-section-title">비고 사항</h4>
             <table class="reg-table">
               <tbody>
-                <tr>
-                  <th>기타 내용</th>
-                  <td colspan="3"><textarea v-model="form.customer.remark" rows="5" placeholder="기타 내용" class="remark-textarea"></textarea></td>
-                </tr>
+              <tr>
+                <th>기타 내용</th>
+                <td colspan="3"><textarea v-model="form.customer.remark" rows="5" placeholder="기타 내용" class="remark-textarea"></textarea></td>
+              </tr>
               </tbody>
             </table>
           </section>
-        </div>
-        <div class="form-page-footer">
-          <button type="button" class="btn-cancel" @click="onFormCancel">목록으로</button>
-          <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
-          <button type="button" class="btn-save" @click="onSaveCustomer">저장</button>
-        </div>
+
+          <!-- 8. 첨부 파일  -->
+          <section class="reg-section">
+            <h4 class="reg-section-title">첨부 파일</h4>
+            <table class="reg-table">
+              <tbody>
+              <tr>
+                <th>파일 첨부</th>
+                <td colspan="3">
+                  <div class="file-upload-wrapper" v-if="canSave">
+                    <input type="file" multiple @change="onFileChange" accept="image/*,application/pdf" id="file-input" style="display:none" />
+                    <label for="file-input" class="btn-inline btn-search-inline">파일 선택</label>
+                    <span class="file-hint">* 이미지/PDF 파일 (여러 개 가능)</span>
+                  </div>
+                  <div v-if="selectedFiles.length > 0" class="file-list-preview">
+                    <ul class="file-list">
+                      <li v-for="(f, i) in selectedFiles" :key="i">
+                        {{ f.name }}
+                        <button v-if="canSave" type="button" @click="removeFile(i)" class="btn-file-remove">×</button>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              <tr v-if="modalMode === 'detail' && existingFiles.length > 0">
+                <th>저장된 파일</th>
+                <td colspan="3">
+                  <div class="file-list-preview">
+                    <ul class="file-list">
+                      <li v-for="file in existingFiles" :key="file.fileId">
+                        <a :href="file.fileUrl" target="_blank" class="file-link">{{ file.originFileName }}</a>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </section>
+        </fieldset>
+      </div>
+      <div class="form-page-footer">
+        <button type="button" class="btn-cancel" @click="onFormCancel">목록으로</button>
+        <!-- 등록 모드일 때만 보이는 테스트 버튼 -->
+        <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
+        <!-- [수정] 권한이 있는 경우만 '저장' 버튼 노출 -->
+        <button v-if="canSave" type="button" class="btn-save" @click="onSaveCustomer">
+          {{ modalMode === 'detail' ? '수정' : '저장' }}
+        </button>
+        <!-- [추가 선택사항] 권한이 없을 때 안내 메시지를 보여주고 싶다면 -->
+        <span v-else class="no-permission-msg" style="color: #888; font-size: 11px; align-self: center; margin-left: 10px;">
+    * 수정 권한이 없습니다. (관리자/팀장 전용)
+  </span>
+      </div>
+<!--      <div class="form-page-footer">
+        <button type="button" class="btn-cancel" @click="onFormCancel">목록으로</button>
+        <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
+        <button type="button" class="btn-save" @click="onSaveCustomer">저장</button>
+      </div>-->
     </div>
   </div>
 </template>
@@ -647,9 +697,17 @@ const route = useRoute();
 const router = useRouter();
 // 폼 페이지(등록/상세) 여부 — 라우트 이름으로 분기
 const isFormPage = computed(() =>
-  route.name === 'CustomersIndividualNew' || route.name === 'CustomersIndividualDetail'
+    route.name === 'CustomersIndividualNew' || route.name === 'CustomersIndividualDetail'
 );
 const isListPage = computed(() => !isFormPage.value);
+
+const authStore = useAuthStore();
+
+const canSave = computed(() => {
+  // authStore.user 객체 내부의 userRole 필드를 확인
+  const role = authStore.user?.userRole;
+  return role === 'ADMIN' || role === 'MANAGER';
+});
 
 const gridApi = ref(null);
 const rowData = ref([]);
@@ -883,7 +941,6 @@ const columnDefs = ref([
   { field: 'subscriptionNo', headerName: '가입번호', width: 100, minWidth: 90, valueGetter: params => params.data?.subscriptionNo ?? '', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
   { field: 'partner', headerName: '협력사', width: 90, minWidth: 70, valueFormatter: () => '더원컴퍼니' },
   { field: 'acquirer', headerName: '유치자', width: 90, minWidth: 70, valueFormatter: () => '더원컴퍼니' },
-  { field: 'openDate', headerName: '개통일', width: 110, minWidth: 100, valueFormatter: p => (p.value ? formatDate(p.value) : '-') },
   {
     field: 'statusName',
     headerName: '개통상태',
@@ -899,10 +956,9 @@ const columnDefs = ref([
   },
   { field: 'gift', headerName: '사은품', width: 80, minWidth: 70, valueFormatter: p => p.value ?? '-' },
   { field: 'amount', headerName: '금액', width: 90, minWidth: 70, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
-  { field: 'addGift', headerName: '추가사은품', width: 90, minWidth: 80, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
+  { field: 'addDeposit', headerName: '추가사은품', width: 90, minWidth: 80, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
   { field: 'paySource', headerName: '지급처', width: 80, minWidth: 70, valueFormatter: p => p.value ?? '-' },
   { field: 'payDone', headerName: '지급완료', width: 80, minWidth: 80, valueFormatter: p => (p.value ? formatDate(p.value) : '-') },
-  { field: 'contractPeriod', headerName: '약정', width: 90, minWidth: 70, valueFormatter: p => p.value ?? '-' },
   { field: 'remark', headerName: '최종상담내용', flex: 1, minWidth: 120 },
   {
     colId: 'manage',
@@ -986,15 +1042,13 @@ function closeExcelModal() {
   showExcelModal.value = false;
 }
 
-/** 엑셀 저장용: 예시 양식 22컬럼(No, 계약번호, 가입일, 만기일, 성명, 주민등록번호, …)에 맞춰 매핑 */
+/** 엑셀 저장용: 예시 양식 22컬럼(No, 계약번호, 가입일, 성명, 주민등록번호, …)에 맞춰 매핑 */
 function toListDisplayRow(row, index) {
   const joinDate = row.createdAt ? formatDate(row.createdAt) : '';
-  const maturityDate = computedMaturityDate(row.openDate, row.contractPeriod) || '';
   return {
     'No.': index + 1,
     '계약번호': row.custId ?? row.subscriptionNo ?? '',
     '가입일': joinDate,
-    '만기일': maturityDate,
     '성명': row.custName ?? '',
     '주민등록번호': '', // 목록에는 미포함(개인정보)
     '사업자번호': row.bizNo ?? '',
@@ -1007,7 +1061,6 @@ function toListDisplayRow(row, index) {
     '상품명': row.prodName ?? '',
     '유지보험료': formatAmount(row.amount) || '',
     '납기일': '',
-    '보험기간': row.contractPeriod ?? '',
     '고객유형': row.custTypeName ?? row.custType ?? '',
     '모집인명': row.counselorName ?? row.creatorName ?? '',
     '모집인코드': row.assignedUserId ?? '',
@@ -1127,7 +1180,7 @@ function getEmptyGift() {
   return {
     giftName: '',
     giftAmount: 0,
-    addGiftAmount: 0,
+    addDepositAmount: 0,
     paySchedDate: '',
     payDoneDate: '',
     paySource: '',
@@ -1288,42 +1341,11 @@ function createEmptyProductRow() {
     subscriptionNo: '',
     product: '',
     productOption: '',
-    contract: '',
     openStatus: '',
-    openDate: '',
     cancelDate: '',
     setTop: '',
-    vas: '',
-    lineCount: 1
+    vas: ''
   };
-}
-
-/** 약정 문자열에서 개월 수 추출 (예: "24", "24개월", "20년" -> 24 or 240) */
-function parseContractMonths(contractStr) {
-  if (!contractStr || typeof contractStr !== 'string') return null;
-  const s = contractStr.trim();
-  const numMatch = s.match(/^(\d+)/);
-  if (!numMatch) return null;
-  const num = parseInt(numMatch[1], 10);
-  if (Number.isNaN(num) || num <= 0) return null;
-  if (/년/.test(s)) return num * 12;
-  return num;
-}
-
-/** 만기일 계산: 개통일자 + 약정 개월 (DB 저장 없음, 화면 표시용) */
-function computedMaturityDate(openDateVal, contractVal) {
-  const openStr = (openDateVal || '').toString().trim();
-  if (!openStr) return '';
-  const months = parseContractMonths(contractVal);
-  if (months == null) return '';
-  try {
-    const d = new Date(openStr + 'T00:00:00');
-    if (isNaN(d.getTime())) return '';
-    d.setMonth(d.getMonth() + months);
-    return d.toISOString().slice(0, 10);
-  } catch {
-    return '';
-  }
 }
 
 function getRequiredRowCount() {
@@ -1390,6 +1412,10 @@ async function openCustomerModal() {
     onCounselorChange();
   }
   showCustomerModal.value = true;
+
+  // 파일 목록 초기화
+  selectedFiles.value = [];
+  existingFiles.value = [];
 }
 
 async function openDetailModal(custId) {
@@ -1475,7 +1501,7 @@ function mapDetailToForm(detail) {
   form.value.gift = {
     giftName: generalGift.giftName || '',
     giftAmount: generalGift.giftAmount ?? 0,
-    addGiftAmount: generalGift.addGiftAmount ?? 0,
+    addDepositAmount: generalGift.addDepositAmount ?? 0,
     paySchedDate: giftPaySchedStr,
     payDoneDate: giftPayDoneStr,
     paySource: generalGift.paySource || '',
@@ -1492,7 +1518,7 @@ function mapDetailToForm(detail) {
   form.value.headGift = {
     giftName: headGift.giftName || '',
     giftAmount: headGift.giftAmount ?? 0,
-    addGiftAmount: headGift.addGiftAmount ?? 0,
+    addDepositAmount: headGift.addDepositAmount ?? 0,
     paySchedDate: headPaySchedStr,
     payDoneDate: headPayDoneStr,
     paySource: headGift.paySource || '',
@@ -1513,9 +1539,7 @@ function mapDetailToForm(detail) {
     commonRegion.value = products[0].regionName || '';
     const required = getRequiredRowCount();
     productRows.value = products.slice(0, required).map(p => {
-      const openVal = p.openDate;
       const cancelVal = p.cancelDate;
-      const openStr = openVal ? (typeof openVal === 'string' ? openVal.slice(0, 10) : openVal) : '';
       const cancelStr = cancelVal ? (typeof cancelVal === 'string' ? cancelVal.slice(0, 10) : cancelVal) : '';
       return {
         company: p.compName || '',
@@ -1523,13 +1547,10 @@ function mapDetailToForm(detail) {
         subscriptionNo: p.subscriptionNo || p.subscription_no || '',
         product: p.prodName || '',
         productOption: p.prodOpt || '',
-        contract: p.contractPeriod || '',
         openStatus: p.openStatus || p.open_status || '',
-        openDate: openStr,
         cancelDate: cancelStr,
         setTop: p.stbType || '',
-        vas: p.vasName || '',
-        lineCount: p.lineCount ?? 1
+        vas: p.vasName || ''
       };
     });
     while (productRows.value.length < required) productRows.value.push(createEmptyProductRow());
@@ -1552,6 +1573,9 @@ function mapDetailToForm(detail) {
     mnpMemo: mnp0.mnpMemo || '',
     remark: mnp0.remark || ''
   };
+  // 기존 첨부파일 목록 저장
+  // existingFiles.value = detail.attachments || [];
+  existingFiles.value = detail['attachments'] || detail['fileList'] || [];
 }
 
 function onRowClicked(params) {
@@ -1641,22 +1665,19 @@ function buildRegisterPayload() {
       holderSsnEnc: joinSsn(headForm.holderSsn1, headForm.holderSsn2) || null
     },
     products: productRows.value
-      .filter(r => ((r.company || '').trim() || (r.product || '').trim() || (r.subscriptionNo || '').trim()))
-      .map(r => ({
-        compName: r.company || null,
-        prodGb: productType.value,
-        regionName: commonRegion.value || null,
-        subscriptionNo: (r.subscriptionNo || '').trim() || null,
-        prodName: r.product || null,
-        prodOpt: r.productOption || null,
-        contractPeriod: r.contract || null,
-        openStatus: (r.openStatus || '').trim() || null,
-        openDate: (r.openDate || '').toString().trim() || null,
-        cancelDate: (r.cancelDate || '').toString().trim() || null,
-        stbType: r.setTop || null,
-        vasName: r.vas || null,
-        lineCount: r.lineCount || 1
-      })),
+        .filter(r => ((r.company || '').trim() || (r.product || '').trim() || (r.subscriptionNo || '').trim()))
+        .map(r => ({
+          compName: r.company || null,
+          prodGb: productType.value,
+          regionName: commonRegion.value || null,
+          subscriptionNo: (r.subscriptionNo || '').trim() || null,
+          prodName: r.product || null,
+          prodOpt: r.productOption || null,
+          openStatus: (r.openStatus || '').trim() || null,
+          cancelDate: (r.cancelDate || '').toString().trim() || null,
+          stbType: r.setTop || null,
+          vasName: r.vas || null
+        })),
     mnp: {
       ...mnpForm,
       ownerSsnEnc: joinSsn(mnpForm.ownerSsn1, mnpForm.ownerSsn2) || null
@@ -1837,7 +1858,7 @@ function fillAllFieldsTestData() {
   const gift = form.value.gift;
   gift.giftName = '사은품A';
   gift.giftAmount = 100000;
-  gift.addGiftAmount = 50000;
+  gift.addDepositAmount = 50000;
   gift.paySchedDate = '2025-02-15';
   gift.payDoneDate = '2025-02-20';
   gift.paySource = '';
@@ -1852,7 +1873,7 @@ function fillAllFieldsTestData() {
   const head = form.value.headGift;
   head.giftName = '본사사은품B';
   head.giftAmount = 50000;
-  head.addGiftAmount = 0;
+  head.addDepositAmount = 0;
   head.paySchedDate = '2025-03-01';
   head.payDoneDate = '2025-03-10';
   head.paySource = '';
@@ -1872,13 +1893,10 @@ function fillAllFieldsTestData() {
     subscriptionNo: 'SUB20250115001',
     product: '5G 프리미엄',
     productOption: '100GB',
-    contract: '24',
     openStatus: 'RECEIPT',
-    openDate: '2025-02-01',
     cancelDate: '',
     setTop: '일반',
-    vas: '넷플릭스',
-    lineCount: 1
+    vas: '넷플릭스'
   }];
 
   const mnp = form.value.mnp;
@@ -1919,13 +1937,26 @@ async function onSaveCustomer() {
   }
   try {
     const payload = buildRegisterPayload();
+    const formData = new FormData();
+
+    // JSON 데이터를 Blob으로 추가 (백엔드 @RequestPart 대응)
+    formData.append('customerData', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+
+    // 첨부파일 추가
+    selectedFiles.value.forEach(file => {
+      formData.append('files', file);
+    });
+
+    const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+
     if (modalMode.value === 'detail') {
-      await axios.put('/api/customers/update', payload);
+      await axios.put('/api/customers/update', formData, config);
       alert('수정되었습니다.');
     } else {
-      await axios.post('/api/customers/register', payload);
+      await axios.post('/api/customers/register', formData, config);
       alert('등록되었습니다.');
     }
+
     showCustomerModal.value = false;
     router.push({ name: 'CustomersIndividual' });
   } catch (err) {
@@ -1974,6 +2005,23 @@ onMounted(() => {
 watch(() => route.fullPath, () => {
   handleRouteChange();
 });
+
+// Script: 상태 및 함수 추가
+const selectedFiles = ref([]); // 새로 선택한 파일들
+const existingFiles = ref([]); // 상세조회 시 서버에서 받아온 파일들
+
+// 파일 선택 핸들러
+function onFileChange(event) {
+  const files = Array.from(event.target.files);
+  // 간단한 용량/형식 체크 로직 추가 가능
+  selectedFiles.value = [...selectedFiles.value, ...files];
+  event.target.value = ''; // 동일 파일 재선택 가능하게 초기화
+}
+
+// 선택 파일 제거
+function removeFile(index) {
+  selectedFiles.value.splice(index, 1);
+}
 </script>
 
 <style scoped>
@@ -2399,6 +2447,41 @@ button {
   background: #eff6ff;
   font-weight: 600;
 }
+.reg-table.product-table thead tr:nth-child(3) th:first-child,
+.reg-table.product-table tbody th:first-child {
+  width: 90px;
+  min-width: 90px;
+  text-align: center;
+}
+.product-fields-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+}
+.product-field {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.product-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #555;
+  white-space: nowrap;
+}
+.product-field input,
+.product-field select {
+  height: 22px;
+  font-size: 11px;
+  padding: 2px 6px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  width: auto;
+}
+.product-field input { min-width: 80px; }
+.product-field select { min-width: 80px; }
 .reg-table .input-with-select,
 .reg-table .input-with-check {
   display: flex;
@@ -2695,4 +2778,13 @@ button {
   font-size: 11px;
   font-weight: 700;
 }
+
+.hidden-input { display: none; }
+.btn-file-select { background: #607d8b; color: #fff; border: none; padding: 4px 12px; }
+.file-hint { font-size: 10px; color: #888; margin-left: 8px; }
+.file-list-preview { margin-top: 8px; }
+.file-list-preview ul { list-style: none; padding: 0; margin: 0; }
+.file-list-preview li { display: inline-flex; align-items: center; background: #f1f3f4; padding: 2px 8px; border-radius: 4px; margin-right: 6px; margin-bottom: 4px; font-size: 11px; }
+.btn-file-del { background: none; border: none; color: #d32f2f; font-weight: bold; cursor: pointer; margin-left: 6px; font-size: 14px; }
+.file-link { color: #2563eb; text-decoration: underline; }
 </style>

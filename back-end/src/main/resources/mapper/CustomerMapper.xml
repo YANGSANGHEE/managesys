@@ -12,7 +12,7 @@
             P.OPEN_DATE AS openDate,
             C.RECEIPT_DT AS receiptDate,
             C.CANCELL_DT AS cancellationDate,
-            C.JOIN_DATE AS joinDate,
+            C.JOIN_DATE AS authenticatedDate,
             C.CUST_NAME AS custName,
             C.REP_NAME AS repName,
             C.CUST_TYPE AS custType,
@@ -44,7 +44,7 @@
             P.CONTRACT_PERIOD AS contractPeriod,
             G.GIFT_NAME AS gift,
             G.GIFT_AMOUNT AS amount,
-            G.ADD_GIFT_AMOUNT AS addGift,
+            G.ADD_DEPOSIT_AMOUNT AS addDeposit,
             COALESCE(PS.CODE_NAME, G.PAY_SOURCE) AS paySource,
             G.PAY_DONE_DATE AS payDone
         FROM TB_CUSTOMER C
@@ -62,7 +62,7 @@
             WHERE (P1.USE_YN IS NULL OR P1.USE_YN = 'Y')
         ) P ON P.CUST_ID = C.CUST_ID
         LEFT JOIN (
-            SELECT G1.CUST_ID, G1.GIFT_NAME, G1.GIFT_AMOUNT, G1.ADD_GIFT_AMOUNT, G1.PAY_SOURCE, G1.PAY_DONE_DATE
+            SELECT G1.CUST_ID, G1.GIFT_NAME, G1.GIFT_AMOUNT, G1.ADD_DEPOSIT_AMOUNT, G1.PAY_SOURCE, G1.PAY_DONE_DATE
             FROM TB_CUST_GIFT G1
             INNER JOIN (
                 SELECT CUST_ID, MIN(GIFT_ID) AS MIN_GIFT_ID
@@ -156,7 +156,7 @@
             C.INSTALL_SCHED_DT AS installSchedDt,
             C.RECEIPT_DT AS receiptDate,
             C.CANCELL_DT AS cancellationDate,
-            C.JOIN_DATE AS joinDate,
+            C.JOIN_DATE AS authenticatedDate,
             C.USE_YN AS useYn,
             C.CREATOR_ID AS creatorId,
             C.CREATED_AT AS createdAt,
@@ -174,7 +174,7 @@
             COALESCE(#{status}, 'RECEIPT'), #{custName}, #{repName}, #{custType}, COALESCE(#{custKind}, 'INDIVIDUAL'),
             #{ssnEnc}, #{bizNo}, #{corpNo}, #{foreignerRegNo}, #{zipCode}, #{addr}, #{addrDetail},
             #{telNo}, #{hpNo}, #{hpCarrier}, #{email}, #{custAuthType}, #{custAuthVal},
-            #{counselorName}, #{deptId}, #{assignedUserId}, #{remark}, COALESCE(#{voucherReturnYn}, 'N'), #{installSchedDt}, #{receiptDate}, #{cancellationDate}, #{joinDate}, COALESCE(#{useYn}, 'Y'), #{creatorId}
+            #{counselorName}, #{deptId}, #{assignedUserId}, #{remark}, COALESCE(#{voucherReturnYn}, 'N'), #{installSchedDt}, #{receiptDate}, #{cancellationDate}, #{authenticatedDate}, COALESCE(#{useYn}, 'Y'), #{creatorId}
         )
     </insert>
 
@@ -206,7 +206,7 @@
             INSTALL_SCHED_DT = #{openDate},
             RECEIPT_DT = #{receiptDate},
             CANCELL_DT = #{cancellationDate},
-            JOIN_DATE = #{joinDate},
+            JOIN_DATE = #{authenticatedDate},
             USE_YN = COALESCE(#{useYn}, 'Y'),
             UPDATED_AT = CURRENT_TIMESTAMP
         WHERE CUST_ID = #{custId}
@@ -237,7 +237,7 @@
     </select>
 
     <select id="selectGiftsByCustId" resultType="com.sys.managesys.common.dto.CustGiftDto">
-        SELECT CUST_ID AS custId, GIFT_GB AS giftGb, GIFT_NAME AS giftName, GIFT_AMOUNT AS giftAmount, ADD_GIFT_AMOUNT AS addGiftAmount,
+        SELECT CUST_ID AS custId, GIFT_GB AS giftGb, GIFT_NAME AS giftName, GIFT_AMOUNT AS giftAmount, ADD_DEPOSIT_AMOUNT AS addDepositAmount,
                PAY_SCHED_DATE AS paySchedDate, PAY_DONE_DATE AS payDoneDate, PAY_SOURCE AS paySource,
                BANK_NAME AS bankName, ACCOUNT_NO AS accountNo, ACCOUNT_HOLDER AS accountHolder, HOLDER_SSN_ENC AS holderSsnEnc,
                IS_SAME_AS_BANK AS isSameAsBank, REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
@@ -261,8 +261,8 @@
     </insert>
 
     <insert id="insertGift" parameterType="com.sys.managesys.common.dto.CustGiftDto">
-        INSERT INTO TB_CUST_GIFT (CUST_ID, GIFT_GB, GIFT_NAME, GIFT_AMOUNT, ADD_GIFT_AMOUNT, PAY_SCHED_DATE, PAY_DONE_DATE, PAY_SOURCE, BANK_NAME, ACCOUNT_NO, ACCOUNT_HOLDER, HOLDER_SSN_ENC, IS_SAME_AS_BANK, REMARK, USE_YN)
-        VALUES (#{custId}, #{giftGb}, #{giftName}, COALESCE(#{giftAmount}, 0), COALESCE(#{addGiftAmount}, 0), #{paySchedDate}, #{payDoneDate}, #{paySource}, #{bankName}, #{accountNo}, #{accountHolder}, #{holderSsnEnc}, COALESCE(#{isSameAsBank}, 'N'), #{remark}, COALESCE(#{useYn}, 'Y'))
+        INSERT INTO TB_CUST_GIFT (CUST_ID, GIFT_GB, GIFT_NAME, GIFT_AMOUNT, ADD_DEPOSIT_AMOUNT, PAY_SCHED_DATE, PAY_DONE_DATE, PAY_SOURCE, BANK_NAME, ACCOUNT_NO, ACCOUNT_HOLDER, HOLDER_SSN_ENC, IS_SAME_AS_BANK, REMARK, USE_YN)
+        VALUES (#{custId}, #{giftGb}, #{giftName}, COALESCE(#{giftAmount}, 0), COALESCE(#{addDepositAmount}, 0), #{paySchedDate}, #{payDoneDate}, #{paySource}, #{bankName}, #{accountNo}, #{accountHolder}, #{holderSsnEnc}, COALESCE(#{isSameAsBank}, 'N'), #{remark}, COALESCE(#{useYn}, 'Y'))
     </insert>
 
     <insert id="insertProduct" parameterType="com.sys.managesys.common.dto.CustProductDto">

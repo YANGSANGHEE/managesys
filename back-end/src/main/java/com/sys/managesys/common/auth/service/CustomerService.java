@@ -89,7 +89,7 @@ public class CustomerService {
             gift.setGiftGb("GENERAL");
             gift.setUseYn(gift.getUseYn() != null ? gift.getUseYn() : "Y");
             if (gift.getGiftAmount() == null) gift.setGiftAmount(0);
-            if (gift.getAddGiftAmount() == null) gift.setAddGiftAmount(0);
+            if (gift.getAddDepositAmount() == null) gift.setAddDepositAmount(0);
             customerMapper.insertGift(gift);
         }
         if (req.getHeadGift() != null) {
@@ -98,7 +98,7 @@ public class CustomerService {
             head.setGiftGb("HEAD");
             head.setUseYn(head.getUseYn() != null ? head.getUseYn() : "Y");
             if (head.getGiftAmount() == null) head.setGiftAmount(0);
-            if (head.getAddGiftAmount() == null) head.setAddGiftAmount(0);
+            if (head.getAddDepositAmount() == null) head.setAddDepositAmount(0);
             customerMapper.insertGift(head);
         }
         if (req.getProducts() != null && !req.getProducts().isEmpty()) {
@@ -151,7 +151,7 @@ public class CustomerService {
             gift.setGiftGb("GENERAL");
             gift.setUseYn(gift.getUseYn() != null ? gift.getUseYn() : "Y");
             if (gift.getGiftAmount() == null) gift.setGiftAmount(0);
-            if (gift.getAddGiftAmount() == null) gift.setAddGiftAmount(0);
+            if (gift.getAddDepositAmount() == null) gift.setAddDepositAmount(0);
             customerMapper.insertGift(gift);
         }
         if (req.getHeadGift() != null) {
@@ -160,7 +160,7 @@ public class CustomerService {
             head.setGiftGb("HEAD");
             head.setUseYn(head.getUseYn() != null ? head.getUseYn() : "Y");
             if (head.getGiftAmount() == null) head.setGiftAmount(0);
-            if (head.getAddGiftAmount() == null) head.setAddGiftAmount(0);
+            if (head.getAddDepositAmount() == null) head.setAddDepositAmount(0);
             customerMapper.insertGift(head);
         }
         if (req.getProducts() != null && !req.getProducts().isEmpty()) {

@@ -13,7 +13,7 @@ public class CustGiftDto {
     private String giftGb;
     private String giftName;
     private Integer giftAmount;
-    private Integer addGiftAmount;
+    private Integer addDepositAmount;
     private LocalDate paySchedDate;
     private String paySource;
     private LocalDate payDoneDate;
