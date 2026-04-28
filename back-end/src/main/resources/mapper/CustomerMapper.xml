@@ -7,70 +7,70 @@
 
     <select id="selectCustomerList" parameterType="com.sys.managesys.common.dto.CustomerDto" resultType="com.sys.managesys.common.dto.CustomerDto">
         SELECT
-            C.CUST_ID AS custId,
-            P.OPEN_STATUS AS status,
-            P.OPEN_DATE AS openDate,
-            C.RECEIPT_DT AS receiptDate,
-            C.CANCELL_DT AS cancellationDate,
-            C.JOIN_DATE AS authenticatedDate,
-            C.CUST_NAME AS custName,
-            C.REP_NAME AS repName,
-            C.CUST_TYPE AS custType,
-            C.CUST_KIND AS custKind,
-            C.ADDR AS addr,
-            C.ADDR_DETAIL AS addrDetail,
-            C.HP_NO AS hpNo,
-            C.HP_CARRIER AS hpCarrier,
-            C.TEL_NO AS telNo,
-            C.EMAIL AS email,
-            C.COUNSELOR_NAME AS counselorName,
-            C.DEPT_ID AS deptId,
-            C.ASSIGNED_USER_ID AS assignedUserId,
-            C.REMARK AS remark,
-            C.USE_YN AS useYn,
-            C.CREATOR_ID AS creatorId,
-            C.CREATED_AT AS createdAt,
-            C.UPDATED_AT AS updatedAt,
-            CREATOR.USER_NAME AS creatorName,
-            ASSIGNED.USER_NAME AS assignedUserName,
-            ST.CODE_NAME AS statusName,
-            HC.CODE_NAME AS hpCarrierName,
-            CT.CODE_NAME AS custTypeName,
-            CK.CODE_NAME AS custKindName,
-            P.PROD_NAME AS prodName,
-            COALESCE(PT.CODE_NAME, P.PROD_GB) AS prodType,
-            P.STB_TYPE AS setInfo,
-            P.SUBSCRIPTION_NO AS subscription_no,  /* 가입번호: TB_CUST_PRODUCT.SUBSCRIPTION_NO */
-            P.CONTRACT_PERIOD AS contractPeriod,
-            G.GIFT_NAME AS gift,
-            G.GIFT_AMOUNT AS amount,
-            G.ADD_DEPOSIT_AMOUNT AS addDeposit,
-            COALESCE(PS.CODE_NAME, G.PAY_SOURCE) AS paySource,
-            G.PAY_DONE_DATE AS payDone
+        C.CUST_ID AS custId,
+        P.OPEN_STATUS AS status,
+        P.OPEN_DATE AS openDate,
+        C.RECEIPT_DT AS receiptDate,
+        C.CANCELL_DT AS cancellationDate,
+        C.JOIN_DATE AS authenticatedDate,
+        C.CUST_NAME AS custName,
+        C.REP_NAME AS repName,
+        C.CUST_TYPE AS custType,
+        C.CUST_KIND AS custKind,
+        C.ADDR AS addr,
+        C.ADDR_DETAIL AS addrDetail,
+        C.HP_NO AS hpNo,
+        C.HP_CARRIER AS hpCarrier,
+        C.TEL_NO AS telNo,
+        C.EMAIL AS email,
+        C.COUNSELOR_NAME AS counselorName,
+        C.DEPT_ID AS deptId,
+        C.ASSIGNED_USER_ID AS assignedUserId,
+        C.REMARK AS remark,
+        C.USE_YN AS useYn,
+        C.CREATOR_ID AS creatorId,
+        C.CREATED_AT AS createdAt,
+        C.UPDATED_AT AS updatedAt,
+        CREATOR.USER_NAME AS creatorName,
+        ASSIGNED.USER_NAME AS assignedUserName,
+        ST.CODE_NAME AS statusName,
+        HC.CODE_NAME AS hpCarrierName,
+        CT.CODE_NAME AS custTypeName,
+        CK.CODE_NAME AS custKindName,
+        P.PROD_NAME AS prodName,
+        COALESCE(PT.CODE_NAME, P.PROD_GB) AS prodType,
+        P.STB_TYPE AS setInfo,
+        P.SUBSCRIPTION_NO AS subscription_no,  /* 가입번호: TB_CUST_PRODUCT.SUBSCRIPTION_NO */
+        P.CONTRACT_PERIOD AS contractPeriod,
+        G.GIFT_NAME AS gift,
+        G.GIFT_AMOUNT AS amount,
+        G.ADD_DEPOSIT_AMOUNT AS addDeposit,
+        COALESCE(PS.CODE_NAME, G.PAY_SOURCE) AS paySource,
+        G.PAY_DONE_DATE AS payDone
         FROM TB_CUSTOMER C
         LEFT JOIN TB_USER CREATOR ON C.CREATOR_ID = CREATOR.USER_ID
         LEFT JOIN TB_USER ASSIGNED ON C.ASSIGNED_USER_ID = ASSIGNED.USER_ID
         LEFT JOIN (
-            SELECT P1.CUST_ID, P1.PROD_NAME, P1.PROD_GB, P1.STB_TYPE, P1.CONTRACT_PERIOD, P1.SUBSCRIPTION_NO, P1.OPEN_DATE, P1.CANCEL_DATE, P1.OPEN_STATUS
-            FROM TB_CUST_PRODUCT P1
-            INNER JOIN (
-                SELECT CUST_ID, MIN(PROD_ID) AS MIN_PROD_ID
-                FROM TB_CUST_PRODUCT
-                WHERE (USE_YN IS NULL OR USE_YN = 'Y')
-                GROUP BY CUST_ID
-            ) FP ON P1.CUST_ID = FP.CUST_ID AND P1.PROD_ID = FP.MIN_PROD_ID
-            WHERE (P1.USE_YN IS NULL OR P1.USE_YN = 'Y')
+        SELECT P1.CUST_ID, P1.PROD_NAME, P1.PROD_GB, P1.STB_TYPE, P1.CONTRACT_PERIOD, P1.SUBSCRIPTION_NO, P1.OPEN_DATE, P1.CANCEL_DATE, P1.OPEN_STATUS
+        FROM TB_CUST_PRODUCT P1
+        INNER JOIN (
+        SELECT CUST_ID, MIN(PROD_ID) AS MIN_PROD_ID
+        FROM TB_CUST_PRODUCT
+        WHERE (USE_YN IS NULL OR USE_YN = 'Y')
+        GROUP BY CUST_ID
+        ) FP ON P1.CUST_ID = FP.CUST_ID AND P1.PROD_ID = FP.MIN_PROD_ID
+        WHERE (P1.USE_YN IS NULL OR P1.USE_YN = 'Y')
         ) P ON P.CUST_ID = C.CUST_ID
         LEFT JOIN (
-            SELECT G1.CUST_ID, G1.GIFT_NAME, G1.GIFT_AMOUNT, G1.ADD_DEPOSIT_AMOUNT, G1.PAY_SOURCE, G1.PAY_DONE_DATE
-            FROM TB_CUST_GIFT G1
-            INNER JOIN (
-                SELECT CUST_ID, MIN(GIFT_ID) AS MIN_GIFT_ID
-                FROM TB_CUST_GIFT
-                WHERE GIFT_GB = 'GENERAL'
-                GROUP BY CUST_ID
-            ) FG ON G1.CUST_ID = FG.CUST_ID AND G1.GIFT_ID = FG.MIN_GIFT_ID
-            WHERE G1.GIFT_GB = 'GENERAL'
+        SELECT G1.CUST_ID, G1.GIFT_NAME, G1.GIFT_AMOUNT, G1.ADD_DEPOSIT_AMOUNT, G1.PAY_SOURCE, G1.PAY_DONE_DATE
+        FROM TB_CUST_GIFT G1
+        INNER JOIN (
+        SELECT CUST_ID, MIN(GIFT_ID) AS MIN_GIFT_ID
+        FROM TB_CUST_GIFT
+        WHERE GIFT_GB = 'GENERAL'
+        GROUP BY CUST_ID
+        ) FG ON G1.CUST_ID = FG.CUST_ID AND G1.GIFT_ID = FG.MIN_GIFT_ID
+        WHERE G1.GIFT_GB = 'GENERAL'
         ) G ON G.CUST_ID = C.CUST_ID
         LEFT JOIN TB_COMMON_CODE ST ON ST.GROUP_CODE = 'CUST_STATUS' AND ST.CODE_VALUE = P.OPEN_STATUS AND (ST.USE_YN IS NULL OR ST.USE_YN = 'Y')
         LEFT JOIN TB_COMMON_CODE HC ON HC.GROUP_CODE = 'COMPANY_CODE' AND HC.CODE_VALUE = C.HP_CARRIER AND (HC.USE_YN IS NULL OR HC.USE_YN = 'Y')
@@ -79,49 +79,55 @@
         LEFT JOIN TB_COMMON_CODE PT ON PT.GROUP_CODE = 'PROD_COMB_GB' AND PT.CODE_VALUE = P.PROD_GB AND (PT.USE_YN IS NULL OR PT.USE_YN = 'Y')
         LEFT JOIN TB_COMMON_CODE PS ON PS.GROUP_CODE = 'PAY_SOURCE' AND PS.CODE_VALUE = G.PAY_SOURCE AND (PS.USE_YN IS NULL OR PS.USE_YN = 'Y')
         WHERE C.USE_YN = 'Y'
-          AND C.CUST_KIND = COALESCE(#{custKind}, 'INDIVIDUAL')
+        AND C.CUST_KIND = COALESCE(#{custKind}, 'INDIVIDUAL')
         <choose>
-          <when test="filterUserRole == 'ADMIN'">
-            <!-- 관리자: INDIVIDUAL 전체 조회, 추가 조건 없음 -->
-          </when>
-          <when test="filterUserRole == 'MANAGER'">
-            <if test="filterDeptId != null">AND C.DEPT_ID = #{filterDeptId}</if>
-          </when>
-          <when test="filterUserRole == 'MEMBER'">
-            <!-- 일반 사원: 본인이 등록(올린)한 고객만 조회 -->
-            <if test="filterUserId != null">AND C.CREATOR_ID = #{filterUserId}</if>
-          </when>
-          <otherwise>
-            <!-- 미인증 또는 알 수 없는 권한: 조회 불가 -->
-            AND 1=0
-          </otherwise>
+            <when test="filterUserRole == 'ADMIN'">
+                <!-- 관리자: 전체 조회 -->
+            </when>
+            <when test="filterUserRole == 'MANAGER'">
+                <!-- 팀장: 본인 및 같은 부서 MEMBER에게 배정된 고객 조회 (TB_USER 현재 부서 기준) -->
+                <if test="filterDeptId != null">
+                    AND C.ASSIGNED_USER_ID IN (
+                        SELECT USER_ID FROM TB_USER
+                        WHERE DEPT_ID = #{filterDeptId} AND (USE_YN IS NULL OR USE_YN = 'Y')
+                    )
+                </if>
+            </when>
+            <when test="filterUserRole == 'MEMBER'">
+                <!-- 일반 사원: 본인에게 배정된 고객만 조회 -->
+                <if test="filterUserId != null">AND C.ASSIGNED_USER_ID = #{filterUserId}</if>
+            </when>
+            <otherwise>
+                AND 1=0
+            </otherwise>
         </choose>
         <if test="searchDeptId != null">AND C.DEPT_ID = #{searchDeptId}</if>
         <if test="searchAssignedUserId != null">AND C.ASSIGNED_USER_ID = #{searchAssignedUserId}</if>
         <if test="searchCustName != null and searchCustName != ''">AND C.CUST_NAME LIKE CONCAT('%', #{searchCustName}, '%')</if>
+        <if test="searchCounselorName != null and searchCounselorName != ''">AND ASSIGNED.USER_NAME LIKE CONCAT('%', #{searchCounselorName}, '%')</if>
         <if test="searchStatus != null and searchStatus != ''">AND P.OPEN_STATUS = #{searchStatus}</if>
         <if test="searchHpCarrier != null and searchHpCarrier != ''">AND C.HP_CARRIER = #{searchHpCarrier}</if>
         <choose>
-          <when test="searchPeriodType == 'RECEIPT'">
-            <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND C.RECEIPT_DT &gt;= #{searchCreatedAtFrom}</if>
-            <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND C.RECEIPT_DT &lt;= #{searchCreatedAtTo}</if>
-          </when>
-          <when test="searchPeriodType == 'OPEN'">
-            <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND P.OPEN_DATE &gt;= #{searchCreatedAtFrom}</if>
-            <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND P.OPEN_DATE &lt;= #{searchCreatedAtTo}</if>
-          </when>
-          <when test="searchPeriodType == 'JOIN'">
-            <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND C.JOIN_DATE &gt;= #{searchCreatedAtFrom}</if>
-            <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND C.JOIN_DATE &lt;= #{searchCreatedAtTo}</if>
-          </when>
-          <when test="searchPeriodType == 'CANCEL'">
-            <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND P.CANCEL_DATE &gt;= #{searchCreatedAtFrom}</if>
-            <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND P.CANCEL_DATE &lt;= #{searchCreatedAtTo}</if>
-          </when>
-          <otherwise>
-            <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND C.CREATED_AT &gt;= #{searchCreatedAtFrom}</if>
-            <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND C.CREATED_AT &lt;= CONCAT(#{searchCreatedAtTo}, ' 23:59:59')</if>
-          </otherwise>
+            <when test="searchPeriodType == 'RECEIPT'">
+                <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND C.RECEIPT_DT &gt;= #{searchCreatedAtFrom}</if>
+                <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND C.RECEIPT_DT &lt;= #{searchCreatedAtTo}</if>
+            </when>
+            <when test="searchPeriodType == 'OPEN'">
+                <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND P.OPEN_DATE &gt;= #{searchCreatedAtFrom}</if>
+                <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND P.OPEN_DATE &lt;= #{searchCreatedAtTo}</if>
+            </when>
+            <when test="searchPeriodType == 'JOIN'">
+                <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND C.JOIN_DATE &gt;= #{searchCreatedAtFrom}</if>
+                <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND C.JOIN_DATE &lt;= #{searchCreatedAtTo}</if>
+            </when>
+            <when test="searchPeriodType == 'CANCEL'">
+                <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND P.CANCEL_DATE &gt;= #{searchCreatedAtFrom}</if>
+                <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND P.CANCEL_DATE &lt;= #{searchCreatedAtTo}</if>
+            </when>
+            <otherwise>
+                <if test="searchCreatedAtFrom != null and searchCreatedAtFrom != ''">AND C.CREATED_AT &gt;= #{searchCreatedAtFrom}</if>
+                <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND C.CREATED_AT &lt;= CONCAT(#{searchCreatedAtTo}, ' 23:59:59')</if>
+            </otherwise>
         </choose>
         ORDER BY C.CREATED_AT DESC
         <if test="limit != null and limit > 0">LIMIT #{limit}</if>
@@ -129,86 +135,88 @@
 
     <select id="selectCustomerById" resultType="com.sys.managesys.common.dto.CustomerDto">
         SELECT
-            C.CUST_ID AS custId,
-            C.STATUS AS status,
-            C.CUST_NAME AS custName,
-            C.REP_NAME AS repName,
-            C.CUST_TYPE AS custType,
-            C.CUST_KIND AS custKind,
-            C.SSN_ENC AS ssnEnc,
-            C.BIZ_NO AS bizNo,
-            C.CORP_NO AS corpNo,
-            C.FOREIGNER_REG_NO AS foreignerRegNo,
-            C.ZIP_CODE AS zipCode,
-            C.ADDR AS addr,
-            C.ADDR_DETAIL AS addrDetail,
-            C.TEL_NO AS telNo,
-            C.HP_NO AS hpNo,
-            C.HP_CARRIER AS hpCarrier,
-            C.EMAIL AS email,
-            C.CUST_AUTH_TYPE AS custAuthType,
-            C.CUST_AUTH_VAL AS custAuthVal,
-            C.COUNSELOR_NAME AS counselorName,
-            C.DEPT_ID AS deptId,
-            C.ASSIGNED_USER_ID AS assignedUserId,
-            C.REMARK AS remark,
-            C.VOUCHER_RETURN_YN AS voucherReturnYn,
-            C.INSTALL_SCHED_DT AS installSchedDt,
-            C.RECEIPT_DT AS receiptDate,
-            C.CANCELL_DT AS cancellationDate,
-            C.JOIN_DATE AS authenticatedDate,
-            C.USE_YN AS useYn,
-            C.CREATOR_ID AS creatorId,
-            C.CREATED_AT AS createdAt,
-            C.UPDATED_AT AS updatedAt
+        C.CUST_ID AS custId,
+        C.STATUS AS status,
+        C.CUST_NAME AS custName,
+        C.REP_NAME AS repName,
+        C.CUST_TYPE AS custType,
+        C.CUST_KIND AS custKind,
+        C.SSN_ENC AS ssnEnc,
+        C.BIZ_NO AS bizNo,
+        C.CORP_NO AS corpNo,
+        C.FOREIGNER_REG_NO AS foreignerRegNo,
+        C.ZIP_CODE AS zipCode,
+        C.ADDR AS addr,
+        C.ADDR_DETAIL AS addrDetail,
+        C.TEL_NO AS telNo,
+        C.HP_NO AS hpNo,
+        C.HP_CARRIER AS hpCarrier,
+        C.EMAIL AS email,
+        C.CUST_AUTH_TYPE AS custAuthType,
+        C.CUST_AUTH_VAL AS custAuthVal,
+        C.COUNSELOR_NAME AS counselorName,
+        C.DEPT_ID AS deptId,
+        C.ASSIGNED_USER_ID AS assignedUserId,
+        C.REMARK AS remark,
+        C.VOUCHER_RETURN_YN AS voucherReturnYn,
+        C.INSTALL_SCHED_DT AS installSchedDt,
+        C.OPEN_DATE AS openDate,
+        C.RECEIPT_DT AS receiptDate,
+        C.CANCELL_DT AS cancellationDate,
+        C.JOIN_DATE AS authenticatedDate,
+        C.USE_YN AS useYn,
+        C.CREATOR_ID AS creatorId,
+        C.CREATED_AT AS createdAt,
+        C.UPDATED_AT AS updatedAt
         FROM TB_CUSTOMER C
         WHERE C.CUST_ID = #{custId} AND C.USE_YN = 'Y'
     </select>
 
     <insert id="insertCustomer" parameterType="com.sys.managesys.common.dto.CustomerDto" useGeneratedKeys="true" keyProperty="custId" keyColumn="CUST_ID">
         INSERT INTO TB_CUSTOMER (
-            STATUS, CUST_NAME, REP_NAME, CUST_TYPE, CUST_KIND, SSN_ENC, BIZ_NO, CORP_NO, FOREIGNER_REG_NO,
-            ZIP_CODE, ADDR, ADDR_DETAIL, TEL_NO, HP_NO, HP_CARRIER, EMAIL,
-            CUST_AUTH_TYPE, CUST_AUTH_VAL, COUNSELOR_NAME, DEPT_ID, ASSIGNED_USER_ID, REMARK, VOUCHER_RETURN_YN, INSTALL_SCHED_DT, RECEIPT_DT, CANCELL_DT, JOIN_DATE, USE_YN, CREATOR_ID
+        STATUS, CUST_NAME, REP_NAME, CUST_TYPE, CUST_KIND, SSN_ENC, BIZ_NO, CORP_NO, FOREIGNER_REG_NO,
+        ZIP_CODE, ADDR, ADDR_DETAIL, TEL_NO, HP_NO, HP_CARRIER, EMAIL,
+        CUST_AUTH_TYPE, CUST_AUTH_VAL, COUNSELOR_NAME, DEPT_ID, ASSIGNED_USER_ID, REMARK, VOUCHER_RETURN_YN, INSTALL_SCHED_DT, OPEN_DATE, RECEIPT_DT, CANCELL_DT, JOIN_DATE, USE_YN, CREATOR_ID
         ) VALUES (
-            COALESCE(#{status}, 'RECEIPT'), #{custName}, #{repName}, #{custType}, COALESCE(#{custKind}, 'INDIVIDUAL'),
-            #{ssnEnc}, #{bizNo}, #{corpNo}, #{foreignerRegNo}, #{zipCode}, #{addr}, #{addrDetail},
-            #{telNo}, #{hpNo}, #{hpCarrier}, #{email}, #{custAuthType}, #{custAuthVal},
-            #{counselorName}, #{deptId}, #{assignedUserId}, #{remark}, COALESCE(#{voucherReturnYn}, 'N'), #{installSchedDt}, #{receiptDate}, #{cancellationDate}, #{authenticatedDate}, COALESCE(#{useYn}, 'Y'), #{creatorId}
+        COALESCE(#{status}, 'RECEIPT'), #{custName}, #{repName}, #{custType}, COALESCE(#{custKind}, 'INDIVIDUAL'),
+        #{ssnEnc}, #{bizNo}, #{corpNo}, #{foreignerRegNo}, #{zipCode}, #{addr}, #{addrDetail},
+        #{telNo}, #{hpNo}, #{hpCarrier}, #{email}, #{custAuthType}, #{custAuthVal},
+        #{counselorName}, #{deptId}, #{assignedUserId}, #{remark}, COALESCE(#{voucherReturnYn}, 'N'), #{installSchedDt}, #{openDate}, #{receiptDate}, #{cancellationDate}, #{authenticatedDate}, COALESCE(#{useYn}, 'Y'), #{creatorId}
         )
     </insert>
 
     <update id="updateCustomer" parameterType="com.sys.managesys.common.dto.CustomerDto">
         UPDATE TB_CUSTOMER SET
-            STATUS = #{status},
-            CUST_NAME = #{custName},
-            REP_NAME = #{repName},
-            CUST_TYPE = #{custType},
-            CUST_KIND = COALESCE(#{custKind}, 'INDIVIDUAL'),
-            SSN_ENC = #{ssnEnc},
-            BIZ_NO = #{bizNo},
-            CORP_NO = #{corpNo},
-            FOREIGNER_REG_NO = #{foreignerRegNo},
-            ZIP_CODE = #{zipCode},
-            ADDR = #{addr},
-            ADDR_DETAIL = #{addrDetail},
-            TEL_NO = #{telNo},
-            HP_NO = #{hpNo},
-            HP_CARRIER = #{hpCarrier},
-            EMAIL = #{email},
-            CUST_AUTH_TYPE = #{custAuthType},
-            CUST_AUTH_VAL = #{custAuthVal},
-            COUNSELOR_NAME = #{counselorName},
-            DEPT_ID = #{deptId},
-            ASSIGNED_USER_ID = #{assignedUserId},
-            REMARK = #{remark},
-            VOUCHER_RETURN_YN = COALESCE(#{voucherReturnYn}, 'N'),
-            INSTALL_SCHED_DT = #{openDate},
-            RECEIPT_DT = #{receiptDate},
-            CANCELL_DT = #{cancellationDate},
-            JOIN_DATE = #{authenticatedDate},
-            USE_YN = COALESCE(#{useYn}, 'Y'),
-            UPDATED_AT = CURRENT_TIMESTAMP
+        STATUS = #{status},
+        CUST_NAME = #{custName},
+        REP_NAME = #{repName},
+        CUST_TYPE = #{custType},
+        CUST_KIND = COALESCE(#{custKind}, 'INDIVIDUAL'),
+        SSN_ENC = #{ssnEnc},
+        BIZ_NO = #{bizNo},
+        CORP_NO = #{corpNo},
+        FOREIGNER_REG_NO = #{foreignerRegNo},
+        ZIP_CODE = #{zipCode},
+        ADDR = #{addr},
+        ADDR_DETAIL = #{addrDetail},
+        TEL_NO = #{telNo},
+        HP_NO = #{hpNo},
+        HP_CARRIER = #{hpCarrier},
+        EMAIL = #{email},
+        CUST_AUTH_TYPE = #{custAuthType},
+        CUST_AUTH_VAL = #{custAuthVal},
+        COUNSELOR_NAME = #{counselorName},
+        DEPT_ID = #{deptId},
+        ASSIGNED_USER_ID = #{assignedUserId},
+        REMARK = #{remark},
+        VOUCHER_RETURN_YN = COALESCE(#{voucherReturnYn}, 'N'),
+        INSTALL_SCHED_DT = #{installSchedDt},
+        OPEN_DATE = #{openDate},
+        RECEIPT_DT = #{receiptDate},
+        CANCELL_DT = #{cancellationDate},
+        JOIN_DATE = #{authenticatedDate},
+        USE_YN = COALESCE(#{useYn}, 'Y'),
+        UPDATED_AT = CURRENT_TIMESTAMP
         WHERE CUST_ID = #{custId}
     </update>
 
@@ -218,10 +226,10 @@
 
     <select id="selectProductsByCustId" resultType="com.sys.managesys.common.dto.CustProductDto">
         SELECT PROD_ID AS prodId, CUST_ID AS custId, COMP_NAME AS compName, PROD_GB AS prodGb,
-               REGION_NAME AS regionName, SUBSCRIPTION_NO AS subscription_no, PROD_NAME AS prodName, PROD_OPT AS prodOpt,
-               CONTRACT_PERIOD AS contractPeriod, STB_TYPE AS stbType, VAS_NAME AS vasName, LINE_COUNT AS lineCount,
-               OPEN_DATE AS openDate, CANCEL_DATE AS cancelDate, OPEN_STATUS AS openStatus,
-               REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
+        REGION_NAME AS regionName, SUBSCRIPTION_NO AS subscription_no, PROD_NAME AS prodName, PROD_OPT AS prodOpt,
+        CONTRACT_PERIOD AS contractPeriod, STB_TYPE AS stbType, VAS_NAME AS vasName, LINE_COUNT AS lineCount,
+        OPEN_DATE AS openDate, CANCEL_DATE AS cancelDate, OPEN_STATUS AS openStatus,
+        REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
         FROM TB_CUST_PRODUCT
         WHERE CUST_ID = #{custId} AND (USE_YN IS NULL OR USE_YN = 'Y')
         ORDER BY PROD_ID
@@ -229,18 +237,18 @@
 
     <select id="selectPaymentByCustId" resultType="com.sys.managesys.common.dto.CustPaymentDto">
         SELECT CUST_ID AS custId, PAY_METHOD AS payMethod, DISCOUNT_TYPE AS discountType, BILL_TYPE AS billType,
-               BANK_CARD_NAME AS bankCardName, ACCOUNT_CARD_NO AS accountCardNo, ACCOUNT_HOLDER AS accountHolder,
-               RELATION_WITH_CUST AS relationWithCust, HOLDER_SSN_ENC AS holderSsnEnc, IS_SAME_AS_CUST AS isSameAsCust,
-               REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
+        BANK_CARD_NAME AS bankCardName, ACCOUNT_CARD_NO AS accountCardNo, ACCOUNT_HOLDER AS accountHolder,
+        RELATION_WITH_CUST AS relationWithCust, HOLDER_SSN_ENC AS holderSsnEnc, IS_SAME_AS_CUST AS isSameAsCust,
+        REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
         FROM TB_CUST_PAYMENT
         WHERE CUST_ID = #{custId}
     </select>
 
     <select id="selectGiftsByCustId" resultType="com.sys.managesys.common.dto.CustGiftDto">
         SELECT CUST_ID AS custId, GIFT_GB AS giftGb, GIFT_NAME AS giftName, GIFT_AMOUNT AS giftAmount, ADD_DEPOSIT_AMOUNT AS addDepositAmount,
-               PAY_SCHED_DATE AS paySchedDate, PAY_DONE_DATE AS payDoneDate, PAY_SOURCE AS paySource,
-               BANK_NAME AS bankName, ACCOUNT_NO AS accountNo, ACCOUNT_HOLDER AS accountHolder, HOLDER_SSN_ENC AS holderSsnEnc,
-               IS_SAME_AS_BANK AS isSameAsBank, REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
+        PAY_SCHED_DATE AS paySchedDate, PAY_DONE_DATE AS payDoneDate, PAY_SOURCE AS paySource,
+        BANK_NAME AS bankName, ACCOUNT_NO AS accountNo, ACCOUNT_HOLDER AS accountHolder, HOLDER_SSN_ENC AS holderSsnEnc,
+        IS_SAME_AS_BANK AS isSameAsBank, REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
         FROM TB_CUST_GIFT
         WHERE CUST_ID = #{custId} AND (USE_YN IS NULL OR USE_YN = 'Y')
         ORDER BY GIFT_ID
@@ -248,8 +256,8 @@
 
     <select id="selectMnpsByCustId" resultType="com.sys.managesys.common.dto.CustMnpDto">
         SELECT CUST_ID AS custId, IS_SAME_AS_CUST AS isSameAsCust, MNP_TEL_NO AS mnpTelNo, OWNER_NAME AS ownerName,
-               OWNER_SSN_ENC AS ownerSsnEnc, CONTACT_NO AS contactNo, ISSUE_DATE AS issueDate, PREV_CARRIER AS prevCarrier,
-               MNP_MEMO AS mnpMemo, REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
+        OWNER_SSN_ENC AS ownerSsnEnc, CONTACT_NO AS contactNo, ISSUE_DATE AS issueDate, PREV_CARRIER AS prevCarrier,
+        MNP_MEMO AS mnpMemo, REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
         FROM TB_CUST_MNP
         WHERE CUST_ID = #{custId} AND (USE_YN IS NULL OR USE_YN = 'Y')
         ORDER BY MNP_ID
@@ -282,4 +290,24 @@
 
     <!-- 고객 삭제: TB_CUSTOMER 삭제 시 FK ON DELETE CASCADE로 TB_CUST_PRODUCT, TB_CUST_GIFT, TB_CUST_PAYMENT, TB_CUST_MNP 연쇄 삭제 -->
     <delete id="deleteByCustId">DELETE FROM TB_CUSTOMER WHERE CUST_ID = #{custId}</delete>
+
+    <!-- 그리드 인라인 편집용 개별 필드 업데이트 -->
+    <update id="quickUpdateSubscriptionNo">
+        UPDATE TB_CUST_PRODUCT SET SUBSCRIPTION_NO = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE CUST_ID = #{custId} AND PROD_GB = 'GENERAL' LIMIT 1
+    </update>
+    <update id="quickUpdateOpenDate">
+        UPDATE TB_CUST_PRODUCT SET OPEN_DATE = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE CUST_ID = #{custId} AND (USE_YN IS NULL OR USE_YN = 'Y')
+        ORDER BY PROD_ID ASC LIMIT 1
+    </update>
+    <update id="quickUpdateStatus">
+        UPDATE TB_CUST_PRODUCT SET OPEN_STATUS = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE CUST_ID = #{custId} AND (USE_YN IS NULL OR USE_YN = 'Y')
+        ORDER BY PROD_ID ASC LIMIT 1
+    </update>
+    <update id="quickUpdatePayDone">
+        UPDATE TB_CUST_GIFT SET PAY_DONE_DATE = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
+        WHERE CUST_ID = #{custId} AND GIFT_GB = 'GENERAL' LIMIT 1
+    </update>
 </mapper>

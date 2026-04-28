@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,10 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {
+        RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
+        RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS
+})
 public class CustomerController {
 
     private final CustomerService customerService;
@@ -81,6 +87,15 @@ public class CustomerController {
     @PutMapping("/update")
     public void updateCustomer(@RequestBody CustomerRegisterRequest request) {
         customerService.update(request, getCurrentUser());
+    }
+
+
+    @PatchMapping("/{custId}/quick-update")
+    public ResponseEntity<Void> quickUpdate(@PathVariable Long custId, @RequestBody Map<String, String> body) {
+        String field = body.get("field");
+        String value = body.get("value");
+        customerService.quickUpdate(custId, field, value);
+        return ResponseEntity.ok().build();
     }
 
     /** 고객 삭제 (TB_CUSTOMER 삭제 시 CASCADE로 TB_CUST_PRODUCT, TB_CUST_GIFT, TB_CUST_PAYMENT, TB_CUST_MNP 연쇄 삭제) */

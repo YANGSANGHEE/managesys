@@ -45,4 +45,10 @@ public interface CustomerMapper {
 
     /** 고객 삭제 (TB_CUSTOMER 삭제 시 FK ON DELETE CASCADE로 TB_CUST_* 테이블 연쇄 삭제) */
     int deleteByCustId(@Param("custId") Long custId);
+
+    /** 그리드 인라인 편집용 개별 필드 업데이트 */
+    int quickUpdateSubscriptionNo(@Param("custId") Long custId, @Param("value") String value);
+    int quickUpdateOpenDate(@Param("custId") Long custId, @Param("value") String value);
+    int quickUpdateStatus(@Param("custId") Long custId, @Param("value") String value);
+    int quickUpdatePayDone(@Param("custId") Long custId, @Param("value") String value);
 }

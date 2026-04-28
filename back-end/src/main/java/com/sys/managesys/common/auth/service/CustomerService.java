@@ -3,10 +3,12 @@ package com.sys.managesys.common.auth.service;
 import com.sys.managesys.common.auth.dto.CurrentUserContext;
 import com.sys.managesys.common.dto.*;
 import com.sys.managesys.common.mapper.CustomerMapper;
+import com.sys.managesys.common.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import java.util.List;
 public class CustomerService {
 
     private final CustomerMapper customerMapper;
+    private final UserMapper userMapper;
 
     public List<CustomerDto> findCustomers(CustomerDto searchDto) {
         return customerMapper.selectCustomerList(searchDto);
@@ -43,8 +46,12 @@ public class CustomerService {
         boolean isAdmin = "admin".equalsIgnoreCase(user.getLoginId()) || "ADMIN".equalsIgnoreCase(user.getUserRole());
         if (isAdmin) return true;
         if ("MANAGER".equalsIgnoreCase(user.getUserRole()) && user.getDeptId() != null) {
-            return user.getDeptId().equals(customer.getDeptId());
+            if (customer.getAssignedUserId() == null) return false;
+            // 배정된 사용자의 현재 부서를 TB_USER에서 실시간 조회
+            UserDto assignedUser = userMapper.findByUserId(customer.getAssignedUserId());
+            return assignedUser != null && user.getDeptId().equals(assignedUser.getDeptId());
         }
+        // MEMBER: 본인에게 배정된 고객만 접근
         return user.getUserId() != null && user.getUserId().equals(customer.getAssignedUserId());
     }
 
@@ -175,6 +182,28 @@ public class CustomerService {
             mnp.setCustId(custId);
             mnp.setUseYn(mnp.getUseYn() != null ? mnp.getUseYn() : "Y");
             customerMapper.insertMnp(mnp);
+        }
+    }
+
+
+    @Transactional
+    public void quickUpdate(Long custId, String field, String value) {
+        if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
+        switch (field) {
+            case "subscriptionNo":
+                customerMapper.quickUpdateSubscriptionNo(custId, value);
+                break;
+            case "openDate":
+                customerMapper.quickUpdateOpenDate(custId, value);
+                break;
+            case "status":
+                customerMapper.quickUpdateStatus(custId, value);
+                break;
+            case "payDone":
+                customerMapper.quickUpdatePayDone(custId, value);
+                break;
+            default:
+                throw new IllegalArgumentException("수정 불가능한 필드입니다: " + field);
         }
     }
 

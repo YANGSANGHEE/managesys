@@ -12,6 +12,10 @@
           <input v-model="searchQuery.searchCustName" @keyup.enter="onSearch" placeholder="고객명 입력" />
         </div>
         <div class="input-box">
+          <label>상담원</label>
+          <input v-model="searchQuery.searchCounselorName" @keyup.enter="onSearch" placeholder="상담원 입력" />
+        </div>
+        <div class="input-box">
           <label>통신사</label>
           <select v-model="searchQuery.searchHpCarrier">
             <option value="">전체</option>
@@ -62,11 +66,22 @@
     </section>
 
     <section v-if="isListPage" class="grid-section card">
+      <div class="grid-toolbar">
+        <button
+            type="button"
+            class="btn-grid-save"
+            :disabled="pendingChanges.length === 0"
+            @click="saveGridChanges"
+        >
+          저장{{ pendingChanges.length > 0 ? ` (${pendingChanges.length}건)` : '' }}
+        </button>
+      </div>
       <ag-grid-vue
           class="ag-theme-alpine grid-fill"
           :columnDefs="columnDefs"
           :rowData="rowData"
           :defaultColDef="defaultColDef"
+          :gridOptions="gridOptions"
           :pagination="true"
           :paginationPageSize="pageSize"
           :paginationPageSizeSelector="[10, 20, 30, 50]"
@@ -74,7 +89,9 @@
           :rowHeight="24"
           :headerHeight="28"
           @grid-ready="onGridReady"
-          @row-clicked="onRowClicked"
+          @row-double-clicked="onRowClicked"
+          @cell-value-changed="onCellValueChanged"
+          :context="{ statusCodes: statusCodes, canEdit: canSave }"
       />
     </section>
 
@@ -274,6 +291,11 @@
                 <td><input v-model="form.customer.receiptDate" type="date" placeholder="접수일" /></td>
                 <th>인증일</th>
                 <td><input v-model="form.customer.joinDate" type="date" placeholder="인증일" /></td>
+              </tr>
+              <tr>
+                <th>개통일</th>
+                <td><input v-model="form.customer.openDate" type="date" placeholder="개통일" /></td>
+                <td colspan="2"></td>
               </tr>
               <tr v-if="modalMode === 'detail'">
                 <th>상품권 반환여부</th>
@@ -674,11 +696,11 @@
     * 수정 권한이 없습니다. (관리자/팀장 전용)
   </span>
       </div>
-<!--      <div class="form-page-footer">
-        <button type="button" class="btn-cancel" @click="onFormCancel">목록으로</button>
-        <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
-        <button type="button" class="btn-save" @click="onSaveCustomer">저장</button>
-      </div>-->
+      <!--      <div class="form-page-footer">
+              <button type="button" class="btn-cancel" @click="onFormCancel">목록으로</button>
+              <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
+              <button type="button" class="btn-save" @click="onSaveCustomer">저장</button>
+            </div>-->
     </div>
   </div>
 </template>
@@ -704,18 +726,19 @@ const isListPage = computed(() => !isFormPage.value);
 const authStore = useAuthStore();
 
 const canSave = computed(() => {
-  // authStore.user 객체 내부의 userRole 필드를 확인
   const role = authStore.user?.userRole;
-  return role === 'ADMIN' || role === 'MANAGER';
+  return role === 'ADMIN';
 });
 
 const gridApi = ref(null);
 const rowData = ref([]);
 const totalCount = ref(0);
+const pendingChanges = ref([]); // 그리드 인라인 편집 누적 변경사항
 const pageSize = ref(30);
 
 const searchQuery = ref({
   searchCustName: '',
+  searchCounselorName: '',
   searchStatus: '',
   searchHpCarrier: '',
   searchPeriodType: '',
@@ -918,6 +941,7 @@ function fullAddress(params) {
 // AG Grid: 헤더(컬럼)는 다 나오게 — 컬럼마다 width/minWidth 유지, sizeColumnsToFit() 미사용 → 가로 스크롤로 전부 표시
 const columnDefs = ref([
   { headerName: 'No', valueGetter: 'node?.rowIndex != null ? node.rowIndex + 1 : ""', width: 60, minWidth: 60, suppressFlex: true },
+  { field: 'assignedUserName', headerName: '상담원', sortable: true, width: 90, minWidth: 80, valueFormatter: p => p.value ?? '-' },
   { field: 'custName', headerName: '고객명', sortable: true, filter: true, flex: 1, minWidth: 90 },
   {
     field: 'receiptDate',
@@ -938,27 +962,104 @@ const columnDefs = ref([
   { field: 'prodName', headerName: '상품명', width: 100, minWidth: 80, valueFormatter: p => p.value ?? '-' },
   { field: 'prodType', headerName: '유형', width: 80, minWidth: 60, valueFormatter: p => p.value ?? '-' },
   { field: 'setInfo', headerName: '세트', width: 80, minWidth: 60, valueFormatter: p => p.value ?? '-' },
-  { field: 'subscriptionNo', headerName: '가입번호', width: 100, minWidth: 90, valueGetter: params => params.data?.subscriptionNo ?? '', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
+  { field: 'subscriptionNo', headerName: '가입번호', width: 100, minWidth: 90, editable: params => !!params.context?.canEdit, headerClass: 'editable-header', cellClass: params => params.context?.canEdit ? 'editable-cell' : '', valueGetter: params => params.data?.subscriptionNo ?? '', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
   { field: 'partner', headerName: '협력사', width: 90, minWidth: 70, valueFormatter: () => '더원컴퍼니' },
   { field: 'acquirer', headerName: '유치자', width: 90, minWidth: 70, valueFormatter: () => '더원컴퍼니' },
+  {
+    field: 'openDate',
+    headerName: '개통일',
+    editable: params => !!params.context?.canEdit,
+    headerClass: 'editable-header',
+    cellClass: params => params.context?.canEdit ? 'editable-cell' : '',
+    valueFormatter: p => (p.value ? formatDate(p.value) : '-'),
+    cellEditor: class DateCellEditor {
+      init(params) {
+        this.input = document.createElement('input');
+        this.input.type = 'date';
+        this.input.value = params.value ? params.value.toString().slice(0, 10) : '';
+        this.input.style.cssText = 'width:100%;height:100%;border:none;outline:none;font-size:11px;padding:0 4px;box-sizing:border-box;';
+      }
+      getGui() { return this.input; }
+      getValue() { return this.input.value || null; }
+      afterGuiAttached() { this.input.focus(); this.input.showPicker?.(); }
+      destroy() {}
+    },
+    width: 110,
+    minWidth: 100
+  },
   {
     field: 'statusName',
     headerName: '개통상태',
     width: 90,
     minWidth: 80,
-    valueFormatter: p => p.value ?? p.data?.status ?? '',
+    editable: params => !!params.context?.canEdit,
+    headerClass: 'editable-header',
     cellClass: params => {
-      const v = (params.value || params.data?.status || '').toString();
-      if (v === '개통완료' || v === 'COMPLETED') return 'status-done';
-      if (v === '취소' || v === 'CANCELLED') return 'status-cancel';
-      return '';
+      const v = (params.data?.status || '').toString();
+      const base = params.context?.canEdit ? 'editable-cell' : '';
+      if (v === '개통완료' || v === 'COMPLETED') return [base, 'status-done'].filter(Boolean);
+      if (v === '취소' || v === 'CANCELLED') return [base, 'status-cancel'].filter(Boolean);
+      return base;
+    },
+    cellEditor: class StatusCellEditor {
+      init(params) {
+        this.select = document.createElement('select');
+        this.select.style.cssText = 'width:100%;height:100%;border:none;outline:none;font-size:11px;padding:0 2px;box-sizing:border-box;';
+        const emptyOpt = document.createElement('option');
+        emptyOpt.value = ''; emptyOpt.text = '선택';
+        this.select.appendChild(emptyOpt);
+        (params.context?.statusCodes || []).forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.codeValue; opt.text = c.codeName;
+          if (c.codeValue === params.data?.status) opt.selected = true;
+          this.select.appendChild(opt);
+        });
+        this._params = params;
+      }
+      getGui() { return this.select; }
+      getValue() {
+        const code = this.select.value;
+        // data의 status(코드값)도 동시에 업데이트
+        if (this._params?.data) this._params.data.status = code;
+        const found = (this._params?.context?.statusCodes || []).find(c => c.codeValue === code);
+        return found ? found.codeName : code;
+      }
+      afterGuiAttached() { this.select.focus(); }
+      destroy() {}
+    },
+    valueFormatter: p => p.value ?? '',
+    valueSetter: params => {
+      // statusName 업데이트 + onCellValueChanged에 status(코드값) 전달을 위해 field 재지정
+      params.data.statusName = params.newValue;
+      return true;
     }
   },
   { field: 'gift', headerName: '사은품', width: 80, minWidth: 70, valueFormatter: p => p.value ?? '-' },
   { field: 'amount', headerName: '금액', width: 90, minWidth: 70, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
   { field: 'addDeposit', headerName: '추가사은품', width: 90, minWidth: 80, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
   { field: 'paySource', headerName: '지급처', width: 80, minWidth: 70, valueFormatter: p => p.value ?? '-' },
-  { field: 'payDone', headerName: '지급완료', width: 80, minWidth: 80, valueFormatter: p => (p.value ? formatDate(p.value) : '-') },
+  {
+    field: 'payDone',
+    headerName: '지급완료',
+    width: 100,
+    minWidth: 90,
+    editable: params => !!params.context?.canEdit,
+    headerClass: 'editable-header',
+    cellClass: params => params.context?.canEdit ? 'editable-cell' : '',
+    valueFormatter: p => (p.value ? formatDate(p.value) : '-'),
+    cellEditor: class PayDoneCellEditor {
+      init(params) {
+        this.input = document.createElement('input');
+        this.input.type = 'date';
+        this.input.value = params.value ? params.value.toString().slice(0, 10) : '';
+        this.input.style.cssText = 'width:100%;height:100%;border:none;outline:none;font-size:11px;padding:0 4px;box-sizing:border-box;';
+      }
+      getGui() { return this.input; }
+      getValue() { return this.input.value || null; }
+      afterGuiAttached() { this.input.focus(); this.input.showPicker?.(); }
+      destroy() {}
+    }
+  },
   { field: 'remark', headerName: '최종상담내용', flex: 1, minWidth: 120 },
   {
     colId: 'manage',
@@ -973,22 +1074,62 @@ const columnDefs = ref([
       container.style.alignItems = 'center';
       container.style.height = '100%';
 
-      const delBtn = document.createElement('button');
-      delBtn.innerText = '삭제';
-      delBtn.className = 'btn-table-del';
-      delBtn.onclick = () => onDelete(params.data);
-
-      container.appendChild(delBtn);
+      if (params.context?.canEdit) {
+        const delBtn = document.createElement('button');
+        delBtn.innerText = '삭제';
+        delBtn.className = 'btn-table-del';
+        delBtn.onclick = () => onDelete(params.data);
+        container.appendChild(delBtn);
+      }
       return container;
     }
   }
 ]);
 
 const defaultColDef = { resizable: true, sortable: true };
+const gridOptions = { singleClickEdit: true, stopEditingWhenCellsLoseFocus: true };
 
 const onGridReady = params => {
   gridApi.value = params.api;
-  // 헤더는 다 나오게: sizeColumnsToFit() 사용 안 함 → 컬럼 너비 유지, 가로 스크롤로 전부 표시
+};
+
+const onCellValueChanged = (params) => {
+  const { data, colDef, newValue, oldValue } = params;
+  if (!data?.custId) return;
+  let field = colDef.field;
+  let value = newValue;
+  // statusName 컬럼은 백엔드에 'status' 코드값으로 전송
+  if (field === 'statusName') {
+    field = 'status';
+    value = data.status; // getValue()에서 data.status를 이미 코드값으로 세팅함
+  }
+  const existing = pendingChanges.value.findIndex(p => p.custId === data.custId && p.field === field);
+  if (existing >= 0) {
+    pendingChanges.value[existing] = { custId: data.custId, field, newValue: value, oldValue };
+  } else {
+    pendingChanges.value.push({ custId: data.custId, field, newValue: value, oldValue });
+  }
+};
+
+const saveGridChanges = async () => {
+  if (pendingChanges.value.length === 0) {
+    alert('변경된 내용이 없습니다.');
+    return;
+  }
+  try {
+    await Promise.all(
+        pendingChanges.value.map(({ custId, field, newValue }) =>
+            axios.patch(`/api/customers/${custId}/quick-update`, { field, value: newValue ?? null })
+        )
+    );
+    alert(`${pendingChanges.value.length}건 저장되었습니다.`);
+    pendingChanges.value = [];
+  } catch (e) {
+    const msg = e?.response?.data?.message || e?.response?.statusText || e?.message || '알 수 없는 오류';
+    const status = e?.response?.status || '';
+    console.error('quick-update 실패:', e);
+    alert(`저장 실패 (${status}): ${msg}`);
+  }
 };
 
 const onSearch = async () => {
@@ -1007,6 +1148,7 @@ const onSearch = async () => {
 const resetSearch = () => {
   searchQuery.value = {
     searchCustName: '',
+    searchCounselorName: '',
     searchStatus: '',
     searchHpCarrier: '',
     searchPeriodType: '',
@@ -1137,6 +1279,7 @@ function getEmptyCustomer() {
     status: 'RECEIPT',
     joinDate: '',
     receiptDate: '',
+    openDate: '',
     cancellationDate: '',
     ssn1: '',
     ssn2: '',
@@ -1446,6 +1589,7 @@ function mapDetailToForm(detail) {
   const [ssn1 = '', ssn2 = ''] = (c.ssnEnc || '').includes('-') ? c.ssnEnc.split('-', 2) : [c.ssnEnc?.slice(0, 6) || '', c.ssnEnc?.slice(6) || ''];
   const joinDateStr = c.joinDate ? (typeof c.joinDate === 'string' ? c.joinDate.slice(0, 10) : c.joinDate) : '';
   const receiptDateStr = c.receiptDate ? (typeof c.receiptDate === 'string' ? c.receiptDate.slice(0, 10) : c.receiptDate) : '';
+  const openDateStr = c.openDate ? (typeof c.openDate === 'string' ? c.openDate.slice(0, 10) : c.openDate) : '';
   const cancelDateStr = c.cancellationDate ? (typeof c.cancellationDate === 'string' ? c.cancellationDate.slice(0, 10) : c.cancellationDate) : '';
   form.value.customer = {
     custId: c.custId,
@@ -1455,6 +1599,7 @@ function mapDetailToForm(detail) {
     status: c.status || 'RECEIPT',
     joinDate: joinDateStr,
     receiptDate: receiptDateStr,
+    openDate: openDateStr,
     cancellationDate: cancelDateStr,
     ssn1, ssn2,
     bizNo: formatBizNo(c.bizNo || ''),
@@ -1537,6 +1682,11 @@ function mapDetailToForm(detail) {
     else if (raw === 'T0' || raw === 'TPS') productType.value = 'T0';
     else productType.value = 'S0';
     commonRegion.value = products[0].regionName || '';
+    // 목록 그리드는 TB_CUST_PRODUCT.OPEN_DATE를 표시하므로 상품의 openDate가 있으면 우선 사용
+    const prodOpenDate = products[0].openDate;
+    if (prodOpenDate) {
+      form.value.customer.openDate = typeof prodOpenDate === 'string' ? prodOpenDate.slice(0, 10) : prodOpenDate;
+    }
     const required = getRequiredRowCount();
     productRows.value = products.slice(0, required).map(p => {
       const cancelVal = p.cancelDate;
@@ -1635,7 +1785,7 @@ function buildRegisterPayload() {
     assignedUserId: c.assignedUserId ?? null,
     remark: (c.remark || '').trim() || null,
     status: c.status || 'RECEIPT',
-    openDate: null,
+    openDate: (c.openDate || '').toString().trim() || null,
     joinDate: (c.joinDate || '').toString().trim() || null,
     receiptDate: (c.receiptDate || '').toString().trim() || null,
     cancellationDate: (c.cancellationDate || '').toString().trim() || null,
@@ -1673,6 +1823,7 @@ function buildRegisterPayload() {
           subscriptionNo: (r.subscriptionNo || '').trim() || null,
           prodName: r.product || null,
           prodOpt: r.productOption || null,
+          openDate: (form.value.customer.openDate || '').toString().trim() || null,
           openStatus: (r.openStatus || '').trim() || null,
           cancelDate: (r.cancelDate || '').toString().trim() || null,
           stbType: r.setTop || null,
@@ -1841,6 +1992,7 @@ function fillAllFieldsTestData() {
   c.custAuthVal = '01012345678';
   c.remark = '전체항목 테스트 비고';
   c.voucherReturnYn = 'Y';
+  c.openDate = new Date().toISOString().slice(0, 10);
 
   const pay = form.value.payment;
   pay.payMethod = 'BANK';
@@ -1893,7 +2045,7 @@ function fillAllFieldsTestData() {
     subscriptionNo: 'SUB20250115001',
     product: '5G 프리미엄',
     productOption: '100GB',
-    openStatus: 'RECEIPT',
+    openStatus: statusCodes.value[0]?.codeValue || 'RECEIPT',
     cancelDate: '',
     setTop: '일반',
     vas: '넷플릭스'
@@ -1937,23 +2089,11 @@ async function onSaveCustomer() {
   }
   try {
     const payload = buildRegisterPayload();
-    const formData = new FormData();
-
-    // JSON 데이터를 Blob으로 추가 (백엔드 @RequestPart 대응)
-    formData.append('customerData', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
-
-    // 첨부파일 추가
-    selectedFiles.value.forEach(file => {
-      formData.append('files', file);
-    });
-
-    const config = { headers: { 'Content-Type': 'multipart/form-data' } };
-
     if (modalMode.value === 'detail') {
-      await axios.put('/api/customers/update', formData, config);
+      await axios.put('/api/customers/update', payload);
       alert('수정되었습니다.');
     } else {
-      await axios.post('/api/customers/register', formData, config);
+      await axios.post('/api/customers/register', payload);
       alert('등록되었습니다.');
     }
 
@@ -2230,6 +2370,30 @@ button {
   overflow: hidden;
 }
 
+.grid-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 4px 0 6px;
+}
+
+.btn-grid-save {
+  height: 26px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-grid-save:hover { background: #1d4ed8; }
+.btn-grid-save:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
 /* AG Grid가 높이를 받아 리스트가 보이도록 최소 높이 보장 */
 .grid-fill {
   width: 100%;
@@ -2305,6 +2469,18 @@ button {
 
 :deep(.ag-theme-alpine .ag-header-cell-label) { font-size: 11px; font-weight: 700; }
 :deep(.ag-theme-alpine .ag-cell) { line-height: 24px; }
+:deep(.ag-theme-alpine .ag-cell.editable-cell) {
+  cursor: text;
+  background-color: #fffbeb;
+  border-left: 2px solid #f59e0b !important;
+}
+:deep(.ag-theme-alpine .ag-cell.editable-cell:hover) {
+  background-color: #fef3c7;
+}
+:deep(.ag-theme-alpine .ag-header-cell.editable-header .ag-header-cell-text) {
+  color: #dc2626;
+  font-weight: 700;
+}
 :deep(.ag-theme-alpine .ag-paging-panel) { font-size: 11px; height: 28px; }
 
 :deep(.status-done) {

@@ -66,6 +66,7 @@ public class CustomerDto {
     private String paySource;
     private LocalDate payDone;
     private String searchCustName;
+    private String searchCounselorName;
     private String searchStatus;
     private String searchHpCarrier;
     private String searchCreatedAtFrom;

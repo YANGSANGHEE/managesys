@@ -40,12 +40,14 @@ public class SecurityConfig {
 
                 /* 로그인·정적리소스·로그아웃 비인증 허용, /api/** 는 인증 필요 */
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()            // 모든 OPTIONS 요청은 인증 없이 허용 (CORS Preflight 해결)
                         .requestMatchers("/api/auth/login", "/api/auth/logout", "/error").permitAll()
                         .requestMatchers("/", "/index.html", "/favicon.ico", "/assets/**", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll()
                 )
+
                 /* 미인증(토큰 없음/만료) → 401, 권한 부족 → 403 */
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
@@ -97,7 +99,7 @@ public class SecurityConfig {
                 "http://localhost:8080",
                 "http://localhost:5173",
                 "http://localhost:8085"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
 
