@@ -10,6 +10,17 @@
         </encoder>
     </appender>
 
+    <appender name="FILE"
+              class="ch.qos.logback.core.FileAppender">
+        <file>logs/app.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss} %-5level %logger - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
     <!-- log4jdbc 핵심 로그 -->
     <logger name="jdbc.sqlonly" level="OFF"/>
     <logger name="jdbc.sqltiming" level="DEBUG"/>
@@ -23,6 +34,7 @@
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </root>
 
 </configuration>

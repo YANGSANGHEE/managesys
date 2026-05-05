@@ -94,7 +94,9 @@ public class CustomerController {
     public ResponseEntity<Void> quickUpdate(@PathVariable Long custId, @RequestBody Map<String, String> body) {
         String field = body.get("field");
         String value = body.get("value");
-        customerService.quickUpdate(custId, field, value);
+        String prodIdStr = body.get("prodId");
+        Long prodId = (prodIdStr == null || prodIdStr.isBlank()) ? null : Long.valueOf(prodIdStr);
+        customerService.quickUpdate(custId, prodId, field, value);
         return ResponseEntity.ok().build();
     }
 

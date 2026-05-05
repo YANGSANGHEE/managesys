@@ -90,4 +90,17 @@
           AND CODE_VALUE = #{codeValue}
     </delete>
 
+    <!-- 상품 cascade 매핑 전체 행 (회사→상품→옵션→약정→할인→부가서비스 path) -->
+    <select id="selectProdCascadeRows" resultType="map">
+        SELECT
+            COMPANY_CD  AS companyCd,
+            PROD_CD     AS prodCd,
+            OPT_CD      AS optCd,
+            CONTRACT_CD AS contractCd,
+            DISCOUNT_CD AS discountCd,
+            VAS_CD      AS vasCd
+        FROM TB_PROD_CASCADE_MAP
+        WHERE USE_YN = 'Y'
+    </select>
+
 </mapper>

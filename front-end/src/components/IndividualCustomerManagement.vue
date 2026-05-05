@@ -88,6 +88,7 @@
           :rowSelection="{ mode: 'multiRow', checkboxes: false, enableClickSelection: true }"
           :rowHeight="24"
           :headerHeight="28"
+          :getRowId="getGridRowId"
           @grid-ready="onGridReady"
           @row-double-clicked="onRowClicked"
           @cell-value-changed="onCellValueChanged"
@@ -289,13 +290,18 @@
               <tr>
                 <th>접수일</th>
                 <td><input v-model="form.customer.receiptDate" type="date" placeholder="접수일" /></td>
-                <th>인증일</th>
-                <td><input v-model="form.customer.joinDate" type="date" placeholder="인증일" /></td>
-              </tr>
-              <tr>
                 <th>개통일</th>
                 <td><input v-model="form.customer.openDate" type="date" placeholder="개통일" /></td>
-                <td colspan="2"></td>
+              </tr>
+              <tr>
+                <th>번호이동</th>
+                <td colspan="3">
+                  <label class="toggle-switch">
+                    <input v-model="form.customer.mnpYn" type="checkbox" true-value="Y" false-value="N" />
+                    <span class="toggle-slider"></span>
+                    <span class="toggle-text">{{ form.customer.mnpYn === 'Y' ? '예' : '아니오' }}</span>
+                  </label>
+                </td>
               </tr>
               <tr v-if="modalMode === 'detail'">
                 <th>상품권 반환여부</th>
@@ -495,7 +501,7 @@
             </table>
           </section>
 
-          <!-- 5. 상품 정보 (구분: 단독 1줄 / DPS 2줄 / TPS 3줄 고정) -->
+          <!-- 5. 상품 정보 (구분: 단독 1줄 / DPS 2줄 / TPS 3줄 / TPS+1~3 = 4·5·6줄) -->
           <section class="reg-section">
             <h4 class="reg-section-title">상품 정보</h4>
             <table class="reg-table product-table">
@@ -525,22 +531,49 @@
                   <div class="product-fields-row">
                     <div class="product-field">
                       <span class="product-field-label">회사</span>
-                      <select v-model="row.company" class="product-company-select">
+                      <select v-model="row.companyCd" @change="onCascadeChange(row, 'company')" class="product-company-select">
                         <option value="">회사 선택</option>
-                        <option v-for="o in companyCodes" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                        <option v-for="o in getCascadeOptions('company')" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                      </select>
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">상품</span>
+                      <select v-model="row.prodCd" @change="onCascadeChange(row, 'prod')" :disabled="!row.companyCd">
+                        <option value="">상품 선택</option>
+                        <option v-for="o in getCascadeOptions('prod', { companyCd: row.companyCd })" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                      </select>
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">옵션</span>
+                      <select v-model="row.optCd" @change="onCascadeChange(row, 'opt')" :disabled="!row.prodCd">
+                        <option value="">옵션 선택</option>
+                        <option v-for="o in getCascadeOptions('opt', { companyCd: row.companyCd, prodCd: row.prodCd })" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                      </select>
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">약정</span>
+                      <select v-model="row.contractCd" @change="onCascadeChange(row, 'contract')" :disabled="!row.optCd">
+                        <option value="">약정 선택</option>
+                        <option v-for="o in getCascadeOptions('contract', { companyCd: row.companyCd, prodCd: row.prodCd, optCd: row.optCd })" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                      </select>
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">할인탭</span>
+                      <select v-model="row.discountCd" @change="onCascadeChange(row, 'discount')" :disabled="!row.contractCd">
+                        <option value="">할인탭 선택</option>
+                        <option v-for="o in getCascadeOptions('discount', { companyCd: row.companyCd, prodCd: row.prodCd, optCd: row.optCd, contractCd: row.contractCd })" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
+                      </select>
+                    </div>
+                    <div class="product-field">
+                      <span class="product-field-label">부가서비스</span>
+                      <select v-model="row.vasCd" @change="onCascadeChange(row, 'vas')" :disabled="!row.discountCd">
+                        <option value="">부가서비스 선택</option>
+                        <option v-for="o in getCascadeOptions('vas', { companyCd: row.companyCd, prodCd: row.prodCd, optCd: row.optCd, contractCd: row.contractCd, discountCd: row.discountCd })" :key="o.codeValue" :value="o.codeValue">{{ o.codeName }}</option>
                       </select>
                     </div>
                     <div class="product-field">
                       <span class="product-field-label">가입번호</span>
                       <input v-model="row.subscriptionNo" type="text" placeholder="가입번호" />
-                    </div>
-                    <div class="product-field">
-                      <span class="product-field-label">상품명</span>
-                      <input v-model="row.product" type="text" placeholder="상품" />
-                    </div>
-                    <div class="product-field">
-                      <span class="product-field-label">상품옵션</span>
-                      <input v-model="row.productOption" type="text" placeholder="상품옵션" />
                     </div>
                     <div class="product-field">
                       <span class="product-field-label">개통상태</span>
@@ -557,74 +590,8 @@
                       <span class="product-field-label">셋탑</span>
                       <input v-model="row.setTop" type="text" placeholder="셋탑박스" />
                     </div>
-                    <div class="product-field">
-                      <span class="product-field-label">부가서비스</span>
-                      <input v-model="row.vas" type="text" placeholder="부가서비스" />
-                    </div>
                   </div>
                 </td>
-              </tr>
-              </tbody>
-            </table>
-          </section>
-
-          <!-- 6. 번호이동 -->
-          <section class="reg-section">
-            <h4 class="reg-section-title">번호이동</h4>
-            <table class="reg-table">
-              <tbody>
-              <tr>
-                <th>위 고객정보와 동일</th>
-                <td>
-                  <label class="check-label">
-                    <input v-model="form.mnp.isSameAsCust" type="checkbox" true-value="Y" false-value="N" />
-                    동일
-                  </label>
-                </td>
-                <th>전화 번호</th>
-                <td><input v-model="form.mnp.mnpTelNo" placeholder="번호이동 전화번호" :readonly="form.mnp.isSameAsCust === 'Y'" /></td>
-              </tr>
-              <tr>
-                <th>명의자</th>
-                <td><input v-model="form.mnp.ownerName" placeholder="명의자 성명" :readonly="form.mnp.isSameAsCust === 'Y'" /></td>
-                <th>{{ isForeignerCustomer ? '외국인 등록번호' : '주민 번호' }}</th>
-                <td>
-                  <template v-if="isForeignerCustomer">
-                    <input
-                        :value="form.mnp.ownerSsn1 + (form.mnp.ownerSsn2 ? '-' + form.mnp.ownerSsn2 : '')"
-                        @input="setMnpOwnerIdNo($event.target.value)"
-                        type="text"
-                        placeholder="123456-7890123"
-                        maxlength="14"
-                        inputmode="numeric"
-                        :readonly="form.mnp.isSameAsCust === 'Y'"
-                    />
-                  </template>
-                  <template v-else>
-                    <div class="input-split input-ssn">
-                      <input v-model="form.mnp.ownerSsn1" type="text" placeholder="앞 6자리" maxlength="6" :readonly="form.mnp.isSameAsCust === 'Y'" />
-                      <span>-</span>
-                      <input v-model="form.mnp.ownerSsn2" type="text" placeholder="뒤 7자리" maxlength="7" :readonly="form.mnp.isSameAsCust === 'Y'" />
-                    </div>
-                  </template>
-                </td>
-              </tr>
-              <tr>
-                <th>연락처</th>
-                <td><input v-model="form.mnp.contactNo" placeholder="연락처" :readonly="form.mnp.isSameAsCust === 'Y'" /></td>
-                <th>발급 일자</th>
-                <td><input v-model="form.mnp.issueDate" type="date" /></td>
-              </tr>
-              <tr>
-                <th>기존 통신사</th>
-                <td>
-                  <select v-model="form.mnp.prevCarrier">
-                    <option value="">선택</option>
-                    <option v-for="c in companyCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
-                  </select>
-                </td>
-                <th>메모</th>
-                <td><input v-model="form.mnp.mnpMemo" placeholder="번호이동 메모" /></td>
               </tr>
               </tbody>
             </table>
@@ -762,6 +729,60 @@ const regionCodes = ref([]);     // REGION_CODE - 지역 선택
 const custTypeCodes = ref([]);   // CUST_TYPE - 고객 종류 (개인, 개인사업자, 법인 등)
 const userRoleCodes = ref([]);   // USER_ROLE - 사용자 권한
 
+// 상품 cascade 트리 (smart-line.kr 기반): 신규등록 화면 회사→상품→옵션→약정→할인탭→부가서비스
+// codes: { PROD_COMPANY:[{codeValue,codeName}], PROD_NAME:[...], ... }
+// rows : [{companyCd, prodCd, optCd, contractCd, discountCd, vasCd}]
+const prodCascade = ref({ codes: {}, rows: [] });
+
+async function loadProdCascade() {
+  try {
+    const res = await axios.get('/api/codes/prod-cascade');
+    const data = res?.data || {};
+    prodCascade.value = {
+      codes: data.codes || {},
+      rows: Array.isArray(data.cascade) ? data.cascade : []
+    };
+  } catch (err) {
+    console.warn('prod cascade 로드 실패:', err?.response?.status, err?.response?.data);
+    prodCascade.value = { codes: {}, rows: [] };
+  }
+}
+
+/** 단계별 옵션: 상위 path가 일치하는 행에서 다음 단계 코드 distinct → codes 그룹과 join 후 정렬 반환
+ *  level: 'company'|'prod'|'opt'|'contract'|'discount'|'vas'
+ *  parentPath: { companyCd, prodCd, optCd, contractCd, discountCd } (선택된 상위 단계까지)
+ */
+function getCascadeOptions(level, parentPath = {}) {
+  const groupMap = {
+    company:  { group: 'PROD_COMPANY',  cd: 'companyCd' },
+    prod:     { group: 'PROD_NAME',     cd: 'prodCd' },
+    opt:      { group: 'PROD_OPT',      cd: 'optCd' },
+    contract: { group: 'PROD_CONTRACT', cd: 'contractCd' },
+    discount: { group: 'PROD_DISCOUNT', cd: 'discountCd' },
+    vas:      { group: 'PROD_VAS',      cd: 'vasCd' }
+  };
+  const meta = groupMap[level];
+  if (!meta) return [];
+  const codes = prodCascade.value.codes[meta.group] || [];
+  // 회사 단계는 모든 회사 (필터 X)
+  if (level === 'company') return codes;
+  // 상위 path 모두 일치하는 cascade 행에서 해당 cd distinct
+  const filterKeys = Object.keys(parentPath);
+  const matched = prodCascade.value.rows.filter(r =>
+      filterKeys.every(k => parentPath[k] != null && String(r[k]) === String(parentPath[k]))
+  );
+  const valid = new Set(matched.map(r => r[meta.cd]).filter(v => v != null && v !== ''));
+  return codes.filter(c => valid.has(c.codeValue));
+}
+
+/** 코드값 → 코드명 (선택 후 텍스트 저장용) */
+function getCascadeName(group, codeValue) {
+  if (!codeValue) return '';
+  const list = prodCascade.value.codes[group] || [];
+  const f = list.find(c => String(c.codeValue) === String(codeValue));
+  return f ? f.codeName : '';
+}
+
 /** axios로 TB_COMMON_CODE 조회 - POST /api/codes/list, body: { groupCode } */
 async function loadCodeList(groupCode) {
   if (!groupCode || !groupCode.trim()) return [];
@@ -790,7 +811,8 @@ async function loadCodes() {
     loadCodeList('HEAD_GIFT'),    // 본사 사은품
     loadCodeList('REGION_CODE'),  // 지역 선택
     loadCodeList('CUST_TYPE'),    // 고객 종류
-    loadCodeList('USER_ROLE')     // 사용자 권한
+    loadCodeList('USER_ROLE'),    // 사용자 권한
+    loadProdCascade()             // 상품 cascade 트리 (코드 + 매핑)
   ]);
   statusCodes.value = status?.length ? status : [
     { codeValue: 'RECEIPT', codeName: '접수' },
@@ -850,14 +872,14 @@ async function loadCodes() {
     { codeValue: 'GYEONGNAM', codeName: '경남' },
     { codeValue: 'JEJU', codeName: '제주' }
   ]);
-  // 고객 종류 (CUST_TYPE) - API 실패 시 폴백
-  custTypeCodes.value = (custType?.length ? custType : [
+  // 고객 종류 (CUST_TYPE) - 외국인(FORN) 항목은 화면에서 제외
+  const rawCustType = (custType?.length ? custType : [
     { codeValue: 'PERS', codeName: '개인' },
     { codeValue: 'BIZP', codeName: '개인사업자' },
     { codeValue: 'CORP', codeName: '법인' },
-    { codeValue: 'MINR', codeName: '미성년자' },
-    { codeValue: 'FORN', codeName: '외국인' }
+    { codeValue: 'MINR', codeName: '미성년자' }
   ]);
+  custTypeCodes.value = rawCustType.filter(c => c.codeValue !== 'FORN');
   userRoleCodes.value = userRole ?? [];
 }
 
@@ -1093,6 +1115,13 @@ const onGridReady = params => {
   gridApi.value = params.api;
 };
 
+// 동일 고객의 여러 상품 행을 구분하기 위한 행 ID 생성
+const getGridRowId = (params) => {
+  const cust = params.data?.custId ?? '';
+  const prod = params.data?.prodId ?? '';
+  return `${cust}_${prod}`;
+};
+
 const onCellValueChanged = (params) => {
   const { data, colDef, newValue, oldValue } = params;
   if (!data?.custId) return;
@@ -1103,11 +1132,13 @@ const onCellValueChanged = (params) => {
     field = 'status';
     value = data.status; // getValue()에서 data.status를 이미 코드값으로 세팅함
   }
-  const existing = pendingChanges.value.findIndex(p => p.custId === data.custId && p.field === field);
+  // 상품 단위 행 키: 같은 고객의 다른 상품도 구분되도록 prodId 포함
+  const prodId = data.prodId ?? null;
+  const existing = pendingChanges.value.findIndex(p => p.custId === data.custId && p.prodId === prodId && p.field === field);
   if (existing >= 0) {
-    pendingChanges.value[existing] = { custId: data.custId, field, newValue: value, oldValue };
+    pendingChanges.value[existing] = { custId: data.custId, prodId, field, newValue: value, oldValue };
   } else {
-    pendingChanges.value.push({ custId: data.custId, field, newValue: value, oldValue });
+    pendingChanges.value.push({ custId: data.custId, prodId, field, newValue: value, oldValue });
   }
 };
 
@@ -1118,8 +1149,12 @@ const saveGridChanges = async () => {
   }
   try {
     await Promise.all(
-        pendingChanges.value.map(({ custId, field, newValue }) =>
-            axios.patch(`/api/customers/${custId}/quick-update`, { field, value: newValue ?? null })
+        pendingChanges.value.map(({ custId, prodId, field, newValue }) =>
+            axios.patch(`/api/customers/${custId}/quick-update`, {
+              field,
+              value: newValue ?? null,
+              prodId: prodId != null ? String(prodId) : null
+            })
         )
     );
     alert(`${pendingChanges.value.length}건 저장되었습니다.`);
@@ -1256,8 +1291,16 @@ const showCustomerModal = ref(false);
 const modalMode = ref('register'); // 'register' | 'detail'
 const counselorOptions = ref([]);
 const selectedCounselorUserId = ref(null);
-// 상품 유형: 단독(S0), DPS(D0), TPS(T0) 만 사용 (TB_COMMON_CODE PROD_COMB_GB 기준)
-const productTypeOptions = [{ codeValue: 'S0', codeName: '단독' }, { codeValue: 'D0', codeName: 'DPS' }, { codeValue: 'T0', codeName: 'TPS' }];
+// 상품 유형: 단독(S0)/DPS(D0)/TPS(T0~T3) 사용 (TB_COMMON_CODE PROD_COMB_GB 기준)
+// T1~T3는 TPS 단계 추가형: 행 수가 4/5/6으로 늘어남
+const productTypeOptions = [
+  { codeValue: 'S0', codeName: '단독' },
+  { codeValue: 'D0', codeName: 'DPS' },
+  { codeValue: 'T0', codeName: 'TPS' },
+  { codeValue: 'T1', codeName: 'TPS+1' },
+  { codeValue: 'T2', codeName: 'TPS+2' },
+  { codeValue: 'T3', codeName: 'TPS+3' }
+];
 const productType = ref('S0');
 const productRows = ref([createEmptyProductRow()]);
 // 지역은 구분 아래 공통 필드로 이동 (상품 단위 X → 고객 단위로 공통 선택)
@@ -1275,7 +1318,7 @@ function getEmptyCustomer() {
   return {
     custName: '',
     repName: '',
-    custType: '',
+    custType: 'PERS',
     status: 'RECEIPT',
     joinDate: '',
     receiptDate: '',
@@ -1299,7 +1342,8 @@ function getEmptyCustomer() {
     deptId: null,
     assignedUserId: null,
     remark: DEFAULT_REMARK_TEXT,
-    voucherReturnYn: 'N'
+    voucherReturnYn: 'N',
+    mnpYn: 'N'
   };
 }
 
@@ -1337,27 +1381,11 @@ function getEmptyGift() {
   };
 }
 
-function getEmptyMnp() {
-  return {
-    isSameAsCust: 'N',
-    mnpTelNo: '',
-    ownerName: '',
-    ownerSsn1: '',
-    ownerSsn2: '',
-    contactNo: '',
-    issueDate: '',
-    prevCarrier: '',
-    mnpMemo: '',
-    remark: ''
-  };
-}
-
 const form = ref({
   customer: getEmptyCustomer(),
   payment: getEmptyPayment(),
   gift: getEmptyGift(),
-  headGift: getEmptyGift(),
-  mnp: getEmptyMnp()
+  headGift: getEmptyGift()
 });
 
 // 동일 정보 적용 체크박스 (납부: 고객→납부, 사은품: 납부→사은품, 번호이동: 고객→번호이동)
@@ -1403,15 +1431,6 @@ function setGiftHolderIdNo(val) {
   }
 }
 
-function setMnpOwnerIdNo(val) {
-  const formatted = formatForeignerRegNo(val);
-  const parts = formatted.split('-');
-  if (form.value.mnp) {
-    form.value.mnp.ownerSsn1 = parts[0] || '';
-    form.value.mnp.ownerSsn2 = parts[1] || '';
-  }
-}
-
 function copyCustomerToPayment() {
   const c = form.value.customer;
   const p = form.value.payment;
@@ -1439,23 +1458,6 @@ function copyPaymentToGift() {
   }
 }
 
-function copyCustomerToMnp() {
-  const c = form.value.customer;
-  const m = form.value.mnp;
-  if (!c || !m) return;
-  m.ownerName = c.custName ?? '';
-  m.mnpTelNo = c.telNo ?? '';
-  m.contactNo = c.hpNo ?? '';
-  if (c.custType === 'FORN') {
-    const parts = (c.foreignerRegNo || '').split('-');
-    m.ownerSsn1 = parts[0]?.trim() ?? '';
-    m.ownerSsn2 = parts[1]?.trim() ?? '';
-  } else {
-    m.ownerSsn1 = c.ssn1 ?? '';
-    m.ownerSsn2 = c.ssn2 ?? '';
-  }
-}
-
 watch(sameAsCustomerForPayment, (checked) => {
   if (checked) copyCustomerToPayment();
 });
@@ -1470,31 +1472,94 @@ watch(() => form.value.payment, () => {
   if (sameAsPaymentForGift.value) copyPaymentToGift();
 }, { deep: true });
 
-watch(() => form.value.mnp?.isSameAsCust, (val) => {
-  if (val === 'Y') copyCustomerToMnp();
+/** 개통일 기준 익주(다음 주) 금요일 (yyyy-MM-dd 반환). 입력이 비어 있거나 잘못되면 '' 반환. */
+function calcNextWeekFriday(openDateStr) {
+  if (!openDateStr) return '';
+  const d = new Date(openDateStr);
+  if (isNaN(d.getTime())) return '';
+  // 일=0, 월=1, ..., 금=5, 토=6 → 다음 주 월요일까지의 일수 (오늘이 월요일이면 +7)
+  const daysToNextMonday = ((1 - d.getDay() + 7) % 7) || 7;
+  const target = new Date(d);
+  target.setDate(d.getDate() + daysToNextMonday + 4); // 다음 주 월요일 + 4일 = 금요일
+  const y = target.getFullYear();
+  const m = String(target.getMonth() + 1).padStart(2, '0');
+  const day = String(target.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// 개통일이 바뀌면 사은품 지급 예정일을 익주 금요일로 자동 세팅
+watch(() => form.value.customer?.openDate, (newOpen) => {
+  const next = calcNextWeekFriday(newOpen);
+  if (next && form.value.gift) form.value.gift.paySchedDate = next;
 });
-watch(() => form.value.customer, () => {
-  if (form.value.mnp?.isSameAsCust === 'Y') copyCustomerToMnp();
-}, { deep: true });
 
 function createEmptyProductRow() {
   return {
+    // cascading select 코드값 (회사/상품/옵션/약정/할인/부가서비스)
+    companyCd: '',
+    prodCd: '',
+    optCd: '',
+    contractCd: '',
+    discountCd: '',
+    vasCd: '',
+    // 표시/저장용 텍스트 (선택 시 자동 채움 - 백엔드 텍스트 컬럼 호환)
     company: '',
-    region: '',
-    subscriptionNo: '',
     product: '',
     productOption: '',
+    contractPeriod: '',
+    discountTab: '',
+    vas: '',
+    // 기존 유지 필드
+    region: '',
+    subscriptionNo: '',
     openStatus: '',
     cancelDate: '',
-    setTop: '',
-    vas: ''
+    setTop: ''
   };
 }
 
+/** cascading 단계에서 상위 변경 시 하위 reset + 텍스트 동기화 */
+function onCascadeChange(row, level) {
+  const setText = (key, group, cd) => { row[key] = getCascadeName(group, cd); };
+  if (level === 'company') {
+    setText('company', 'PROD_COMPANY', row.companyCd);
+    row.prodCd = ''; row.product = '';
+    row.optCd = ''; row.productOption = '';
+    row.contractCd = ''; row.contractPeriod = '';
+    row.discountCd = ''; row.discountTab = '';
+    row.vasCd = ''; row.vas = '';
+  } else if (level === 'prod') {
+    setText('product', 'PROD_NAME', row.prodCd);
+    row.optCd = ''; row.productOption = '';
+    row.contractCd = ''; row.contractPeriod = '';
+    row.discountCd = ''; row.discountTab = '';
+    row.vasCd = ''; row.vas = '';
+  } else if (level === 'opt') {
+    setText('productOption', 'PROD_OPT', row.optCd);
+    row.contractCd = ''; row.contractPeriod = '';
+    row.discountCd = ''; row.discountTab = '';
+    row.vasCd = ''; row.vas = '';
+  } else if (level === 'contract') {
+    setText('contractPeriod', 'PROD_CONTRACT', row.contractCd);
+    row.discountCd = ''; row.discountTab = '';
+    row.vasCd = ''; row.vas = '';
+  } else if (level === 'discount') {
+    setText('discountTab', 'PROD_DISCOUNT', row.discountCd);
+    row.vasCd = ''; row.vas = '';
+  } else if (level === 'vas') {
+    setText('vas', 'PROD_VAS', row.vasCd);
+  }
+}
+
 function getRequiredRowCount() {
+  // 단독/DPS/TPS 기본
   if (productType.value === 'S0') return 1;
   if (productType.value === 'D0') return 2;
   if (productType.value === 'T0') return 3;
+  // TPS+1~3 단계 (행 수 +1씩)
+  if (productType.value === 'T1') return 4;
+  if (productType.value === 'T2') return 5;
+  if (productType.value === 'T3') return 6;
   return 1;
 }
 
@@ -1535,8 +1600,7 @@ async function openCustomerModal() {
     customer: getEmptyCustomer(),
     payment: getEmptyPayment(),
     gift: getEmptyGift(),
-    headGift: getEmptyGift(),
-    mnp: getEmptyMnp()
+    headGift: getEmptyGift()
   };
   productType.value = 'S0';
   productRows.value = [createEmptyProductRow()];
@@ -1680,6 +1744,7 @@ function mapDetailToForm(detail) {
     const raw = (products[0].prodGb || '').trim().toUpperCase();
     if (raw === 'D0' || raw === 'DPS') productType.value = 'D0';
     else if (raw === 'T0' || raw === 'TPS') productType.value = 'T0';
+    else if (raw === 'T1' || raw === 'T2' || raw === 'T3') productType.value = raw;
     else productType.value = 'S0';
     commonRegion.value = products[0].regionName || '';
     // 목록 그리드는 TB_CUST_PRODUCT.OPEN_DATE를 표시하므로 상품의 openDate가 있으면 우선 사용
@@ -1709,20 +1774,7 @@ function mapDetailToForm(detail) {
     productRows.value = [createEmptyProductRow()];
     commonRegion.value = '';
   }
-  const mnp0 = (detail.mnps && detail.mnps[0]) || {};
-  const [mnpSsn1, mnpSsn2] = splitSsn(mnp0.ownerSsnEnc);
-  form.value.mnp = {
-    isSameAsCust: mnp0.isSameAsCust || 'N',
-    mnpTelNo: mnp0.mnpTelNo || '',
-    ownerName: mnp0.ownerName || '',
-    ownerSsn1: mnpSsn1,
-    ownerSsn2: mnpSsn2,
-    contactNo: mnp0.contactNo || '',
-    issueDate: mnp0.issueDate || '',
-    prevCarrier: mnp0.prevCarrier || '',
-    mnpMemo: mnp0.mnpMemo || '',
-    remark: mnp0.remark || ''
-  };
+  form.value.customer.mnpYn = (detail.mnps && detail.mnps.length > 0) ? 'Y' : 'N';
   // 기존 첨부파일 목록 저장
   // existingFiles.value = detail.attachments || [];
   existingFiles.value = detail['attachments'] || detail['fileList'] || [];
@@ -1796,7 +1848,6 @@ function buildRegisterPayload() {
   const pay = form.value.payment;
   const giftForm = form.value.gift;
   const headForm = form.value.headGift;
-  const mnpForm = form.value.mnp;
   return {
     customer: customerPayload,
     voucherReturnYn: customerPayload.voucherReturnYn,
@@ -1823,16 +1874,35 @@ function buildRegisterPayload() {
           subscriptionNo: (r.subscriptionNo || '').trim() || null,
           prodName: r.product || null,
           prodOpt: r.productOption || null,
+          contractPeriod: r.contractPeriod || null,
+          discountTab: r.discountTab || null,
           openDate: (form.value.customer.openDate || '').toString().trim() || null,
           openStatus: (r.openStatus || '').trim() || null,
           cancelDate: (r.cancelDate || '').toString().trim() || null,
           stbType: r.setTop || null,
           vasName: r.vas || null
         })),
-    mnp: {
-      ...mnpForm,
-      ownerSsnEnc: joinSsn(mnpForm.ownerSsn1, mnpForm.ownerSsn2) || null
-    }
+    mnp: form.value.customer.mnpYn === 'Y' ? buildMnpFromCustomer() : null
+  };
+}
+
+/** 토글 ON 시 고객 정보를 그대로 번호이동(TB_CUST_MNP) 마커 row에 복사 */
+function buildMnpFromCustomer() {
+  const c = form.value.customer;
+  const ownerSsnEnc = c.custType === 'FORN'
+      ? ((c.foreignerRegNo || '').trim() || null)
+      : (joinSsn(c.ssn1, c.ssn2) || null);
+  return {
+    isSameAsCust: 'Y',
+    mnpTelNo: c.telNo || null,
+    ownerName: c.custName || null,
+    ownerSsnEnc,
+    contactNo: c.hpNo || null,
+    issueDate: null,
+    prevCarrier: c.hpCarrier || null,
+    mnpMemo: null,
+    remark: null,
+    useYn: 'Y'
   };
 }
 
@@ -1941,18 +2011,6 @@ function validateFormats() {
     }
   }
 
-  // 번호이동 - 명의자 주민/외국인
-  const mnp = form.value.mnp;
-  if (mnp && (mnp.ownerSsn1 || mnp.ownerSsn2)) {
-    if (isForeigner) {
-      const combined = digitsOnly(mnp.ownerSsn1) + digitsOnly(mnp.ownerSsn2);
-      if (combined.length !== 13) return '번호이동의 외국인 등록번호는 숫자 13자리(123456-7890123 형식)로 입력해주세요.';
-    } else {
-      if (!/^\d{6}$/.test(digitsOnly(mnp.ownerSsn1))) return '번호이동 주민번호 앞 6자리를 숫자로 입력해주세요.';
-      if (!/^\d{7}$/.test(digitsOnly(mnp.ownerSsn2))) return '번호이동 주민번호 뒤 7자리를 숫자로 입력해주세요.';
-    }
-  }
-
   // 계좌번호: 숫자만, 1~20자리 (입력된 경우만)
   if (pay?.accountCardNo?.trim()) {
     const d = digitsOnly(pay.accountCardNo);
@@ -2051,17 +2109,7 @@ function fillAllFieldsTestData() {
     vas: '넷플릭스'
   }];
 
-  const mnp = form.value.mnp;
-  mnp.isSameAsCust = 'Y';
-  mnp.mnpTelNo = '010-1234-5678';
-  mnp.ownerName = '전체항목테스트고객';
-  mnp.ownerSsn1 = '900101';
-  mnp.ownerSsn2 = '1234567';
-  mnp.contactNo = '010-1234-5678';
-  mnp.issueDate = '2025-01-25';
-  mnp.prevCarrier = 'KT';
-  mnp.mnpMemo = '번호이동 테스트 메모';
-  mnp.remark = '번호이동 비고';
+  c.mnpYn = 'Y';
 
   alert('테스트 데이터가 채워졌습니다. 저장 버튼을 눌러 등록하세요.');
 }
@@ -2916,6 +2964,58 @@ button {
 
 .check-label input { width: auto; }
 .check-label.same-as-check { margin-left: 10px; white-space: nowrap; }
+
+/* 번호이동 토글 스위치 */
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 11px;
+  font-weight: 500;
+}
+.toggle-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 18px;
+  background: #d1d5db;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: #2563eb;
+}
+.toggle-switch input:checked + .toggle-slider::after {
+  transform: translateX(18px);
+}
+.toggle-switch input:focus-visible + .toggle-slider {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+.toggle-switch:hover .toggle-slider { filter: brightness(0.95); }
+.toggle-text { color: #374151; min-width: 30px; }
 
 .form-page-footer {
   padding: 8px 12px;

@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface CommonCodeMapper {
@@ -25,4 +26,7 @@ public interface CommonCodeMapper {
     int insertCode(CommonCodeDto dto);
     int updateCode(CommonCodeDto dto);
     int deleteCode(@Param("groupCode") String groupCode, @Param("codeValue") String codeValue);
+
+    /** 상품 cascade 매핑 전체 행 (TB_PROD_CASCADE_MAP) */
+    List<Map<String, Object>> selectProdCascadeRows();
 }

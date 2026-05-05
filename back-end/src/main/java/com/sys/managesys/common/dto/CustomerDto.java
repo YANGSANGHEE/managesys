@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CustomerDto {
     private Long custId;
+    private Long prodId; // 리스트 행이 상품 단위로 분리되므로 행 식별용
     private String status;
     private String custName;
     private String repName;

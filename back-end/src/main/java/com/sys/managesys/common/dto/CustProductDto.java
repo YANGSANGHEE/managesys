@@ -19,6 +19,7 @@ public class CustProductDto {
     private String contractPeriod;
     private String stbType;
     private String vasName;
+    private String discountTab;
     private Integer lineCount;
     private String remark;
     private String useYn;

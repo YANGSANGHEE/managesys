@@ -8,6 +8,7 @@
     <select id="selectCustomerList" parameterType="com.sys.managesys.common.dto.CustomerDto" resultType="com.sys.managesys.common.dto.CustomerDto">
         SELECT
         C.CUST_ID AS custId,
+        P.PROD_ID AS prodId,
         P.OPEN_STATUS AS status,
         P.OPEN_DATE AS openDate,
         C.RECEIPT_DT AS receiptDate,
@@ -50,17 +51,9 @@
         FROM TB_CUSTOMER C
         LEFT JOIN TB_USER CREATOR ON C.CREATOR_ID = CREATOR.USER_ID
         LEFT JOIN TB_USER ASSIGNED ON C.ASSIGNED_USER_ID = ASSIGNED.USER_ID
-        LEFT JOIN (
-        SELECT P1.CUST_ID, P1.PROD_NAME, P1.PROD_GB, P1.STB_TYPE, P1.CONTRACT_PERIOD, P1.SUBSCRIPTION_NO, P1.OPEN_DATE, P1.CANCEL_DATE, P1.OPEN_STATUS
-        FROM TB_CUST_PRODUCT P1
-        INNER JOIN (
-        SELECT CUST_ID, MIN(PROD_ID) AS MIN_PROD_ID
-        FROM TB_CUST_PRODUCT
-        WHERE (USE_YN IS NULL OR USE_YN = 'Y')
-        GROUP BY CUST_ID
-        ) FP ON P1.CUST_ID = FP.CUST_ID AND P1.PROD_ID = FP.MIN_PROD_ID
-        WHERE (P1.USE_YN IS NULL OR P1.USE_YN = 'Y')
-        ) P ON P.CUST_ID = C.CUST_ID
+        LEFT JOIN TB_CUST_PRODUCT P
+            ON P.CUST_ID = C.CUST_ID
+           AND (P.USE_YN IS NULL OR P.USE_YN = 'Y')
         LEFT JOIN (
         SELECT G1.CUST_ID, G1.GIFT_NAME, G1.GIFT_AMOUNT, G1.ADD_DEPOSIT_AMOUNT, G1.PAY_SOURCE, G1.PAY_DONE_DATE
         FROM TB_CUST_GIFT G1
@@ -129,7 +122,7 @@
                 <if test="searchCreatedAtTo != null and searchCreatedAtTo != ''">AND C.CREATED_AT &lt;= CONCAT(#{searchCreatedAtTo}, ' 23:59:59')</if>
             </otherwise>
         </choose>
-        ORDER BY C.CREATED_AT DESC
+        ORDER BY C.CREATED_AT DESC, P.PROD_ID ASC
         <if test="limit != null and limit > 0">LIMIT #{limit}</if>
     </select>
 
@@ -227,8 +220,8 @@
     <select id="selectProductsByCustId" resultType="com.sys.managesys.common.dto.CustProductDto">
         SELECT PROD_ID AS prodId, CUST_ID AS custId, COMP_NAME AS compName, PROD_GB AS prodGb,
         REGION_NAME AS regionName, SUBSCRIPTION_NO AS subscription_no, PROD_NAME AS prodName, PROD_OPT AS prodOpt,
-        CONTRACT_PERIOD AS contractPeriod, STB_TYPE AS stbType, VAS_NAME AS vasName, LINE_COUNT AS lineCount,
-        OPEN_DATE AS openDate, CANCEL_DATE AS cancelDate, OPEN_STATUS AS openStatus,
+        CONTRACT_PERIOD AS contractPeriod, STB_TYPE AS stbType, VAS_NAME AS vasName, DISCOUNT_TAB AS discountTab,
+        LINE_COUNT AS lineCount, OPEN_DATE AS openDate, CANCEL_DATE AS cancelDate, OPEN_STATUS AS openStatus,
         REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
         FROM TB_CUST_PRODUCT
         WHERE CUST_ID = #{custId} AND (USE_YN IS NULL OR USE_YN = 'Y')
@@ -274,8 +267,8 @@
     </insert>
 
     <insert id="insertProduct" parameterType="com.sys.managesys.common.dto.CustProductDto">
-        INSERT INTO TB_CUST_PRODUCT (CUST_ID, COMP_NAME, PROD_GB, REGION_NAME, SUBSCRIPTION_NO, PROD_NAME, PROD_OPT, CONTRACT_PERIOD, STB_TYPE, VAS_NAME, LINE_COUNT, OPEN_DATE, CANCEL_DATE, OPEN_STATUS, REMARK, USE_YN)
-        VALUES (#{custId}, #{compName}, #{prodGb}, #{regionName}, #{subscriptionNo}, #{prodName}, #{prodOpt}, #{contractPeriod}, #{stbType}, #{vasName}, COALESCE(#{lineCount}, 1), #{openDate}, #{cancelDate}, COALESCE(#{openStatus}, 'RECEIPT'), #{remark}, 'Y')
+        INSERT INTO TB_CUST_PRODUCT (CUST_ID, COMP_NAME, PROD_GB, REGION_NAME, SUBSCRIPTION_NO, PROD_NAME, PROD_OPT, CONTRACT_PERIOD, STB_TYPE, VAS_NAME, DISCOUNT_TAB, LINE_COUNT, OPEN_DATE, CANCEL_DATE, OPEN_STATUS, REMARK, USE_YN)
+        VALUES (#{custId}, #{compName}, #{prodGb}, #{regionName}, #{subscriptionNo}, #{prodName}, #{prodOpt}, #{contractPeriod}, #{stbType}, #{vasName}, #{discountTab}, COALESCE(#{lineCount}, 1), #{openDate}, #{cancelDate}, COALESCE(#{openStatus}, 'RECEIPT'), #{remark}, 'Y')
     </insert>
 
     <insert id="insertMnp" parameterType="com.sys.managesys.common.dto.CustMnpDto">
@@ -291,20 +284,20 @@
     <!-- 고객 삭제: TB_CUSTOMER 삭제 시 FK ON DELETE CASCADE로 TB_CUST_PRODUCT, TB_CUST_GIFT, TB_CUST_PAYMENT, TB_CUST_MNP 연쇄 삭제 -->
     <delete id="deleteByCustId">DELETE FROM TB_CUSTOMER WHERE CUST_ID = #{custId}</delete>
 
-    <!-- 그리드 인라인 편집용 개별 필드 업데이트 -->
+    <!-- 그리드 인라인 편집용 개별 필드 업데이트
+         리스트가 상품 행 단위로 분리되므로 상품 관련 필드는 PROD_ID 기준으로 갱신.
+         사은품(payDone)은 고객당 GENERAL 1건이므로 CUST_ID 기준 유지. -->
     <update id="quickUpdateSubscriptionNo">
         UPDATE TB_CUST_PRODUCT SET SUBSCRIPTION_NO = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
-        WHERE CUST_ID = #{custId} AND PROD_GB = 'GENERAL' LIMIT 1
+        WHERE PROD_ID = #{prodId}
     </update>
     <update id="quickUpdateOpenDate">
         UPDATE TB_CUST_PRODUCT SET OPEN_DATE = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
-        WHERE CUST_ID = #{custId} AND (USE_YN IS NULL OR USE_YN = 'Y')
-        ORDER BY PROD_ID ASC LIMIT 1
+        WHERE PROD_ID = #{prodId}
     </update>
     <update id="quickUpdateStatus">
         UPDATE TB_CUST_PRODUCT SET OPEN_STATUS = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
-        WHERE CUST_ID = #{custId} AND (USE_YN IS NULL OR USE_YN = 'Y')
-        ORDER BY PROD_ID ASC LIMIT 1
+        WHERE PROD_ID = #{prodId}
     </update>
     <update id="quickUpdatePayDone">
         UPDATE TB_CUST_GIFT SET PAY_DONE_DATE = #{value}, UPDATED_AT = CURRENT_TIMESTAMP

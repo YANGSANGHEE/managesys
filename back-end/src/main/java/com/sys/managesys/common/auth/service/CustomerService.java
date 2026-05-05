@@ -187,17 +187,20 @@ public class CustomerService {
 
 
     @Transactional
-    public void quickUpdate(Long custId, String field, String value) {
+    public void quickUpdate(Long custId, Long prodId, String field, String value) {
         if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
         switch (field) {
             case "subscriptionNo":
-                customerMapper.quickUpdateSubscriptionNo(custId, value);
+                if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
+                customerMapper.quickUpdateSubscriptionNo(prodId, value);
                 break;
             case "openDate":
-                customerMapper.quickUpdateOpenDate(custId, value);
+                if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
+                customerMapper.quickUpdateOpenDate(prodId, value);
                 break;
             case "status":
-                customerMapper.quickUpdateStatus(custId, value);
+                if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
+                customerMapper.quickUpdateStatus(prodId, value);
                 break;
             case "payDone":
                 customerMapper.quickUpdatePayDone(custId, value);

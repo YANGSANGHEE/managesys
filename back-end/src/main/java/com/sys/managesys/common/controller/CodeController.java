@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +31,28 @@ public class CodeController {
         String groupCode = raw.toString().trim();
         if (groupCode.isEmpty()) return List.of();
         return commonCodeMapper.selectByGroupCode(groupCode);
+    }
+
+    /**
+     * 신규등록 화면 상품 정보 cascading select용:
+     * 6개 그룹의 코드 목록 + cascade 매핑 행을 한 번에 반환.
+     * 응답:
+     *   { codes: { PROD_COMPANY:[{codeValue,codeName,sortOrder}], PROD_NAME:[...], ... },
+     *     cascade: [ {companyCd, prodCd, optCd, contractCd, discountCd, vasCd}, ... ] }
+     * 프론트는 이 데이터를 클라이언트에서 필터링해 단계별 select 옵션을 결정.
+     */
+    @GetMapping("/prod-cascade")
+    public Map<String, Object> prodCascade() {
+        String[] groups = {"PROD_COMPANY", "PROD_NAME", "PROD_OPT", "PROD_CONTRACT", "PROD_DISCOUNT", "PROD_VAS"};
+        Map<String, List<CommonCodeDto>> codes = new HashMap<>();
+        for (String g : groups) {
+            codes.put(g, commonCodeMapper.selectByGroupCode(g));
+        }
+        List<Map<String, Object>> cascade = commonCodeMapper.selectProdCascadeRows();
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("codes", codes);
+        resp.put("cascade", cascade);
+        return resp;
     }
 
     // ─── 그룹코드 CRUD ───────────────────────────────────────────────────────
