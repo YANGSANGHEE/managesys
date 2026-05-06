@@ -25,6 +25,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addResolver(new PathResourceResolver() {
                     @Override
                     protected Resource getResource(String resourcePath, Resource location) throws IOException {
+                        // /api/** 경로는 컨트롤러가 처리하므로 정적 리소스 핸들러에서 제외
+                        if (resourcePath.startsWith("api/")) {
+                            return null;
+                        }
                         Resource requestedResource = location.createRelative(resourcePath);
                         // 실제 파일(js, css, 이미지 등)이 있으면 그대로 반환
                         if (requestedResource.exists() && requestedResource.isReadable()) {

@@ -96,7 +96,26 @@ public class CustomerController {
         String value = body.get("value");
         String prodIdStr = body.get("prodId");
         Long prodId = (prodIdStr == null || prodIdStr.isBlank()) ? null : Long.valueOf(prodIdStr);
-        customerService.quickUpdate(custId, prodId, field, value);
+        customerService.quickUpdate(custId, prodId, field, value, getCurrentUser());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{custId}/status-hist")
+    public List<CustProdStatusHistDto> getStatusHist(@PathVariable Long custId) {
+        return customerService.getStatusHist(custId);
+    }
+
+    @GetMapping("/{custId}/consults")
+    public List<CustConsultDto> getConsults(@PathVariable Long custId) {
+        return customerService.getConsults(custId);
+    }
+
+    @PostMapping("/{custId}/consults")
+    public ResponseEntity<Void> addConsult(@PathVariable Long custId, @RequestBody CustConsultDto dto) {
+        CurrentUserContext user = getCurrentUser();
+        dto.setCustId(custId);
+        if (user != null) dto.setCreatorId(user.getUserId());
+        customerService.addConsult(dto);
         return ResponseEntity.ok().build();
     }
 

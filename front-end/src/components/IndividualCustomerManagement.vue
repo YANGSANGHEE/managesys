@@ -649,6 +649,63 @@
             </table>
           </section>
         </fieldset>
+
+        <!-- 9. 고객 이력 / 개통상태 이력 (상세 조회 시에만 노출) -->
+        <div v-if="modalMode === 'detail'" class="history-columns">
+
+          <!-- 좌: 고객 이력 -->
+          <section class="reg-section consult-section history-col">
+            <h4 class="reg-section-title">고객 이력</h4>
+
+            <!-- 조회 그리드 (등록 영역보다 위) -->
+            <ag-grid-vue
+              class="ag-theme-alpine consult-grid"
+              :columnDefs="consultColumnDefs"
+              :rowData="consultList"
+              :defaultColDef="{ resizable: true, sortable: false }"
+              :rowHeight="24"
+              :headerHeight="28"
+              :domLayout="'autoHeight'"
+            />
+
+            <!-- 이력 등록 영역 -->
+            <div class="consult-sub-section">
+              <div class="consult-sub-title">이력 등록</div>
+              <div class="consult-input-wrap">
+                <select v-model="consultForm.consultType" class="consult-type-select">
+                  <option value="">상담구분 선택</option>
+                  <option v-for="c in consultTypeCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
+                </select>
+                <div class="consult-content-area">
+                  <textarea
+                    v-model="consultForm.content"
+                    placeholder="상담 내용을 입력하세요"
+                    class="consult-content-textarea"
+                    rows="5"
+                  />
+                  <div class="consult-btn-row">
+                    <button type="button" class="btn-consult-submit" @click="submitConsult">이력등록</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 우: 개통상태 이력 -->
+          <section class="reg-section status-hist-section history-col">
+            <h4 class="reg-section-title">개통상태 이력</h4>
+            <ag-grid-vue
+              class="ag-theme-alpine status-hist-grid"
+              :columnDefs="statusHistColumnDefs"
+              :rowData="statusHistList"
+              :defaultColDef="{ resizable: true, sortable: false }"
+              :rowHeight="24"
+              :headerHeight="28"
+              :domLayout="'autoHeight'"
+            />
+          </section>
+
+        </div>
       </div>
       <div class="form-page-footer">
         <button type="button" class="btn-cancel" @click="onFormCancel">목록으로</button>
@@ -728,6 +785,7 @@ const headGiftCodes = ref([]);   // HEAD_GIFT - 본사 사은품
 const regionCodes = ref([]);     // REGION_CODE - 지역 선택
 const custTypeCodes = ref([]);   // CUST_TYPE - 고객 종류 (개인, 개인사업자, 법인 등)
 const userRoleCodes = ref([]);   // USER_ROLE - 사용자 권한
+const consultTypeCodes = ref([]); // CONSULT_TYPE - 상담구분
 
 // 상품 cascade 트리 (smart-line.kr 기반): 신규등록 화면 회사→상품→옵션→약정→할인탭→부가서비스
 // codes: { PROD_COMPANY:[{codeValue,codeName}], PROD_NAME:[...], ... }
@@ -796,23 +854,24 @@ async function loadCodeList(groupCode) {
   }
 }
 
-/** 페이지/모달용 공통코드 일괄 로드 (axios 호출 10건) */
+/** 페이지/모달용 공통코드 일괄 로드 */
 async function loadCodes() {
   const [
-    status, company, bank, billType, discount, custAuth, paySource, headGift, region, custType, userRole
+    status, company, bank, billType, discount, custAuth, paySource, headGift, region, custType, userRole, consultType
   ] = await Promise.all([
-    loadCodeList('CUST_STATUS'),  // 진행 상태 (개통상태)
-    loadCodeList('COMPANY_CODE'), // 통신사/회사선택
-    loadCodeList('BANK_CODE'),    // 지급은행
-    loadCodeList('BILL_TYPE'),    // 청구서 종류
-    loadCodeList('DISCOUNT_GB'),  // 요금 감면
-    loadCodeList('CUST_AUTH'),   // 고객 인증
-    loadCodeList('PAY_SOURCE'),   // 지급처
-    loadCodeList('HEAD_GIFT'),    // 본사 사은품
-    loadCodeList('REGION_CODE'),  // 지역 선택
-    loadCodeList('CUST_TYPE'),    // 고객 종류
-    loadCodeList('USER_ROLE'),    // 사용자 권한
-    loadProdCascade()             // 상품 cascade 트리 (코드 + 매핑)
+    loadCodeList('CUST_STATUS'),   // 진행 상태 (개통상태)
+    loadCodeList('COMPANY_CODE'),  // 통신사/회사선택
+    loadCodeList('BANK_CODE'),     // 지급은행
+    loadCodeList('BILL_TYPE'),     // 청구서 종류
+    loadCodeList('DISCOUNT_GB'),   // 요금 감면
+    loadCodeList('CUST_AUTH'),     // 고객 인증
+    loadCodeList('PAY_SOURCE'),    // 지급처
+    loadCodeList('HEAD_GIFT'),     // 본사 사은품
+    loadCodeList('REGION_CODE'),   // 지역 선택
+    loadCodeList('CUST_TYPE'),     // 고객 종류
+    loadCodeList('USER_ROLE'),     // 사용자 권한
+    loadCodeList('CONSULT_TYPE'),  // 상담구분
+    loadProdCascade()              // 상품 cascade 트리 (코드 + 매핑)
   ]);
   statusCodes.value = status?.length ? status : [
     { codeValue: 'RECEIPT', codeName: '접수' },
@@ -881,6 +940,7 @@ async function loadCodes() {
   ]);
   custTypeCodes.value = rawCustType.filter(c => c.codeValue !== 'FORN');
   userRoleCodes.value = userRole ?? [];
+  consultTypeCodes.value = consultType ?? [];
 }
 
 function formatDate(value) {
@@ -1640,8 +1700,13 @@ async function openDetailModal(custId) {
     mapDetailToForm(detail);
     sameAsCustomerForPayment.value = false;
     sameAsPaymentForGift.value = false;
+    consultList.value = [];
+    statusHistList.value = [];
+    consultForm.value = { consultType: '', content: '' };
     await nextTick();
     showCustomerModal.value = true;
+    await loadConsults(custId);
+    await loadStatusHist(custId);
   } catch (err) {
     console.error('고객 상세 조회 오류:', err);
     alert(err.response?.data?.message || '고객 정보를 불러오는 중 오류가 발생했습니다.');
@@ -2209,6 +2274,92 @@ function onFileChange(event) {
 // 선택 파일 제거
 function removeFile(index) {
   selectedFiles.value.splice(index, 1);
+}
+
+// ─── 고객 이력(상담 이력) ─────────────────────────────────────────
+const consultForm = ref({ consultType: '', content: '' });
+const consultList = ref([]);
+
+const consultColumnDefs = [
+  { field: 'consultTypeName', headerName: '상담구분', width: 100, minWidth: 80, valueFormatter: p => p.value ?? '-' },
+  { field: 'creatorName', headerName: '작성자', width: 100, minWidth: 90, valueFormatter: p => p.value ?? '-' },
+  { field: 'content', headerName: '내용', flex: 1, minWidth: 200, wrapText: true, autoHeight: true },
+  {
+    field: 'createdAt',
+    headerName: '작성일',
+    width: 150,
+    minWidth: 130,
+    valueFormatter: p => {
+      if (!p.value) return '-';
+      const d = new Date(p.value);
+      if (isNaN(d.getTime())) return '-';
+      return d.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    }
+  }
+];
+
+async function loadConsults(custId) {
+  try {
+    const res = await axios.get(`/api/customers/${custId}/consults`);
+    consultList.value = Array.isArray(res.data) ? res.data : [];
+  } catch (err) {
+    console.warn('상담 이력 조회 실패:', err);
+    consultList.value = [];
+  }
+}
+
+async function submitConsult() {
+  if (!consultForm.value.content?.trim()) {
+    alert('상담 내용을 입력해주세요.');
+    return;
+  }
+  const custId = form.value.customer.custId;
+  if (!custId) {
+    alert('고객 정보를 확인해주세요.');
+    return;
+  }
+  if (!confirm('고객 이력을 등록하시겠습니까?')) return;
+  try {
+    await axios.post(`/api/customers/${custId}/consults`, {
+      consultType: consultForm.value.consultType || null,
+      content: consultForm.value.content.trim()
+    });
+    consultForm.value.content = '';
+    consultForm.value.consultType = '';
+    await loadConsults(custId);
+  } catch (err) {
+    alert(err.response?.data?.message || '이력 등록 중 오류가 발생했습니다.');
+  }
+}
+
+// ─── 개통상태 이력 ─────────────────────────────────────────────────
+const statusHistList = ref([]);
+
+const statusHistColumnDefs = [
+  { field: 'statusName', headerName: '개통상태', width: 110, minWidth: 90, cellStyle: { textAlign: 'center' }, headerClass: 'ag-center-header', valueFormatter: p => p.value ?? p.data?.openStatus ?? '-' },
+  { field: 'changerName', headerName: '변경자', width: 90, minWidth: 80, cellStyle: { textAlign: 'center' }, headerClass: 'ag-center-header', valueFormatter: p => p.value ?? '-' },
+  {
+    field: 'changedAt',
+    headerName: '변경일시',
+    flex: 1,
+    minWidth: 130,
+    valueFormatter: p => {
+      if (!p.value) return '-';
+      const d = new Date(p.value);
+      if (isNaN(d.getTime())) return '-';
+      return d.toLocaleString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+    }
+  }
+];
+
+async function loadStatusHist(custId) {
+  try {
+    const res = await axios.get(`/api/customers/${custId}/status-hist`);
+    statusHistList.value = Array.isArray(res.data) ? res.data : [];
+  } catch (err) {
+    console.warn('개통상태 이력 조회 실패:', err);
+    statusHistList.value = [];
+  }
 }
 </script>
 
@@ -3063,4 +3214,96 @@ button {
 .file-list-preview li { display: inline-flex; align-items: center; background: #f1f3f4; padding: 2px 8px; border-radius: 4px; margin-right: 6px; margin-bottom: 4px; font-size: 11px; }
 .btn-file-del { background: none; border: none; color: #d32f2f; font-weight: bold; cursor: pointer; margin-left: 6px; font-size: 14px; }
 .file-link { color: #2563eb; text-decoration: underline; }
+
+/* 이력 2단 레이아웃 */
+.history-columns {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  align-items: flex-start;
+}
+.history-col {
+  min-width: 0;
+  margin-top: 0 !important;
+}
+
+/* 고객 이력 (상담 이력) — 나머지 70% */
+.consult-section {
+  flex: 1;
+}
+.consult-grid { width: 100%; margin-bottom: 0; }
+
+/* 개통상태 이력 — 30% 너비, 자체 콘텐츠 높이 */
+.status-hist-section {
+  flex: 0 0 30%;
+  align-self: flex-start;
+}
+.status-hist-grid { width: 100%; }
+:deep(.ag-center-header .ag-header-cell-label) {
+  justify-content: center;
+}
+
+/* 이력 등록 서브 영역 */
+.consult-sub-section { margin-top: 12px; }
+.consult-sub-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+  padding: 3px 0 3px 8px;
+  border-left: 3px solid #6b7280;
+  background: #f3f4f6;
+  margin-bottom: 8px;
+  border-radius: 0 3px 3px 0;
+}
+.consult-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.consult-type-select {
+  height: 26px;
+  padding: 2px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 11px;
+  width: 180px;
+  box-sizing: border-box;
+}
+/* textarea + 버튼 묶음 */
+.consult-content-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.consult-content-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 11px;
+  box-sizing: border-box;
+  resize: vertical;
+  line-height: 1.5;
+  font-family: inherit;
+}
+.consult-content-textarea:focus { border-color: #2563eb; outline: none; }
+/* 버튼을 우측 하단 정렬 */
+.consult-btn-row {
+  display: flex;
+  justify-content: flex-end;
+}
+.btn-consult-submit {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0 16px;
+  height: 28px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn-consult-submit:hover { background: #1d4ed8; }
 </style>

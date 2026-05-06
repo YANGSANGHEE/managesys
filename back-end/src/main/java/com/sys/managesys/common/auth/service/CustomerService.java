@@ -2,6 +2,8 @@ package com.sys.managesys.common.auth.service;
 
 import com.sys.managesys.common.auth.dto.CurrentUserContext;
 import com.sys.managesys.common.dto.*;
+import com.sys.managesys.common.mapper.CustConsultMapper;
+import com.sys.managesys.common.mapper.CustProdStatusHistMapper;
 import com.sys.managesys.common.mapper.CustomerMapper;
 import com.sys.managesys.common.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,8 @@ public class CustomerService {
 
     private final CustomerMapper customerMapper;
     private final UserMapper userMapper;
+    private final CustConsultMapper custConsultMapper;
+    private final CustProdStatusHistMapper custProdStatusHistMapper;
 
     public List<CustomerDto> findCustomers(CustomerDto searchDto) {
         return customerMapper.selectCustomerList(searchDto);
@@ -113,6 +117,13 @@ public class CustomerService {
                 prod.setCustId(custId);
                 if (prod.getLineCount() == null) prod.setLineCount(1);
                 customerMapper.insertProduct(prod);
+                // 최초 등록 개통상태 이력 기록
+                String initStatus = prod.getOpenStatus() != null ? prod.getOpenStatus() : "RECEIPT";
+                CustProdStatusHistDto hist = new CustProdStatusHistDto();
+                hist.setCustId(custId);
+                hist.setOpenStatus(initStatus);
+                hist.setChangerId(customer.getCreatorId());
+                custProdStatusHistMapper.insertHist(hist);
             }
         }
         if (req.getMnp() != null) {
@@ -134,6 +145,8 @@ public class CustomerService {
         if (vyn == null || vyn.isBlank()) vyn = customer.getVoucherReturnYn();
         String voucherReturnYn = (vyn != null && "Y".equalsIgnoreCase(vyn.trim())) ? "Y" : "N";
         customer.setVoucherReturnYn(voucherReturnYn);
+        // 삭제 전 기존 상품 상태 스냅샷 (변경 감지용)
+        List<CustProductDto> existingProducts = customerMapper.selectProductsByCustId(custId);
         if (currentUser != null) {
             CustomerDto existing = customerMapper.selectCustomerById(custId);
             if (existing == null || !canAccessCustomer(existing, currentUser)) {
@@ -171,10 +184,22 @@ public class CustomerService {
             customerMapper.insertGift(head);
         }
         if (req.getProducts() != null && !req.getProducts().isEmpty()) {
-            for (CustProductDto prod : req.getProducts()) {
+            for (int i = 0; i < req.getProducts().size(); i++) {
+                CustProductDto prod = req.getProducts().get(i);
                 prod.setCustId(custId);
                 if (prod.getLineCount() == null) prod.setLineCount(1);
                 customerMapper.insertProduct(prod);
+                // 이전 상태와 비교해 변경된 경우에만 이력 기록
+                String newStatus = prod.getOpenStatus() != null ? prod.getOpenStatus() : "RECEIPT";
+                String oldStatus = (i < existingProducts.size() && existingProducts.get(i).getOpenStatus() != null)
+                        ? existingProducts.get(i).getOpenStatus() : null;
+                if (!newStatus.equals(oldStatus)) {
+                    CustProdStatusHistDto hist = new CustProdStatusHistDto();
+                    hist.setCustId(custId);
+                    hist.setOpenStatus(newStatus);
+                    hist.setChangerId(currentUser != null ? currentUser.getUserId() : null);
+                    custProdStatusHistMapper.insertHist(hist);
+                }
             }
         }
         if (req.getMnp() != null) {
@@ -187,7 +212,7 @@ public class CustomerService {
 
 
     @Transactional
-    public void quickUpdate(Long custId, Long prodId, String field, String value) {
+    public void quickUpdate(Long custId, Long prodId, String field, String value, CurrentUserContext currentUser) {
         if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
         switch (field) {
             case "subscriptionNo":
@@ -201,6 +226,12 @@ public class CustomerService {
             case "status":
                 if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
                 customerMapper.quickUpdateStatus(prodId, value);
+                CustProdStatusHistDto hist = new CustProdStatusHistDto();
+                hist.setCustId(custId);
+                hist.setProdId(prodId);
+                hist.setOpenStatus(value);
+                hist.setChangerId(currentUser != null ? currentUser.getUserId() : null);
+                custProdStatusHistMapper.insertHist(hist);
                 break;
             case "payDone":
                 customerMapper.quickUpdatePayDone(custId, value);
@@ -208,6 +239,21 @@ public class CustomerService {
             default:
                 throw new IllegalArgumentException("수정 불가능한 필드입니다: " + field);
         }
+    }
+
+    public List<CustConsultDto> getConsults(Long custId) {
+        return custConsultMapper.selectConsultsByCustId(custId);
+    }
+
+    public List<CustProdStatusHistDto> getStatusHist(Long custId) {
+        return custProdStatusHistMapper.selectHistByCustId(custId);
+    }
+
+    @Transactional
+    public void addConsult(CustConsultDto dto) {
+        if (dto.getCustId() == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
+        if (dto.getContent() == null || dto.getContent().isBlank()) throw new IllegalArgumentException("내용을 입력해주세요.");
+        custConsultMapper.insertConsult(dto);
     }
 
     /** 고객 삭제. 자식 테이블을 명시 삭제한 뒤 메인 삭제하여 고아 데이터(Orphan) 방지. (DB CASCADE 미설정 환경에서도 무결성 보장) */
