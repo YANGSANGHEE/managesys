@@ -93,6 +93,7 @@
           @row-double-clicked="onRowClicked"
           @cell-value-changed="onCellValueChanged"
           :context="{ statusCodes: statusCodes, canEdit: canSave }"
+          :getRowStyle="getRowStyle"
       />
     </section>
 
@@ -319,7 +320,13 @@
           <!-- 2. 납부 정보 -->
           <section class="reg-section">
             <h4 class="reg-section-title">납부 정보</h4>
-            <table class="reg-table">
+            <table class="reg-table payment-info-table">
+              <colgroup>
+                <col style="width: 15%">
+                <col style="width: 35%">
+                <col style="width: 15%">
+                <col style="width: 35%">
+              </colgroup>
               <tbody>
               <tr>
                 <th>납부방법</th>
@@ -1170,6 +1177,12 @@ const columnDefs = ref([
 
 const defaultColDef = { resizable: true, sortable: true };
 const gridOptions = { singleClickEdit: true, stopEditingWhenCellsLoseFocus: true };
+
+function getRowStyle(params) {
+  if (params.data?.latestConsultType === 'REPLY_REQUEST') {
+    return { background: '#FFF0D6' };
+  }
+}
 
 const onGridReady = params => {
   gridApi.value = params.api;
@@ -2280,8 +2293,34 @@ function removeFile(index) {
 const consultForm = ref({ consultType: '', content: '' });
 const consultList = ref([]);
 
+// 코드값(CODE_VALUE) 또는 표시명(CODE_NAME) 어느 쪽으로도 매칭
+const CONSULT_TYPE_BADGE = {
+  // 코드값
+  REPLY_REQUEST:   { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' },
+  CONSULT_REQUEST: { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' },
+  REPLY_ANSWER:    { bg: '#dbeafe', color: '#1d4ed8', border: '#93c5fd' },
+  CUSTOMER_MEMO:   { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
+  // 표시명 (코드값 불일치 시 폴백)
+  '회신요청': { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' },
+  '상담요청': { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' },
+  '회신답변': { bg: '#dbeafe', color: '#1d4ed8', border: '#93c5fd' },
+  '고객메모': { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
+};
+
 const consultColumnDefs = [
-  { field: 'consultTypeName', headerName: '상담구분', width: 100, minWidth: 80, valueFormatter: p => p.value ?? '-' },
+  {
+    field: 'consultTypeName',
+    headerName: '상담구분',
+    width: 100,
+    minWidth: 80,
+    cellRenderer: params => {
+      const name = params.value;
+      if (!name) return '-';
+      const badge = CONSULT_TYPE_BADGE[params.data?.consultType] || CONSULT_TYPE_BADGE[name];
+      if (!badge) return name;
+      return `<span style="display:inline-block;background:${badge.bg};color:${badge.color};border:1px solid ${badge.border};padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;line-height:1.6;">${name}</span>`;
+    }
+  },
   { field: 'creatorName', headerName: '작성자', width: 100, minWidth: 90, valueFormatter: p => p.value ?? '-' },
   { field: 'content', headerName: '내용', flex: 1, minWidth: 200, wrapText: true, autoHeight: true },
   {
@@ -3225,6 +3264,12 @@ button {
 .history-col {
   min-width: 0;
   margin-top: 0 !important;
+}
+
+/* 납부 정보 테이블: 오른쪽 컬럼 축소를 위해 th 텍스트 줄바꿈 허용 */
+.payment-info-table th {
+  white-space: normal;
+  word-break: keep-all;
 }
 
 /* 고객 이력 (상담 이력) — 나머지 70% */
