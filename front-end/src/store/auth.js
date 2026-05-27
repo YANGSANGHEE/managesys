@@ -18,6 +18,14 @@ export const useAuthStore = defineStore('auth', () => {
         isLoading.value = status;
     }
 
+    // 감사 모드 (외부 감사 대응: 개인정보 최소 표시)
+    const auditMode = ref(localStorage.getItem('auditMode') === 'true');
+
+    function toggleAuditMode() {
+        auditMode.value = !auditMode.value;
+        localStorage.setItem('auditMode', String(auditMode.value));
+    }
+
     // 2. 게터(Getters)
     const isAuthenticated = computed(() => !!token.value);
     const userName = computed(() => user.value ? user.value.userName : '');
@@ -73,6 +81,8 @@ export const useAuthStore = defineStore('auth', () => {
         login,
         logout,
         rehydrate,
-        clearMustChangePassword
+        clearMustChangePassword,
+        auditMode,
+        toggleAuditMode
     };
 });

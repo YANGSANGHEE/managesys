@@ -23,6 +23,20 @@ onMounted(() => {
   }
 });
 
+// ── 감사 모드 토글 + 토스트 확인 알림 ──────────────────────────────
+const toastVisible = ref(false);
+const toastText    = ref('');
+let   toastTimer   = null;
+
+const handleAuditToggle = () => {
+  authStore.toggleAuditMode();
+  toastText.value    = authStore.auditMode ? '🔒 감사 모드 활성화' : '🔓 일반 모드로 전환';
+  toastVisible.value = true;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { toastVisible.value = false; }, 2000);
+};
+// ─────────────────────────────────────────────────────────────────
+
 const handleLogin = async () => {
   if (!loginData.value.loginId || !loginData.value.password) {
     alert("아이디와 비밀번호를 입력해주세요.");
@@ -74,9 +88,18 @@ const handleLogin = async () => {
         <h1>Welcome<br>Back!</h1>
         <p>더원컴퍼니와 함께<br>스마트한 업무관리를</p>
       </div>
-      <div class="brand-footer">
+      <div class="brand-footer" @click="handleAuditToggle">
+        <!-- 감사 모드 상시 인디케이터: 활성 시 작은 점 표시 (운영자 전용 식별자) -->
+        <span v-if="!authStore.auditMode" class="audit-indicator" aria-hidden="true">●</span>
         © 2024 더원컴퍼니. All rights reserved.
       </div>
+
+      <!-- 토글 확인 토스트 (2초 후 자동 소멸) -->
+      <Transition name="audit-toast">
+        <div v-if="toastVisible" class="audit-toast" aria-hidden="true">
+          {{ toastText }}
+        </div>
+      </Transition>
     </div>
 
     <div class="form-panel flex-center">
@@ -173,7 +196,40 @@ const handleLogin = async () => {
 .brand-footer {
   font-size: 0.9rem;
   opacity: 0.7;
+  cursor: default;
+  user-select: none;
 }
+
+/* 감사 모드 상시 인디케이터 (●) */
+.audit-indicator {
+  font-size: 0.45rem;
+  color: rgba(253, 224, 71, 0.85); /* 은은한 노란빛 */
+  vertical-align: middle;
+  margin-right: 5px;
+  line-height: 1;
+}
+
+/* 토글 확인 토스트 */
+.audit-toast {
+  position: absolute;
+  bottom: 68px;      /* brand-footer 바로 위 */
+  left: 0;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(10, 20, 50, 0.72);
+  padding: 5px 12px;
+  border-radius: 6px;
+  pointer-events: none;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+/* 토스트 트랜지션 */
+.audit-toast-enter-active { transition: opacity 0.25s ease; }
+.audit-toast-leave-active  { transition: opacity 0.5s ease; }
+.audit-toast-enter-from,
+.audit-toast-leave-to      { opacity: 0; }
 
 /* 오른쪽 폼 패널 */
 .form-panel {

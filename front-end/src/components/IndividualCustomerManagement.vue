@@ -153,6 +153,8 @@
                 <th>대표자</th>
                 <td><input v-model="form.customer.repName" placeholder="대표자 (사업자/법인)" /></td>
               </tr>
+              <!-- 감사 모드에서는 고객명/대표자 이외 모든 개인정보 행 숨김 -->
+              <template v-if="!isAuditMode">
               <tr>
                 <th>고객종류</th>
                 <td colspan="3">
@@ -313,12 +315,13 @@
                   </label>
                 </td>
               </tr>
+              </template><!-- /감사 모드 숨김 끝 -->
               </tbody>
             </table>
           </section>
 
           <!-- 2. 납부 정보 -->
-          <section class="reg-section">
+          <section v-if="!isAuditMode" class="reg-section">
             <h4 class="reg-section-title">납부 정보</h4>
             <table class="reg-table payment-info-table">
               <colgroup>
@@ -410,7 +413,7 @@
           </section>
 
           <!-- 3. 사은품 정보 -->
-          <section class="reg-section">
+          <section v-if="!isAuditMode" class="reg-section">
             <h4 class="reg-section-title">사은품 정보</h4>
             <table class="reg-table">
               <tbody>
@@ -605,7 +608,7 @@
           </section>
 
           <!-- 7. 비고 사항 -->
-          <section class="reg-section">
+          <section v-if="!isAuditMode" class="reg-section">
             <h4 class="reg-section-title">비고 사항</h4>
             <table class="reg-table">
               <tbody>
@@ -618,7 +621,7 @@
           </section>
 
           <!-- 8. 첨부 파일  -->
-          <section class="reg-section">
+          <section v-if="!isAuditMode" class="reg-section">
             <h4 class="reg-section-title">첨부 파일</h4>
             <table class="reg-table">
               <tbody>
@@ -657,8 +660,8 @@
           </section>
         </fieldset>
 
-        <!-- 9. 고객 이력 / 개통상태 이력 (상세 조회 시에만 노출) -->
-        <div v-if="modalMode === 'detail'" class="history-columns">
+        <!-- 9. 고객 이력 / 개통상태 이력 (상세 조회 시에만, 감사 모드에서는 숨김) -->
+        <div v-if="!isAuditMode && modalMode === 'detail'" class="history-columns">
 
           <!-- 좌: 고객 이력 -->
           <section class="reg-section consult-section history-col">
@@ -760,6 +763,10 @@ const canSave = computed(() => {
   const role = authStore.user?.userRole;
   return role === 'ADMIN';
 });
+
+// 감사 모드: 로그인 페이지 저작권 텍스트 클릭으로 토글, 고객 상세 라우트에서만 적용
+// ※ modalMode(비동기 변경) 대신 route.name(첫 렌더 시점에 이미 확정)을 사용해 플래시 방지
+const isAuditMode = computed(() => authStore.auditMode && route.name === 'CustomersIndividualDetail');
 
 const gridApi = ref(null);
 const rowData = ref([]);
