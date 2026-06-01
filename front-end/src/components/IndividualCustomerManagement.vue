@@ -1191,8 +1191,9 @@ const defaultColDef = { resizable: true, sortable: true };
 const gridOptions = { singleClickEdit: true, stopEditingWhenCellsLoseFocus: true };
 
 function getRowStyle(params) {
+  // 최신 상담구분이 '회신요청'인 고객 행은 노란색으로 강조 (목록 상단 정렬은 백엔드 ORDER BY 처리)
   if (params.data?.latestConsultType === 'REPLY_REQUEST') {
-    return { background: '#FFF0D6' };
+    return { background: '#FFF59D' };
   }
 }
 

@@ -70,6 +70,7 @@
         :paginationPageSize="pageSize"
         :paginationPageSizeSelector="[10, 20, 30, 50]"
         :rowSelection="{ mode: 'multiRow', checkboxes: false, enableClickSelection: true }"
+        :getRowStyle="getRowStyle"
         @grid-ready="onGridReady"
         @row-clicked="onRowClicked"
       />
@@ -654,6 +655,13 @@ const isWriter = computed(() => {
 });
 // 개발 환경 여부 (운영 빌드에서 테스트용 버튼 숨김)
 const isDev = process.env.NODE_ENV !== 'production';
+
+// 최신 상담구분이 '회신요청'인 고객 행은 노란색으로 강조 (상단 정렬은 백엔드 ORDER BY 처리)
+function getRowStyle(params) {
+  if (params.data?.latestConsultType === 'REPLY_REQUEST') {
+    return { background: '#FFF59D' };
+  }
+}
 
 const gridApi = ref(null);
 const rowData = ref([]);
