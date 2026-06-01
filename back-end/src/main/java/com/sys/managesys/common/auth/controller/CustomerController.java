@@ -78,8 +78,13 @@ public class CustomerController {
     @PostMapping("/register")
     public void registerCustomer(@RequestBody CustomerRegisterRequest request) {
         CurrentUserContext user = getCurrentUser();
-        if (user != null && request.getCustomer() != null && request.getCustomer().getCreatorId() == null) {
+        if (user != null && request.getCustomer() != null) {
+            // 등록자(creatorId)는 클라이언트 입력을 신뢰하지 않고 항상 서버에서 현재 사용자로 강제 (명의 위조 방지)
             request.getCustomer().setCreatorId(user.getUserId());
+            // 담당자(assignedUserId) 미지정 시 등록자 본인으로 기본 배정
+            if (request.getCustomer().getAssignedUserId() == null) {
+                request.getCustomer().setAssignedUserId(user.getUserId());
+            }
         }
         customerService.register(request);
     }

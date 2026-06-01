@@ -225,8 +225,15 @@ public class CustomerService {
     @Transactional
     public void quickUpdate(Long custId, Long prodId, String field, String value, CurrentUserContext currentUser) {
         if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
-        if (currentUser != null && !isWriter(currentUser)) {
-            throw new IllegalArgumentException("고객 정보를 수정할 권한이 없습니다. (관리자/팀장 전용)");
+        if (currentUser != null) {
+            if (!isWriter(currentUser)) {
+                throw new IllegalArgumentException("고객 정보를 수정할 권한이 없습니다. (관리자/팀장 전용)");
+            }
+            // update/delete 와 동일하게 부서 범위(팀장=자기 부서) 검증
+            CustomerDto target = customerMapper.selectCustomerById(custId);
+            if (target == null || !canAccessCustomer(target, currentUser)) {
+                throw new IllegalArgumentException("해당 고객 정보에 대한 수정 권한이 없습니다.");
+            }
         }
         switch (field) {
             case "subscriptionNo":
