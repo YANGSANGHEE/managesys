@@ -864,7 +864,7 @@ function fullAddress(params) {
 
 // AG Grid: 헤더(컬럼)는 다 나오게 — 컬럼마다 width/minWidth 유지, sizeColumnsToFit() 미사용 → 가로 스크롤로 전부 표시
 const columnDefs = ref([
-  { headerName: 'No', valueGetter: 'node?.rowIndex != null ? node.rowIndex + 1 : ""', width: 60, minWidth: 60, suppressFlex: true },
+  { headerName: 'No', valueGetter: 'node?.rowIndex != null ? node.rowIndex + 1 : ""', width: 60, minWidth: 60 },
   { field: 'custName', headerName: '고객명', sortable: true, filter: true, flex: 1, minWidth: 90 },
   {
     field: 'receiptDate',
@@ -914,7 +914,6 @@ const columnDefs = ref([
     headerName: '관리',
     width: 80,
     minWidth: 70,
-    suppressFlex: true,
     cellRenderer: params => {
       const container = document.createElement('div');
       container.style.display = 'flex';
