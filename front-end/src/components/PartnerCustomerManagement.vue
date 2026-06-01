@@ -124,6 +124,7 @@
           <button type="button" class="modal-close" @click="showCustomerModal = false">&times;</button>
         </div>
         <div class="modal-reg-body">
+          <fieldset :disabled="!canSave" class="contents-fieldset">
           <!-- 1. 고객 정보 -->
           <section class="reg-section">
             <h4 class="reg-section-title">고객 정보</h4>
@@ -623,11 +624,13 @@
               </tbody>
             </table>
           </section>
+          </fieldset>
         </div>
         <div class="modal-reg-footer">
           <button type="button" class="btn-cancel" @click="showCustomerModal = false">취소</button>
           <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
-          <button type="button" class="btn-save" @click="onSaveCustomer">저장</button>
+          <button v-if="canSave" type="button" class="btn-save" @click="onSaveCustomer">{{ modalMode === 'detail' ? '수정' : '저장' }}</button>
+          <span v-else class="no-permission-msg" style="color:#888;font-size:11px;align-self:center;margin-left:10px;">* 수정 권한이 없습니다. (관리자/팀장 전용)</span>
         </div>
       </div>
     </div>
@@ -642,6 +645,13 @@ import { useAuthStore } from '@/store/auth';
 import { AgGridVue } from 'ag-grid-vue3';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+
+const authStore = useAuthStore();
+// 쓰기(수정/삭제) 권한: 최고 관리자(ADMIN)·팀장(MANAGER)만. 일반 담당자(MEMBER)는 등록만 가능.
+const isWriter = computed(() => {
+  const role = authStore.user?.userRole;
+  return role === 'ADMIN' || role === 'MANAGER';
+});
 
 const gridApi = ref(null);
 const rowData = ref([]);
@@ -910,12 +920,14 @@ const columnDefs = ref([
       container.style.alignItems = 'center';
       container.style.height = '100%';
 
-      const delBtn = document.createElement('button');
-      delBtn.innerText = '삭제';
-      delBtn.className = 'btn-table-del';
-      delBtn.onclick = () => onDelete(params.data);
-
-      container.appendChild(delBtn);
+      // 삭제 버튼은 쓰기 권한(관리자/팀장)만 노출. 일반 담당자(MEMBER)는 삭제 불가.
+      if (isWriter.value) {
+        const delBtn = document.createElement('button');
+        delBtn.innerText = '삭제';
+        delBtn.className = 'btn-table-del';
+        delBtn.onclick = () => onDelete(params.data);
+        container.appendChild(delBtn);
+      }
       return container;
     }
   }
@@ -1052,6 +1064,8 @@ async function doExcelDownload() {
 // 고객 등록 모달
 const showCustomerModal = ref(false);
 const modalMode = ref('register'); // 'register' | 'detail'
+// 폼 입력/저장 가능 여부: 등록 모드는 전 권한 가능, 상세(수정) 모드는 관리자·팀장만
+const canSave = computed(() => modalMode.value === 'register' ? true : isWriter.value);
 const counselorOptions = ref([]);
 const selectedCounselorUserId = ref(null);
 // 상품 유형: 단독(S0), DPS(D0), TPS(T0) 만 사용 (TB_COMMON_CODE PROD_COMB_GB 기준)
@@ -2594,6 +2608,14 @@ button {
   background: #fff;
   color: #5f6368;
   border: 1px solid #dadce0;
+}
+
+/* 권한 분기용 fieldset 래퍼: 기본 테두리/여백 제거 (레이아웃 영향 없음) */
+.contents-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
 }
 
 .modal-reg-footer .btn-save {

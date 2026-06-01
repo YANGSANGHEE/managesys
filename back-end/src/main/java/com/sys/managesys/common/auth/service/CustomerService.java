@@ -46,6 +46,14 @@ public class CustomerService {
         return res;
     }
 
+    /** 쓰기(수정/삭제/인라인수정) 권한: 최고 관리자(ADMIN) 및 팀장(MANAGER)만 허용. 일반 담당자(MEMBER)는 등록(Create)만 가능. */
+    private boolean isWriter(CurrentUserContext user) {
+        if (user == null) return false;
+        return "ADMIN".equalsIgnoreCase(user.getUserRole())
+                || "MANAGER".equalsIgnoreCase(user.getUserRole())
+                || "admin".equalsIgnoreCase(user.getLoginId());
+    }
+
     private boolean canAccessCustomer(CustomerDto customer, CurrentUserContext user) {
         boolean isAdmin = "admin".equalsIgnoreCase(user.getLoginId()) || "ADMIN".equalsIgnoreCase(user.getUserRole());
         if (isAdmin) return true;
@@ -148,6 +156,9 @@ public class CustomerService {
         // 삭제 전 기존 상품 상태 스냅샷 (변경 감지용)
         List<CustProductDto> existingProducts = customerMapper.selectProductsByCustId(custId);
         if (currentUser != null) {
+            if (!isWriter(currentUser)) {
+                throw new IllegalArgumentException("고객 정보를 수정할 권한이 없습니다. (관리자/팀장 전용)");
+            }
             CustomerDto existing = customerMapper.selectCustomerById(custId);
             if (existing == null || !canAccessCustomer(existing, currentUser)) {
                 throw new IllegalArgumentException("해당 고객 정보에 대한 수정 권한이 없습니다.");
@@ -214,6 +225,9 @@ public class CustomerService {
     @Transactional
     public void quickUpdate(Long custId, Long prodId, String field, String value, CurrentUserContext currentUser) {
         if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
+        if (currentUser != null && !isWriter(currentUser)) {
+            throw new IllegalArgumentException("고객 정보를 수정할 권한이 없습니다. (관리자/팀장 전용)");
+        }
         switch (field) {
             case "subscriptionNo":
                 if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
@@ -262,8 +276,13 @@ public class CustomerService {
         if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
         CustomerDto customer = customerMapper.selectCustomerById(custId);
         if (customer == null) throw new IllegalArgumentException("해당 고객 정보를 찾을 수 없습니다.");
-        if (currentUser != null && !canAccessCustomer(customer, currentUser)) {
-            throw new IllegalArgumentException("해당 고객 정보에 대한 삭제 권한이 없습니다.");
+        if (currentUser != null) {
+            if (!isWriter(currentUser)) {
+                throw new IllegalArgumentException("고객 정보를 삭제할 권한이 없습니다. (관리자/팀장 전용)");
+            }
+            if (!canAccessCustomer(customer, currentUser)) {
+                throw new IllegalArgumentException("해당 고객 정보에 대한 삭제 권한이 없습니다.");
+            }
         }
         customerMapper.deletePaymentByCustId(custId);
         customerMapper.deleteGiftsByCustId(custId);

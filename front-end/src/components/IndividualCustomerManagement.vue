@@ -68,6 +68,7 @@
     <section v-if="isListPage" class="grid-section card">
       <div class="grid-toolbar">
         <button
+            v-if="isWriter"
             type="button"
             class="btn-grid-save"
             :disabled="pendingChanges.length === 0"
@@ -92,7 +93,7 @@
           @grid-ready="onGridReady"
           @row-double-clicked="onRowClicked"
           @cell-value-changed="onCellValueChanged"
-          :context="{ statusCodes: statusCodes, canEdit: canSave }"
+          :context="{ statusCodes: statusCodes, canEdit: isWriter }"
           :getRowStyle="getRowStyle"
       />
     </section>
@@ -759,10 +760,13 @@ const isListPage = computed(() => !isFormPage.value);
 
 const authStore = useAuthStore();
 
-const canSave = computed(() => {
+// 쓰기(수정/삭제/인라인수정) 권한: 최고 관리자(ADMIN)·팀장(MANAGER)만. 일반 담당자(MEMBER)는 등록만 가능.
+const isWriter = computed(() => {
   const role = authStore.user?.userRole;
-  return role === 'ADMIN';
+  return role === 'ADMIN' || role === 'MANAGER';
 });
+// 폼 입력/저장 가능 여부: 등록 모드는 전 권한 가능, 상세(수정) 모드는 관리자·팀장만
+const canSave = computed(() => modalMode.value === 'register' ? true : isWriter.value);
 
 // 감사 모드: 로그인 페이지 저작권 텍스트 클릭으로 토글, 고객 상세 라우트에서만 적용
 // ※ modalMode(비동기 변경) 대신 route.name(첫 렌더 시점에 이미 확정)을 사용해 플래시 방지
