@@ -16,14 +16,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
 import axios from 'axios';
 import MyPasswordModal from '@/components/MyPasswordModal.vue';
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
+
+// 현재 라우트의 meta.title 을 헤더 제목으로 표시 (라우터에 각 화면 title 정의됨)
+const currentMenu = computed(() => route.meta?.title || '');
 
 const showPasswordModal = ref(false);
 

@@ -628,7 +628,7 @@
         </div>
         <div class="modal-reg-footer">
           <button type="button" class="btn-cancel" @click="showCustomerModal = false">취소</button>
-          <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
+          <button v-if="modalMode === 'register' && isDev" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
           <button v-if="canSave" type="button" class="btn-save" @click="onSaveCustomer">{{ modalMode === 'detail' ? '수정' : '저장' }}</button>
           <span v-else class="no-permission-msg" style="color:#888;font-size:11px;align-self:center;margin-left:10px;">* 수정 권한이 없습니다. (관리자/팀장 전용)</span>
         </div>
@@ -652,6 +652,8 @@ const isWriter = computed(() => {
   const role = authStore.user?.userRole;
   return role === 'ADMIN' || role === 'MANAGER';
 });
+// 개발 환경 여부 (운영 빌드에서 테스트용 버튼 숨김)
+const isDev = process.env.NODE_ENV !== 'production';
 
 const gridApi = ref(null);
 const rowData = ref([]);

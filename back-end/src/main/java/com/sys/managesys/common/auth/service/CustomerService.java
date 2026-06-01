@@ -246,13 +246,20 @@ public class CustomerService {
                 break;
             case "status":
                 if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
+                // 변경 전 상태 조회 → 실제로 값이 바뀐 경우에만 이력 기록 (무변경 저장 시 이력 오염 방지)
+                String prevStatus = customerMapper.selectProductsByCustId(custId).stream()
+                        .filter(p -> prodId.equals(p.getProdId()))
+                        .map(CustProductDto::getOpenStatus)
+                        .findFirst().orElse(null);
                 customerMapper.quickUpdateStatus(prodId, value);
-                CustProdStatusHistDto hist = new CustProdStatusHistDto();
-                hist.setCustId(custId);
-                hist.setProdId(prodId);
-                hist.setOpenStatus(value);
-                hist.setChangerId(currentUser != null ? currentUser.getUserId() : null);
-                custProdStatusHistMapper.insertHist(hist);
+                if (!java.util.Objects.equals(prevStatus, value)) {
+                    CustProdStatusHistDto hist = new CustProdStatusHistDto();
+                    hist.setCustId(custId);
+                    hist.setProdId(prodId);
+                    hist.setOpenStatus(value);
+                    hist.setChangerId(currentUser != null ? currentUser.getUserId() : null);
+                    custProdStatusHistMapper.insertHist(hist);
+                }
                 break;
             case "payDone":
                 customerMapper.quickUpdatePayDone(custId, value);

@@ -42,9 +42,10 @@ function handleSessionExpiry() {
         headers: token ? { Authorization: `Bearer ${token}` } : {}
     }).finally(() => {
         authStore.logout();
-        sessionExpiryHandling = false;
         alert('세션이 만료되었습니다. 다시 로그인해주세요.');
         router.push('/login');
+        // 동시다발 401 버스트 동안 중복 alert 방지: 플래그를 잠시 래치 후 해제
+        setTimeout(() => { sessionExpiryHandling = false; }, 1500);
     });
 }
 

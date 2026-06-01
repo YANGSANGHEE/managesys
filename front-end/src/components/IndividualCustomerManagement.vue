@@ -720,8 +720,8 @@
       </div>
       <div class="form-page-footer">
         <button type="button" class="btn-cancel" @click="onFormCancel">목록으로</button>
-        <!-- 등록 모드일 때만 보이는 테스트 버튼 -->
-        <button v-if="modalMode === 'register'" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
+        <!-- 등록 모드 + 개발 환경에서만 보이는 테스트 버튼 (운영 빌드에서는 숨김) -->
+        <button v-if="modalMode === 'register' && isDev" type="button" class="btn-test-data" @click="fillAllFieldsTestData">테스트 데이터 채우기</button>
         <!-- [수정] 권한이 있는 경우만 '저장' 버튼 노출 -->
         <button v-if="canSave" type="button" class="btn-save" @click="onSaveCustomer">
           {{ modalMode === 'detail' ? '수정' : '저장' }}
@@ -765,6 +765,8 @@ const isWriter = computed(() => {
   const role = authStore.user?.userRole;
   return role === 'ADMIN' || role === 'MANAGER';
 });
+// 개발 환경 여부 (운영 빌드에서 테스트용 버튼 숨김)
+const isDev = process.env.NODE_ENV !== 'production';
 // 폼 입력/저장 가능 여부: 등록 모드는 전 권한 가능, 상세(수정) 모드는 관리자·팀장만
 const canSave = computed(() => modalMode.value === 'register' ? true : isWriter.value);
 
