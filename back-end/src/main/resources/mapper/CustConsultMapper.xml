@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sys.managesys.common.mapper.CustConsultMapper">
+
+    <select id="selectConsultsByCustId" resultType="com.sys.managesys.common.dto.CustConsultDto">
+        SELECT
+            C.CONSULT_ID   AS consultId,
+            C.CUST_ID      AS custId,
+            C.CONSULT_TYPE AS consultType,
+            CC.CODE_NAME   AS consultTypeName,
+            C.CONTENT      AS content,
+            C.CREATOR_ID   AS creatorId,
+            U.USER_NAME    AS creatorName,
+            C.CREATED_AT   AS createdAt,
+            C.USE_YN       AS useYn
+        FROM TB_CUST_CONSULT C
+        LEFT JOIN TB_USER U
+            ON U.USER_ID = C.CREATOR_ID
+        LEFT JOIN TB_COMMON_CODE CC
+            ON CC.GROUP_CODE = 'CONSULT_TYPE'
+           AND CC.CODE_VALUE = C.CONSULT_TYPE
+           AND (CC.USE_YN IS NULL OR CC.USE_YN = 'Y')
+        WHERE C.CUST_ID = #{custId}
+          AND (C.USE_YN IS NULL OR C.USE_YN = 'Y')
+        ORDER BY C.CREATED_AT DESC
+    </select>
+
+    <insert id="insertConsult" parameterType="com.sys.managesys.common.dto.CustConsultDto"
+            useGeneratedKeys="true" keyProperty="consultId">
+        INSERT INTO TB_CUST_CONSULT (CUST_ID, CONSULT_TYPE, CONTENT, CREATOR_ID, USE_YN)
+        VALUES (#{custId}, #{consultType}, #{content}, #{creatorId}, 'Y')
+    </insert>
+
+</mapper>

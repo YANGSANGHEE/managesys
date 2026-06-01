@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sys.managesys.common.mapper.CustProdStatusHistMapper">
+
+    <select id="selectHistByCustId" resultType="com.sys.managesys.common.dto.CustProdStatusHistDto">
+        SELECT
+            H.HIST_ID    AS histId,
+            H.CUST_ID    AS custId,
+            H.PROD_ID    AS prodId,
+            H.OPEN_STATUS AS openStatus,
+            CC.CODE_NAME AS statusName,
+            H.CHANGER_ID AS changerId,
+            U.USER_NAME  AS changerName,
+            H.CHANGED_AT AS changedAt
+        FROM TB_CUST_PROD_STATUS_HIST H
+        LEFT JOIN TB_COMMON_CODE CC
+            ON CC.GROUP_CODE = 'CUST_STATUS'
+           AND CC.CODE_VALUE = H.OPEN_STATUS
+           AND (CC.USE_YN IS NULL OR CC.USE_YN = 'Y')
+        LEFT JOIN TB_USER U
+            ON U.USER_ID = H.CHANGER_ID
+        WHERE H.CUST_ID = #{custId}
+        ORDER BY H.CHANGED_AT DESC
+    </select>
+
+    <insert id="insertHist" parameterType="com.sys.managesys.common.dto.CustProdStatusHistDto"
+            useGeneratedKeys="true" keyProperty="histId">
+        INSERT INTO TB_CUST_PROD_STATUS_HIST (CUST_ID, PROD_ID, OPEN_STATUS, CHANGER_ID)
+        VALUES (#{custId}, #{prodId}, #{openStatus}, #{changerId})
+    </insert>
+
+</mapper>
