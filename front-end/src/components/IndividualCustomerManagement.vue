@@ -1040,11 +1040,12 @@ function fullAddress(params) {
   return [addr, detail].filter(Boolean).join(' ');
 }
 
-// AG Grid: 헤더(컬럼)는 다 나오게 — 컬럼마다 width/minWidth 유지, sizeColumnsToFit() 미사용 → 가로 스크롤로 전부 표시
+// AG Grid: 데이터 로드 후 autoSizeAllColumns()로 컬럼 너비를 셀 내용(글자 수)에 맞춰 자동 조정.
+// flex 미사용(내용 기준 너비) → 총 폭이 화면을 넘으면 가로 스크롤로 전부 표시.
 const columnDefs = ref([
   { headerName: 'No', valueGetter: 'node?.rowIndex != null ? node.rowIndex + 1 : ""', width: 60, minWidth: 60 },
   { field: 'assignedUserName', headerName: '상담원', sortable: true, width: 90, minWidth: 80, valueFormatter: p => p.value ?? '-' },
-  { field: 'custName', headerName: '고객명', sortable: true, filter: true, flex: 1, minWidth: 90 },
+  { field: 'custName', headerName: '고객명', sortable: true, filter: true, minWidth: 90 },
   {
     field: 'receiptDate',
     headerName: '접수일',
@@ -1056,7 +1057,6 @@ const columnDefs = ref([
   {
     headerName: '거주지',
     valueFormatter: fullAddress,
-    flex: 1,
     minWidth: 120,
     tooltipField: 'addr'
   },
@@ -1162,7 +1162,7 @@ const columnDefs = ref([
       destroy() {}
     }
   },
-  { field: 'remark', headerName: '최종상담내용', flex: 1, minWidth: 120 },
+  { field: 'remark', headerName: '최종상담내용', minWidth: 120 },
   {
     colId: 'manage',
     headerName: '관리',
@@ -1200,6 +1200,14 @@ function getRowStyle(params) {
 const onGridReady = params => {
   gridApi.value = params.api;
 };
+
+/** 컬럼 너비를 셀 내용(글자 수)에 맞춰 자동 조정 — 헤더 텍스트도 포함. 데이터 렌더 후 호출. */
+function autoSizeAllColumns() {
+  const api = gridApi.value;
+  if (api && typeof api.autoSizeAllColumns === 'function') {
+    api.autoSizeAllColumns(false); // false: 헤더 너비도 계산에 포함
+  }
+}
 
 // 동일 고객의 여러 상품 행을 구분하기 위한 행 ID 생성
 const getGridRowId = (params) => {
@@ -1259,6 +1267,9 @@ const onSearch = async () => {
     const res = await axios.post('/api/customers/list', payload);
     rowData.value = Array.isArray(res.data) ? res.data : [];
     totalCount.value = rowData.value.length;
+    // 셀 렌더 완료 후 내용 기준 너비 자동 조정
+    await nextTick();
+    setTimeout(autoSizeAllColumns, 50);
   } catch (err) {
     console.error('고객 목록 조회 오류:', err);
     rowData.value = [];
