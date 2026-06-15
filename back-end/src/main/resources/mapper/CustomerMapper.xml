@@ -5,6 +5,24 @@
 
 <mapper namespace="com.sys.managesys.common.mapper.CustomerMapper">
 
+    <!-- 개인정보 암호화 컬럼은 조회 시 자동 복호화한다. autoMapping=true 로 나머지 컬럼은 기존처럼 자동 매핑.
+         (select 가 'AS camelCase' 별칭을 쓰므로 result 의 column 도 별칭명을 사용) -->
+    <resultMap id="customerDetailMap" type="com.sys.managesys.common.dto.CustomerDto" autoMapping="true">
+        <result property="ssnEnc"         column="ssnEnc"         typeHandler="com.sys.managesys.common.config.EncryptedStringTypeHandler"/>
+        <result property="foreignerRegNo" column="foreignerRegNo" typeHandler="com.sys.managesys.common.config.EncryptedStringTypeHandler"/>
+    </resultMap>
+    <resultMap id="paymentDetailMap" type="com.sys.managesys.common.dto.CustPaymentDto" autoMapping="true">
+        <result property="accountCardNo" column="accountCardNo" typeHandler="com.sys.managesys.common.config.EncryptedStringTypeHandler"/>
+        <result property="holderSsnEnc"  column="holderSsnEnc"  typeHandler="com.sys.managesys.common.config.EncryptedStringTypeHandler"/>
+    </resultMap>
+    <resultMap id="giftDetailMap" type="com.sys.managesys.common.dto.CustGiftDto" autoMapping="true">
+        <result property="holderSsnEnc" column="holderSsnEnc" typeHandler="com.sys.managesys.common.config.EncryptedStringTypeHandler"/>
+        <result property="accountNo"    column="accountNo"    typeHandler="com.sys.managesys.common.config.EncryptedStringTypeHandler"/>
+    </resultMap>
+    <resultMap id="mnpDetailMap" type="com.sys.managesys.common.dto.CustMnpDto" autoMapping="true">
+        <result property="ownerSsnEnc" column="ownerSsnEnc" typeHandler="com.sys.managesys.common.config.EncryptedStringTypeHandler"/>
+    </resultMap>
+
     <select id="selectCustomerList" parameterType="com.sys.managesys.common.dto.CustomerDto" resultType="com.sys.managesys.common.dto.CustomerDto">
         SELECT
         C.CUST_ID AS custId,
@@ -138,7 +156,7 @@
         <if test="limit != null and limit > 0">LIMIT #{limit}</if>
     </select>
 
-    <select id="selectCustomerById" resultType="com.sys.managesys.common.dto.CustomerDto">
+    <select id="selectCustomerById" resultMap="customerDetailMap">
         SELECT
         C.CUST_ID AS custId,
         C.STATUS AS status,
@@ -184,7 +202,7 @@
         CUST_AUTH_TYPE, CUST_AUTH_VAL, COUNSELOR_NAME, DEPT_ID, ASSIGNED_USER_ID, REMARK, VOUCHER_RETURN_YN, INSTALL_SCHED_DT, OPEN_DATE, RECEIPT_DT, CANCELL_DT, JOIN_DATE, USE_YN, CREATOR_ID
         ) VALUES (
         COALESCE(#{status}, 'RECEIPT'), #{custName}, #{repName}, #{custType}, COALESCE(#{custKind}, 'INDIVIDUAL'),
-        #{ssnEnc}, #{bizNo}, #{corpNo}, #{foreignerRegNo}, #{zipCode}, #{addr}, #{addrDetail},
+        #{ssnEnc, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler}, #{bizNo}, #{corpNo}, #{foreignerRegNo, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler}, #{zipCode}, #{addr}, #{addrDetail},
         #{telNo}, #{hpNo}, #{hpCarrier}, #{email}, #{custAuthType}, #{custAuthVal},
         #{counselorName}, #{deptId}, #{assignedUserId}, #{remark}, COALESCE(#{voucherReturnYn}, 'N'), #{installSchedDt}, #{openDate}, #{receiptDate}, #{cancellationDate}, #{authenticatedDate}, COALESCE(#{useYn}, 'Y'), #{creatorId}
         )
@@ -197,10 +215,10 @@
         REP_NAME = #{repName},
         CUST_TYPE = #{custType},
         CUST_KIND = COALESCE(#{custKind}, 'INDIVIDUAL'),
-        SSN_ENC = #{ssnEnc},
+        SSN_ENC = #{ssnEnc, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler},
         BIZ_NO = #{bizNo},
         CORP_NO = #{corpNo},
-        FOREIGNER_REG_NO = #{foreignerRegNo},
+        FOREIGNER_REG_NO = #{foreignerRegNo, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler},
         ZIP_CODE = #{zipCode},
         ADDR = #{addr},
         ADDR_DETAIL = #{addrDetail},
@@ -240,7 +258,7 @@
         ORDER BY PROD_ID
     </select>
 
-    <select id="selectPaymentByCustId" resultType="com.sys.managesys.common.dto.CustPaymentDto">
+    <select id="selectPaymentByCustId" resultMap="paymentDetailMap">
         SELECT CUST_ID AS custId, PAY_METHOD AS payMethod, DISCOUNT_TYPE AS discountType, BILL_TYPE AS billType,
         BANK_CARD_NAME AS bankCardName, ACCOUNT_CARD_NO AS accountCardNo, ACCOUNT_HOLDER AS accountHolder,
         RELATION_WITH_CUST AS relationWithCust, HOLDER_SSN_ENC AS holderSsnEnc, IS_SAME_AS_CUST AS isSameAsCust,
@@ -249,7 +267,7 @@
         WHERE CUST_ID = #{custId}
     </select>
 
-    <select id="selectGiftsByCustId" resultType="com.sys.managesys.common.dto.CustGiftDto">
+    <select id="selectGiftsByCustId" resultMap="giftDetailMap">
         SELECT CUST_ID AS custId, GIFT_GB AS giftGb, GIFT_NAME AS giftName, GIFT_AMOUNT AS giftAmount, ADD_DEPOSIT_AMOUNT AS addDepositAmount,
         PAY_SCHED_DATE AS paySchedDate, PAY_DONE_DATE AS payDoneDate, PAY_SOURCE AS paySource,
         BANK_NAME AS bankName, ACCOUNT_NO AS accountNo, ACCOUNT_HOLDER AS accountHolder, HOLDER_SSN_ENC AS holderSsnEnc,
@@ -259,7 +277,7 @@
         ORDER BY GIFT_ID
     </select>
 
-    <select id="selectMnpsByCustId" resultType="com.sys.managesys.common.dto.CustMnpDto">
+    <select id="selectMnpsByCustId" resultMap="mnpDetailMap">
         SELECT CUST_ID AS custId, IS_SAME_AS_CUST AS isSameAsCust, MNP_TEL_NO AS mnpTelNo, OWNER_NAME AS ownerName,
         OWNER_SSN_ENC AS ownerSsnEnc, CONTACT_NO AS contactNo, ISSUE_DATE AS issueDate, PREV_CARRIER AS prevCarrier,
         MNP_MEMO AS mnpMemo, REMARK AS remark, USE_YN AS useYn, CREATED_AT AS createdAt, UPDATED_AT AS updatedAt
@@ -270,12 +288,12 @@
 
     <insert id="insertPayment" parameterType="com.sys.managesys.common.dto.CustPaymentDto">
         INSERT INTO TB_CUST_PAYMENT (CUST_ID, PAY_METHOD, DISCOUNT_TYPE, BILL_TYPE, BANK_CARD_NAME, ACCOUNT_CARD_NO, ACCOUNT_HOLDER, RELATION_WITH_CUST, HOLDER_SSN_ENC, IS_SAME_AS_CUST, REMARK, USE_YN)
-        VALUES (#{custId}, #{payMethod}, #{discountType}, #{billType}, #{bankCardName}, #{accountCardNo}, #{accountHolder}, #{relationWithCust}, #{holderSsnEnc}, COALESCE(#{isSameAsCust}, 'N'), #{remark}, COALESCE(#{useYn}, 'Y'))
+        VALUES (#{custId}, #{payMethod}, #{discountType}, #{billType}, #{bankCardName}, #{accountCardNo, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler}, #{accountHolder}, #{relationWithCust}, #{holderSsnEnc, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler}, COALESCE(#{isSameAsCust}, 'N'), #{remark}, COALESCE(#{useYn}, 'Y'))
     </insert>
 
     <insert id="insertGift" parameterType="com.sys.managesys.common.dto.CustGiftDto">
         INSERT INTO TB_CUST_GIFT (CUST_ID, GIFT_GB, GIFT_NAME, GIFT_AMOUNT, ADD_DEPOSIT_AMOUNT, PAY_SCHED_DATE, PAY_DONE_DATE, PAY_SOURCE, BANK_NAME, ACCOUNT_NO, ACCOUNT_HOLDER, HOLDER_SSN_ENC, IS_SAME_AS_BANK, REMARK, USE_YN)
-        VALUES (#{custId}, #{giftGb}, #{giftName}, COALESCE(#{giftAmount}, 0), COALESCE(#{addDepositAmount}, 0), #{paySchedDate}, #{payDoneDate}, #{paySource}, #{bankName}, #{accountNo}, #{accountHolder}, #{holderSsnEnc}, COALESCE(#{isSameAsBank}, 'N'), #{remark}, COALESCE(#{useYn}, 'Y'))
+        VALUES (#{custId}, #{giftGb}, #{giftName}, COALESCE(#{giftAmount}, 0), COALESCE(#{addDepositAmount}, 0), #{paySchedDate}, #{payDoneDate}, #{paySource}, #{bankName}, #{accountNo, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler}, #{accountHolder}, #{holderSsnEnc, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler}, COALESCE(#{isSameAsBank}, 'N'), #{remark}, COALESCE(#{useYn}, 'Y'))
     </insert>
 
     <insert id="insertProduct" parameterType="com.sys.managesys.common.dto.CustProductDto">
@@ -285,7 +303,7 @@
 
     <insert id="insertMnp" parameterType="com.sys.managesys.common.dto.CustMnpDto">
         INSERT INTO TB_CUST_MNP (CUST_ID, IS_SAME_AS_CUST, MNP_TEL_NO, OWNER_NAME, OWNER_SSN_ENC, CONTACT_NO, ISSUE_DATE, PREV_CARRIER, MNP_MEMO, REMARK, USE_YN)
-        VALUES (#{custId}, COALESCE(#{isSameAsCust}, 'N'), #{mnpTelNo}, #{ownerName}, #{ownerSsnEnc}, #{contactNo}, #{issueDate}, #{prevCarrier}, #{mnpMemo}, #{remark}, COALESCE(#{useYn}, 'Y'))
+        VALUES (#{custId}, COALESCE(#{isSameAsCust}, 'N'), #{mnpTelNo}, #{ownerName}, #{ownerSsnEnc, typeHandler=com.sys.managesys.common.config.EncryptedStringTypeHandler}, #{contactNo}, #{issueDate}, #{prevCarrier}, #{mnpMemo}, #{remark}, COALESCE(#{useYn}, 'Y'))
     </insert>
 
     <delete id="deletePaymentByCustId">DELETE FROM TB_CUST_PAYMENT WHERE CUST_ID = #{custId}</delete>
