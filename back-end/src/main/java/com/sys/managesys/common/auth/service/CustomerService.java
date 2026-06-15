@@ -1,6 +1,7 @@
 package com.sys.managesys.common.auth.service;
 
 import com.sys.managesys.common.auth.dto.CurrentUserContext;
+import com.sys.managesys.common.config.AccessForbiddenException;
 import com.sys.managesys.common.dto.*;
 import com.sys.managesys.common.mapper.CustConsultMapper;
 import com.sys.managesys.common.mapper.CustFileMapper;
@@ -36,7 +37,7 @@ public class CustomerService {
         CustomerDto customer = customerMapper.selectCustomerById(custId);
         if (customer == null) return null;
         if (currentUser != null && !canAccessCustomer(customer, currentUser)) {
-            throw new IllegalArgumentException("해당 고객 정보에 대한 조회 권한이 없습니다.");
+            throw new AccessForbiddenException("해당 고객 정보에 대한 조회 권한이 없습니다.");
         }
         List<CustProductDto> products = customerMapper.selectProductsByCustId(custId);
         CustPaymentDto payment = customerMapper.selectPaymentByCustId(custId);
@@ -52,6 +53,13 @@ public class CustomerService {
         res.setAttachments(attachments != null ? attachments : new ArrayList<>());
         return res;
     }
+
+    /*
+     * [전제] 아래 권한 검사들은 호출부에서 'currentUser != null' 가드 하에 수행된다.
+     * 이는 방어적 패턴이며, 실제로는 SecurityConfig 가 /api/** 를 authenticated() 로 강제하므로
+     * 컨트롤러 도달 시 currentUser 는 항상 non-null 이다.
+     * ⚠ 향후 SecurityConfig 의 인증 정책을 완화하면 이 전제가 깨져 권한 검사가 우회될 수 있으니 주의.
+     */
 
     /** 쓰기(수정/삭제/인라인수정) 권한: 최고 관리자(ADMIN) 및 팀장(MANAGER)만 허용. 일반 담당자(MEMBER)는 등록(Create)만 가능. */
     private boolean isWriter(CurrentUserContext user) {
@@ -165,11 +173,11 @@ public class CustomerService {
         List<CustProductDto> existingProducts = customerMapper.selectProductsByCustId(custId);
         if (currentUser != null) {
             if (!isWriter(currentUser)) {
-                throw new IllegalArgumentException("고객 정보를 수정할 권한이 없습니다. (관리자/팀장 전용)");
+                throw new AccessForbiddenException("고객 정보를 수정할 권한이 없습니다. (관리자/팀장 전용)");
             }
             CustomerDto existing = customerMapper.selectCustomerById(custId);
             if (existing == null || !canAccessCustomer(existing, currentUser)) {
-                throw new IllegalArgumentException("해당 고객 정보에 대한 수정 권한이 없습니다.");
+                throw new AccessForbiddenException("해당 고객 정보에 대한 수정 권한이 없습니다.");
             }
         }
         customerMapper.updateCustomer(customer);
@@ -235,12 +243,12 @@ public class CustomerService {
         if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
         if (currentUser != null) {
             if (!isWriter(currentUser)) {
-                throw new IllegalArgumentException("고객 정보를 수정할 권한이 없습니다. (관리자/팀장 전용)");
+                throw new AccessForbiddenException("고객 정보를 수정할 권한이 없습니다. (관리자/팀장 전용)");
             }
             // update/delete 와 동일하게 부서 범위(팀장=자기 부서) 검증
             CustomerDto target = customerMapper.selectCustomerById(custId);
             if (target == null || !canAccessCustomer(target, currentUser)) {
-                throw new IllegalArgumentException("해당 고객 정보에 대한 수정 권한이 없습니다.");
+                throw new AccessForbiddenException("해당 고객 정보에 대한 수정 권한이 없습니다.");
             }
         }
         switch (field) {
@@ -277,18 +285,32 @@ public class CustomerService {
         }
     }
 
-    public List<CustConsultDto> getConsults(Long custId) {
+    /** 고객 하위정보(상담/이력) 접근 권한 검증: 고객 미존재 400, 접근권한 없으면 403. (조회/추가 공통)
+     *  /detail 과 동일한 canAccessCustomer 규칙을 적용해 타 고객 정보 무단 접근(IDOR)을 막는다. */
+    private void requireCustomerAccess(Long custId, CurrentUserContext currentUser) {
+        if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
+        CustomerDto customer = customerMapper.selectCustomerById(custId);
+        if (customer == null) throw new IllegalArgumentException("해당 고객 정보를 찾을 수 없습니다.");
+        if (currentUser != null && !canAccessCustomer(customer, currentUser)) {
+            throw new AccessForbiddenException("해당 고객 정보에 대한 접근 권한이 없습니다.");
+        }
+    }
+
+    public List<CustConsultDto> getConsults(Long custId, CurrentUserContext currentUser) {
+        requireCustomerAccess(custId, currentUser);   // 타 고객 상담이력 무단 조회(IDOR) 방지
         return custConsultMapper.selectConsultsByCustId(custId);
     }
 
-    public List<CustProdStatusHistDto> getStatusHist(Long custId) {
+    public List<CustProdStatusHistDto> getStatusHist(Long custId, CurrentUserContext currentUser) {
+        requireCustomerAccess(custId, currentUser);   // 타 고객 상태이력 무단 조회(IDOR) 방지
         return custProdStatusHistMapper.selectHistByCustId(custId);
     }
 
     @Transactional
-    public void addConsult(CustConsultDto dto) {
+    public void addConsult(CustConsultDto dto, CurrentUserContext currentUser) {
         if (dto.getCustId() == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
         if (dto.getContent() == null || dto.getContent().isBlank()) throw new IllegalArgumentException("내용을 입력해주세요.");
+        requireCustomerAccess(dto.getCustId(), currentUser);   // 타 고객에 무단 상담 추가(쓰기 IDOR) 방지
         custConsultMapper.insertConsult(dto);
     }
 
@@ -300,10 +322,10 @@ public class CustomerService {
         if (customer == null) throw new IllegalArgumentException("해당 고객 정보를 찾을 수 없습니다.");
         if (currentUser != null) {
             if (!isWriter(currentUser)) {
-                throw new IllegalArgumentException("고객 정보를 삭제할 권한이 없습니다. (관리자/팀장 전용)");
+                throw new AccessForbiddenException("고객 정보를 삭제할 권한이 없습니다. (관리자/팀장 전용)");
             }
             if (!canAccessCustomer(customer, currentUser)) {
-                throw new IllegalArgumentException("해당 고객 정보에 대한 삭제 권한이 없습니다.");
+                throw new AccessForbiddenException("해당 고객 정보에 대한 삭제 권한이 없습니다.");
             }
         }
         // 첨부파일: 디스크 실체를 먼저 지운 뒤(메타는 FK CASCADE로 연쇄 삭제되지만 명시적으로도 삭제)
@@ -316,6 +338,9 @@ public class CustomerService {
         customerMapper.deleteGiftsByCustId(custId);
         customerMapper.deleteProductsByCustId(custId);
         customerMapper.deleteMnpsByCustId(custId);
+        // 개통상태 이력 / 상담 이력도 명시 삭제 (FK CASCADE 미설정 테이블 → orphan 방지)
+        custProdStatusHistMapper.deleteHistByCustId(custId);
+        custConsultMapper.deleteConsultsByCustId(custId);
         customerMapper.deleteByCustId(custId);
     }
 
@@ -328,7 +353,7 @@ public class CustomerService {
         CustomerDto customer = customerMapper.selectCustomerById(custId);
         if (customer == null) throw new IllegalArgumentException("해당 고객 정보를 찾을 수 없습니다.");
         if (currentUser != null && !canAccessCustomer(customer, currentUser)) {
-            throw new IllegalArgumentException("해당 고객에 파일을 첨부할 권한이 없습니다.");
+            throw new AccessForbiddenException("해당 고객에 파일을 첨부할 권한이 없습니다.");
         }
         if (files == null || files.isEmpty()) {
             throw new IllegalArgumentException("업로드할 파일이 없습니다.");
@@ -357,7 +382,7 @@ public class CustomerService {
         CustomerDto customer = customerMapper.selectCustomerById(custId);
         if (customer == null) throw new IllegalArgumentException("해당 고객 정보를 찾을 수 없습니다.");
         if (currentUser != null && !canAccessCustomer(customer, currentUser)) {
-            throw new IllegalArgumentException("해당 고객의 첨부파일을 조회할 권한이 없습니다.");
+            throw new AccessForbiddenException("해당 고객의 첨부파일을 조회할 권한이 없습니다.");
         }
         return custFileMapper.selectFilesByCustId(custId);
     }
@@ -368,7 +393,7 @@ public class CustomerService {
         if (file == null) throw new IllegalArgumentException("파일을 찾을 수 없습니다.");
         CustomerDto customer = customerMapper.selectCustomerById(file.getCustId());
         if (currentUser != null && customer != null && !canAccessCustomer(customer, currentUser)) {
-            throw new IllegalArgumentException("해당 파일을 다운로드할 권한이 없습니다.");
+            throw new AccessForbiddenException("해당 파일을 다운로드할 권한이 없습니다.");
         }
         return file;
     }
@@ -386,10 +411,10 @@ public class CustomerService {
         CustomerDto customer = customerMapper.selectCustomerById(file.getCustId());
         if (currentUser != null) {
             if (!isWriter(currentUser)) {
-                throw new IllegalArgumentException("첨부파일을 삭제할 권한이 없습니다. (관리자/팀장 전용)");
+                throw new AccessForbiddenException("첨부파일을 삭제할 권한이 없습니다. (관리자/팀장 전용)");
             }
             if (customer != null && !canAccessCustomer(customer, currentUser)) {
-                throw new IllegalArgumentException("해당 파일을 삭제할 권한이 없습니다.");
+                throw new AccessForbiddenException("해당 파일을 삭제할 권한이 없습니다.");
             }
         }
         custFileMapper.deleteFileById(fileId);

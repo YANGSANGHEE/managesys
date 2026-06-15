@@ -34,4 +34,8 @@
         VALUES (#{custId}, #{consultType}, #{content}, #{creatorId}, 'Y')
     </insert>
 
+    <delete id="deleteConsultsByCustId">
+        DELETE FROM TB_CUST_CONSULT WHERE CUST_ID = #{custId}
+    </delete>
+
 </mapper>

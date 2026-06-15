@@ -32,4 +32,8 @@
         VALUES (#{custId}, #{prodId}, #{openStatus}, #{changerId})
     </insert>
 
+    <delete id="deleteHistByCustId">
+        DELETE FROM TB_CUST_PROD_STATUS_HIST WHERE CUST_ID = #{custId}
+    </delete>
+
 </mapper>

@@ -10,4 +10,6 @@ import java.util.List;
 public interface CustConsultMapper {
     List<CustConsultDto> selectConsultsByCustId(@Param("custId") Long custId);
     int insertConsult(CustConsultDto dto);
+    /** 고객 삭제 시 상담 이력 연쇄 삭제 (orphan 방지) */
+    int deleteConsultsByCustId(@Param("custId") Long custId);
 }

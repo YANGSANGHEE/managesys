@@ -10,4 +10,6 @@ import java.util.List;
 public interface CustProdStatusHistMapper {
     List<CustProdStatusHistDto> selectHistByCustId(@Param("custId") Long custId);
     int insertHist(CustProdStatusHistDto dto);
+    /** 고객 삭제 시 개통상태 이력 연쇄 삭제 (orphan 방지) */
+    int deleteHistByCustId(@Param("custId") Long custId);
 }

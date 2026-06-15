@@ -13,8 +13,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.net.URLEncoder;
@@ -26,10 +24,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {
-        RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT,
-        RequestMethod.PATCH, RequestMethod.DELETE, RequestMethod.OPTIONS
-})
+// CORS 는 SecurityConfig.corsConfigurationSource() 의 allow-list 로 일원화한다.
+// (컨트롤러 레벨 @CrossOrigin("*") 은 allow-list 를 무력화하므로 제거)
 public class CustomerController {
 
     private final CustomerService customerService;
@@ -115,12 +111,12 @@ public class CustomerController {
 
     @GetMapping("/{custId}/status-hist")
     public List<CustProdStatusHistDto> getStatusHist(@PathVariable Long custId) {
-        return customerService.getStatusHist(custId);
+        return customerService.getStatusHist(custId, getCurrentUser());
     }
 
     @GetMapping("/{custId}/consults")
     public List<CustConsultDto> getConsults(@PathVariable Long custId) {
-        return customerService.getConsults(custId);
+        return customerService.getConsults(custId, getCurrentUser());
     }
 
     @PostMapping("/{custId}/consults")
@@ -128,7 +124,7 @@ public class CustomerController {
         CurrentUserContext user = getCurrentUser();
         dto.setCustId(custId);
         if (user != null) dto.setCreatorId(user.getUserId());
-        customerService.addConsult(dto);
+        customerService.addConsult(dto, user);
         return ResponseEntity.ok().build();
     }
 
