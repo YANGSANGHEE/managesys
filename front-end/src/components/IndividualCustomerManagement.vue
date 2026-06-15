@@ -650,7 +650,8 @@
                   <div class="file-list-preview">
                     <ul class="file-list">
                       <li v-for="file in existingFiles" :key="file.fileId">
-                        <a :href="file.fileUrl" target="_blank" class="file-link">{{ file.originFileName }}</a>
+                        <a href="#" @click.prevent="downloadFile(file)" class="file-link">{{ file.originFileName }}</a>
+                        <button v-if="isWriter" type="button" @click="deleteExistingFile(file)" class="btn-file-remove">×</button>
                       </li>
                     </ul>
                   </div>
@@ -2239,13 +2240,26 @@ async function onSaveCustomer() {
   }
   try {
     const payload = buildRegisterPayload();
+    let custId;
     if (modalMode.value === 'detail') {
       await axios.put('/api/customers/update', payload);
-      alert('수정되었습니다.');
+      custId = form.value.customer.custId;
     } else {
-      await axios.post('/api/customers/register', payload);
-      alert('등록되었습니다.');
+      const res = await axios.post('/api/customers/register', payload);
+      custId = res.data?.custId;
     }
+
+    // 새로 선택한 첨부파일이 있으면 업로드 (고객 저장이 성공한 뒤에 수행)
+    if (custId && selectedFiles.value.length > 0) {
+      try {
+        await uploadFiles(custId);
+      } catch (uploadErr) {
+        console.error('첨부파일 업로드 오류:', uploadErr);
+        alert('고객 정보는 저장되었으나 첨부파일 업로드에 실패했습니다.\n' +
+          (uploadErr.response?.data?.message || ''));
+      }
+    }
+    alert(modalMode.value === 'detail' ? '수정되었습니다.' : '등록되었습니다.');
 
     showCustomerModal.value = false;
     router.push({ name: 'CustomersIndividual' });
@@ -2311,6 +2325,46 @@ function onFileChange(event) {
 // 선택 파일 제거
 function removeFile(index) {
   selectedFiles.value.splice(index, 1);
+}
+
+// 선택한 파일들을 서버에 업로드 (multipart). custId 필요.
+async function uploadFiles(custId) {
+  if (!selectedFiles.value.length) return;
+  const fd = new FormData();
+  selectedFiles.value.forEach(f => fd.append('files', f));
+  // Content-Type 은 axios 가 boundary 와 함께 자동 설정하도록 명시하지 않는다.
+  await axios.post(`/api/customers/${custId}/files`, fd);
+  selectedFiles.value = [];
+}
+
+// 저장된 첨부파일 다운로드. JWT 인증 때문에 a[href] 직접 링크 대신 blob 으로 받는다.
+async function downloadFile(file) {
+  try {
+    const res = await axios.get(`/api/customers/files/${file.fileId}/download`, { responseType: 'blob' });
+    const url = window.URL.createObjectURL(res.data);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.originFileName || 'download';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('첨부파일 다운로드 오류:', err);
+    alert(err.response?.data?.message || '파일 다운로드에 실패했습니다.');
+  }
+}
+
+// 저장된 첨부파일 삭제 (관리자/팀장)
+async function deleteExistingFile(file) {
+  if (!confirm(`'${file.originFileName}' 파일을 삭제하시겠습니까?`)) return;
+  try {
+    await axios.delete(`/api/customers/files/${file.fileId}`);
+    existingFiles.value = existingFiles.value.filter(f => f.fileId !== file.fileId);
+  } catch (err) {
+    console.error('첨부파일 삭제 오류:', err);
+    alert(err.response?.data?.message || '파일 삭제에 실패했습니다.');
+  }
 }
 
 // ─── 고객 이력(상담 이력) ─────────────────────────────────────────

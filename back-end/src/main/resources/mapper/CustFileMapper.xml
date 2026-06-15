@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sys.managesys.common.mapper.CustFileMapper">
+
+    <resultMap id="custFileMap" type="com.sys.managesys.common.dto.CustFileDto">
+        <id     property="fileId"         column="FILE_ID"/>
+        <result property="custId"         column="CUST_ID"/>
+        <result property="originFileName" column="ORIGIN_FILE_NAME"/>
+        <result property="storedFileName" column="STORED_FILE_NAME"/>
+        <result property="filePath"       column="FILE_PATH"/>
+        <result property="fileSize"       column="FILE_SIZE"/>
+        <result property="contentType"    column="CONTENT_TYPE"/>
+        <result property="creatorId"      column="CREATOR_ID"/>
+        <result property="createdAt"      column="CREATED_AT"/>
+        <result property="useYn"          column="USE_YN"/>
+    </resultMap>
+
+    <insert id="insertFile" parameterType="com.sys.managesys.common.dto.CustFileDto"
+            useGeneratedKeys="true" keyProperty="fileId">
+        INSERT INTO TB_CUST_FILE
+            (CUST_ID, ORIGIN_FILE_NAME, STORED_FILE_NAME, FILE_PATH, FILE_SIZE, CONTENT_TYPE, CREATOR_ID, USE_YN)
+        VALUES
+            (#{custId}, #{originFileName}, #{storedFileName}, #{filePath}, #{fileSize}, #{contentType}, #{creatorId}, 'Y')
+    </insert>
+
+    <select id="selectFilesByCustId" resultMap="custFileMap">
+        SELECT FILE_ID, CUST_ID, ORIGIN_FILE_NAME, STORED_FILE_NAME, FILE_PATH,
+               FILE_SIZE, CONTENT_TYPE, CREATOR_ID, CREATED_AT, USE_YN
+        FROM TB_CUST_FILE
+        WHERE CUST_ID = #{custId} AND USE_YN = 'Y'
+        ORDER BY FILE_ID ASC
+    </select>
+
+    <select id="selectFileById" resultMap="custFileMap">
+        SELECT FILE_ID, CUST_ID, ORIGIN_FILE_NAME, STORED_FILE_NAME, FILE_PATH,
+               FILE_SIZE, CONTENT_TYPE, CREATOR_ID, CREATED_AT, USE_YN
+        FROM TB_CUST_FILE
+        WHERE FILE_ID = #{fileId}
+    </select>
+
+    <delete id="deleteFileById">
+        DELETE FROM TB_CUST_FILE WHERE FILE_ID = #{fileId}
+    </delete>
+
+    <delete id="deleteFilesByCustId">
+        DELETE FROM TB_CUST_FILE WHERE CUST_ID = #{custId}
+    </delete>
+
+</mapper>

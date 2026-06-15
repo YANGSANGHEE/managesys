@@ -13,4 +13,5 @@ public class CustomerDetailResponse {
     private CustPaymentDto payment;
     private List<CustGiftDto> gifts;
     private List<CustMnpDto> mnps;
+    private List<CustFileDto> attachments;   // 첨부파일 목록
 }

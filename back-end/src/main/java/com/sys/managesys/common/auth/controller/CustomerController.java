@@ -6,13 +6,19 @@ import com.sys.managesys.common.config.CustomUserDetails;
 import com.sys.managesys.common.dto.*;
 import com.sys.managesys.common.auth.service.UserManagementService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -76,7 +82,7 @@ public class CustomerController {
     }
 
     @PostMapping("/register")
-    public void registerCustomer(@RequestBody CustomerRegisterRequest request) {
+    public ResponseEntity<Map<String, Object>> registerCustomer(@RequestBody CustomerRegisterRequest request) {
         CurrentUserContext user = getCurrentUser();
         if (user != null && request.getCustomer() != null) {
             // 등록자(creatorId)는 클라이언트 입력을 신뢰하지 않고 항상 서버에서 현재 사용자로 강제 (명의 위조 방지)
@@ -86,7 +92,9 @@ public class CustomerController {
                 request.getCustomer().setAssignedUserId(user.getUserId());
             }
         }
-        customerService.register(request);
+        Long custId = customerService.register(request);
+        // 신규 등록 직후 첨부파일을 올릴 수 있도록 custId 반환
+        return ResponseEntity.ok(Map.of("custId", custId));
     }
 
     @PutMapping("/update")
@@ -128,6 +136,45 @@ public class CustomerController {
     @DeleteMapping("/{custId}")
     public void deleteCustomer(@PathVariable Long custId) {
         customerService.deleteCustomer(custId, getCurrentUser());
+    }
+
+    // ─── 첨부파일 ────────────────────────────────────────────────────────────
+
+    /** 첨부 업로드 (multipart). 해당 고객 접근 권한자만. */
+    @PostMapping("/{custId}/files")
+    public ResponseEntity<List<CustFileDto>> uploadFiles(@PathVariable Long custId,
+                                                         @RequestParam("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(customerService.uploadFiles(custId, files, getCurrentUser()));
+    }
+
+    /** 첨부 목록 */
+    @GetMapping("/{custId}/files")
+    public List<CustFileDto> getFiles(@PathVariable Long custId) {
+        return customerService.getFiles(custId, getCurrentUser());
+    }
+
+    /** 첨부 다운로드 */
+    @GetMapping("/files/{fileId}/download")
+    public ResponseEntity<Resource> downloadFile(@PathVariable Long fileId) {
+        CustFileDto file = customerService.getFileForDownload(fileId, getCurrentUser());
+        Resource resource = customerService.loadFileResource(file);
+        String encodedName = URLEncoder.encode(
+                file.getOriginFileName() != null ? file.getOriginFileName() : "download",
+                StandardCharsets.UTF_8).replace("+", "%20");
+        String contentType = file.getContentType() != null ? file.getContentType()
+                : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"" + encodedName + "\"; filename*=UTF-8''" + encodedName)
+                .body(resource);
+    }
+
+    /** 첨부 삭제 (관리자/팀장) */
+    @DeleteMapping("/files/{fileId}")
+    public ResponseEntity<Void> deleteFile(@PathVariable Long fileId) {
+        customerService.deleteFile(fileId, getCurrentUser());
+        return ResponseEntity.ok().build();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

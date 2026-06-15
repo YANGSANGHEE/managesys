@@ -3,12 +3,15 @@ package com.sys.managesys.common.auth.service;
 import com.sys.managesys.common.auth.dto.CurrentUserContext;
 import com.sys.managesys.common.dto.*;
 import com.sys.managesys.common.mapper.CustConsultMapper;
+import com.sys.managesys.common.mapper.CustFileMapper;
 import com.sys.managesys.common.mapper.CustProdStatusHistMapper;
 import com.sys.managesys.common.mapper.CustomerMapper;
 import com.sys.managesys.common.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -22,6 +25,8 @@ public class CustomerService {
     private final UserMapper userMapper;
     private final CustConsultMapper custConsultMapper;
     private final CustProdStatusHistMapper custProdStatusHistMapper;
+    private final CustFileMapper custFileMapper;
+    private final FileStorageService fileStorageService;
 
     public List<CustomerDto> findCustomers(CustomerDto searchDto) {
         return customerMapper.selectCustomerList(searchDto);
@@ -37,12 +42,14 @@ public class CustomerService {
         CustPaymentDto payment = customerMapper.selectPaymentByCustId(custId);
         List<CustGiftDto> gifts = customerMapper.selectGiftsByCustId(custId);
         List<CustMnpDto> mnps = customerMapper.selectMnpsByCustId(custId);
+        List<CustFileDto> attachments = custFileMapper.selectFilesByCustId(custId);
         CustomerDetailResponse res = new CustomerDetailResponse();
         res.setCustomer(customer);
         res.setProducts(products != null ? products : new ArrayList<>());
         res.setPayment(payment);
         res.setGifts(gifts != null ? gifts : new ArrayList<>());
         res.setMnps(mnps != null ? mnps : new ArrayList<>());
+        res.setAttachments(attachments != null ? attachments : new ArrayList<>());
         return res;
     }
 
@@ -87,7 +94,7 @@ public class CustomerService {
     }
 
     @Transactional
-    public void register(CustomerRegisterRequest req) {
+    public Long register(CustomerRegisterRequest req) {
         CustomerDto customer = req.getCustomer();
         validateCustomer(customer, false);
         customer.setCustKind(customer.getCustKind() != null ? customer.getCustKind() : "INDIVIDUAL");
@@ -140,6 +147,7 @@ public class CustomerService {
             mnp.setUseYn(mnp.getUseYn() != null ? mnp.getUseYn() : "Y");
             customerMapper.insertMnp(mnp);
         }
+        return custId;
     }
 
     @Transactional
@@ -298,10 +306,93 @@ public class CustomerService {
                 throw new IllegalArgumentException("해당 고객 정보에 대한 삭제 권한이 없습니다.");
             }
         }
+        // 첨부파일: 디스크 실체를 먼저 지운 뒤(메타는 FK CASCADE로 연쇄 삭제되지만 명시적으로도 삭제)
+        List<CustFileDto> files = custFileMapper.selectFilesByCustId(custId);
+        for (CustFileDto f : files) {
+            fileStorageService.deleteQuietly(f.getFilePath());
+        }
+        custFileMapper.deleteFilesByCustId(custId);
         customerMapper.deletePaymentByCustId(custId);
         customerMapper.deleteGiftsByCustId(custId);
         customerMapper.deleteProductsByCustId(custId);
         customerMapper.deleteMnpsByCustId(custId);
         customerMapper.deleteByCustId(custId);
+    }
+
+    // ─── 첨부파일 ────────────────────────────────────────────────────────────
+
+    /** 첨부 업로드. 해당 고객에 접근 권한이 있어야 한다(등록자/담당자/관리자·팀장). */
+    @Transactional
+    public List<CustFileDto> uploadFiles(Long custId, List<MultipartFile> files, CurrentUserContext currentUser) {
+        if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
+        CustomerDto customer = customerMapper.selectCustomerById(custId);
+        if (customer == null) throw new IllegalArgumentException("해당 고객 정보를 찾을 수 없습니다.");
+        if (currentUser != null && !canAccessCustomer(customer, currentUser)) {
+            throw new IllegalArgumentException("해당 고객에 파일을 첨부할 권한이 없습니다.");
+        }
+        if (files == null || files.isEmpty()) {
+            throw new IllegalArgumentException("업로드할 파일이 없습니다.");
+        }
+        List<CustFileDto> saved = new ArrayList<>();
+        for (MultipartFile mf : files) {
+            if (mf == null || mf.isEmpty()) continue;
+            FileStorageService.StoredFile stored = fileStorageService.store(mf);
+            CustFileDto dto = new CustFileDto();
+            dto.setCustId(custId);
+            dto.setOriginFileName(mf.getOriginalFilename());
+            dto.setStoredFileName(stored.storedFileName());
+            dto.setFilePath(stored.absolutePath());
+            dto.setFileSize(mf.getSize());
+            dto.setContentType(mf.getContentType());
+            dto.setCreatorId(currentUser != null ? currentUser.getUserId() : null);
+            custFileMapper.insertFile(dto);
+            saved.add(dto);
+        }
+        return saved;
+    }
+
+    /** 첨부 목록 조회 (접근 권한 검증) */
+    public List<CustFileDto> getFiles(Long custId, CurrentUserContext currentUser) {
+        if (custId == null) throw new IllegalArgumentException("고객 ID가 없습니다.");
+        CustomerDto customer = customerMapper.selectCustomerById(custId);
+        if (customer == null) throw new IllegalArgumentException("해당 고객 정보를 찾을 수 없습니다.");
+        if (currentUser != null && !canAccessCustomer(customer, currentUser)) {
+            throw new IllegalArgumentException("해당 고객의 첨부파일을 조회할 권한이 없습니다.");
+        }
+        return custFileMapper.selectFilesByCustId(custId);
+    }
+
+    /** 다운로드용 단건 조회 (접근 권한 검증) */
+    public CustFileDto getFileForDownload(Long fileId, CurrentUserContext currentUser) {
+        CustFileDto file = custFileMapper.selectFileById(fileId);
+        if (file == null) throw new IllegalArgumentException("파일을 찾을 수 없습니다.");
+        CustomerDto customer = customerMapper.selectCustomerById(file.getCustId());
+        if (currentUser != null && customer != null && !canAccessCustomer(customer, currentUser)) {
+            throw new IllegalArgumentException("해당 파일을 다운로드할 권한이 없습니다.");
+        }
+        return file;
+    }
+
+    /** 디스크에서 파일 실체를 Resource 로 로드 */
+    public Resource loadFileResource(CustFileDto file) {
+        return fileStorageService.loadAsResource(file.getFilePath());
+    }
+
+    /** 첨부 삭제 (쓰기 권한자만: 관리자/팀장). 디스크 + 메타 모두 삭제. */
+    @Transactional
+    public void deleteFile(Long fileId, CurrentUserContext currentUser) {
+        CustFileDto file = custFileMapper.selectFileById(fileId);
+        if (file == null) throw new IllegalArgumentException("파일을 찾을 수 없습니다.");
+        CustomerDto customer = customerMapper.selectCustomerById(file.getCustId());
+        if (currentUser != null) {
+            if (!isWriter(currentUser)) {
+                throw new IllegalArgumentException("첨부파일을 삭제할 권한이 없습니다. (관리자/팀장 전용)");
+            }
+            if (customer != null && !canAccessCustomer(customer, currentUser)) {
+                throw new IllegalArgumentException("해당 파일을 삭제할 권한이 없습니다.");
+            }
+        }
+        custFileMapper.deleteFileById(fileId);
+        fileStorageService.deleteQuietly(file.getFilePath());
     }
 }
