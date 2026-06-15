@@ -1,10 +1,12 @@
 package com.sys.managesys.common.controller;
 
+import com.sys.managesys.common.config.CustomUserDetails;
 import com.sys.managesys.common.dto.CommonCodeDto;
 import com.sys.managesys.common.dto.GroupCodeDto;
 import com.sys.managesys.common.mapper.CommonCodeMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,6 +22,18 @@ import java.util.Map;
 public class CodeController {
 
     private final CommonCodeMapper commonCodeMapper;
+
+    /**
+     * 공통코드 쓰기(등록/수정/삭제) 권한 검증 - ADMIN / MANAGER 만 허용.
+     * 권한이 없으면 403 ResponseEntity 를 반환하고, 권한이 있으면 null 을 반환한다.
+     * (프론트 라우터 가드의 ADMIN/MANAGER 정책과 일치)
+     */
+    private ResponseEntity<?> checkWritePermission(CustomUserDetails userDetails) {
+        if (userDetails == null || "MEMBER".equals(userDetails.getRoleCode())) {
+            return ResponseEntity.status(403).body("권한이 없습니다.");
+        }
+        return null;
+    }
 
     // ─── 드롭다운용 (기존) ───────────────────────────────────────────────────
     @PostMapping("/list")
@@ -64,7 +78,10 @@ public class CodeController {
     }
 
     @PostMapping("/groups/register")
-    public ResponseEntity<?> groupRegister(@RequestBody GroupCodeDto dto) {
+    public ResponseEntity<?> groupRegister(@RequestBody GroupCodeDto dto,
+                                           @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         if (dto.getGroupCode() == null || dto.getGroupCode().isBlank())
             return ResponseEntity.badRequest().body("그룹코드를 입력해주세요.");
         if (dto.getGroupName() == null || dto.getGroupName().isBlank())
@@ -74,7 +91,10 @@ public class CodeController {
     }
 
     @PostMapping("/groups/modify")
-    public ResponseEntity<?> groupModify(@RequestBody GroupCodeDto dto) {
+    public ResponseEntity<?> groupModify(@RequestBody GroupCodeDto dto,
+                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         if (dto.getGroupCode() == null || dto.getGroupCode().isBlank())
             return ResponseEntity.badRequest().body("그룹코드를 입력해주세요.");
         commonCodeMapper.updateGroupCode(dto);
@@ -82,7 +102,10 @@ public class CodeController {
     }
 
     @PostMapping("/groups/remove")
-    public ResponseEntity<?> groupRemove(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> groupRemove(@RequestBody Map<String, Object> body,
+                                         @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         if (body == null || body.get("groupCode") == null)
             return ResponseEntity.badRequest().body("그룹코드를 입력해주세요.");
         String groupCode = body.get("groupCode").toString();
@@ -102,7 +125,10 @@ public class CodeController {
     }
 
     @PostMapping("/detail/register")
-    public ResponseEntity<?> detailRegister(@RequestBody CommonCodeDto dto) {
+    public ResponseEntity<?> detailRegister(@RequestBody CommonCodeDto dto,
+                                            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         if (dto.getGroupCode() == null || dto.getGroupCode().isBlank())
             return ResponseEntity.badRequest().body("그룹코드를 입력해주세요.");
         if (dto.getCodeValue() == null || dto.getCodeValue().isBlank())
@@ -114,13 +140,19 @@ public class CodeController {
     }
 
     @PostMapping("/detail/modify")
-    public ResponseEntity<?> detailModify(@RequestBody CommonCodeDto dto) {
+    public ResponseEntity<?> detailModify(@RequestBody CommonCodeDto dto,
+                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         commonCodeMapper.updateCode(dto);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/detail/remove")
-    public ResponseEntity<?> detailRemove(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> detailRemove(@RequestBody Map<String, Object> body,
+                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         if (body == null || body.get("groupCode") == null || body.get("codeValue") == null)
             return ResponseEntity.badRequest().body("그룹코드와 코드값을 입력해주세요.");
         String groupCode = body.get("groupCode").toString();
