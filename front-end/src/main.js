@@ -14,9 +14,12 @@ app.use(router);
 // 2. Pinia 등록 후 스토어 가져오기 (에러 방지)
 const authStore = useAuthStore();
 
-// 3. Axios 기본 설정 (백엔드 주소로 직접 요청)
+// 3. Axios 기본 설정 (상대경로 = 페이지를 서빙한 같은 출처로 요청)
+//    앱이 SPA(static)와 API를 동일 포트로 서빙하므로 localhost/사설IP/공인IP 모두 동작.
+//    환경별로 백엔드 주소를 바꿔 박을 필요 없음(CORS/헤어핀NAT 회피).
 //axios.defaults.baseURL = 'http://43.203.193.217:10000';
-axios.defaults.baseURL = 'http://localhost:8085';
+//axios.defaults.baseURL = 'http://localhost:8085';
+axios.defaults.baseURL = '';
 
 // 세션 만료(401) 시 로그아웃 API는 한 번만 호출
 let sessionExpiryHandling = false;

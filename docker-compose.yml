@@ -8,7 +8,7 @@
 #  사용법:
 #    1) cp .env.example .env   후 APP_ENCRYPTION_KEY 채우기 (또는 제공된 .env 사용)
 #    2) docker compose up -d --build
-#    3) http://localhost:8085  접속
+#    3) http://<호스트>:10000  접속  (컨테이너 내부 앱 포트는 8085)
 #    * 외부 DB 클라이언트는 localhost:3307 로 접속
 ###############################################################################
 
@@ -62,7 +62,7 @@ services:
       SERVER_PORT: "8085"
       TZ: Asia/Seoul
     ports:
-      - "8085:8085"
+      - "10000:8085"                          # 호스트 10000 → 컨테이너 8085 (프론트가 :10000 호출)
     volumes:
       - app-uploads:/app/uploads/customer      # 고객 첨부파일
       - app-dumps:/app/dumps                    # 로그인 이력 덤프 CSV
