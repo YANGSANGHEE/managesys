@@ -1,0 +1,19 @@
+# 빌드 컨텍스트 최소화 (build context = ./back-end)
+.gradle/
+build/
+bin/
+out/
+logs/
+*.log
+.idea/
+*.iml
+.git/
+.gitattributes
+.bkit/
+.claude/
+.playwright-mcp/
+security_bak/
+docs/
+HELP.md
+Dockerfile
+.dockerignore

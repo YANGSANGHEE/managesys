@@ -1,0 +1,81 @@
+###############################################################################
+# managesys - MariaDB + App(Spring Boot) 2-컨테이너 구성
+#
+#  - mariadb : 호스트 3307 → 컨테이너 3306, 데이터는 named volume 에 영속
+#  - app     : 내부 네트워크(managesys-net)로 mariadb:3306 에 연결
+#  - 파일/로그 저장경로는 모두 named volume
+#
+#  사용법:
+#    1) cp .env.example .env   후 APP_ENCRYPTION_KEY 채우기 (또는 제공된 .env 사용)
+#    2) docker compose up -d --build
+#    3) http://localhost:8085  접속
+#    * 외부 DB 클라이언트는 localhost:3307 로 접속
+###############################################################################
+
+services:
+  mariadb:
+    image: mariadb:11.4                       # 공식 MariaDB(Ubuntu 기반) LTS
+    container_name: managesys-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-1234}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-managesys}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"                           # 호스트 3307 (앱 컨테이너는 내부 3306 사용)
+    volumes:
+      - mariadb-data:/var/lib/mysql           # DB 데이터 영속
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro  # 최초 기동 시 *.sql 자동 적재(선택)
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - managesys-net
+
+  app:
+    build:
+      context: ./back-end
+      dockerfile: Dockerfile
+    image: managesys-app:latest
+    container_name: managesys-app
+    restart: unless-stopped
+    depends_on:
+      mariadb:
+        condition: service_healthy            # DB 헬스 OK 후 기동
+    environment:
+      # DB 연결 — 내부 네트워크 서비스명(mariadb):3306 으로 오버라이드
+      SPRING_DATASOURCE_URL: jdbc:log4jdbc:mariadb://mariadb:3306/${MARIADB_DATABASE:-managesys}
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MARIADB_ROOT_PASSWORD:-1234}
+      # 개인정보 암호화 키 (필수 — 미설정 시 부팅 실패)
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
+      APP_ENCRYPTION_MIGRATEONSTARTUP: "false"
+      # 파일/덤프 저장경로 → 컨테이너 내부 경로(=named volume)
+      APP_UPLOAD_CUSTFILEDIR: /app/uploads/customer
+      APP_LOGINHISTORY_DUMPPATH: /app/dumps
+      SERVER_PORT: "8085"
+      TZ: Asia/Seoul
+    ports:
+      - "8085:8085"
+    volumes:
+      - app-uploads:/app/uploads/customer      # 고객 첨부파일
+      - app-dumps:/app/dumps                    # 로그인 이력 덤프 CSV
+      - app-logs:/app/logs                      # 애플리케이션 로그
+    networks:
+      - managesys-net
+
+networks:
+  managesys-net:
+    driver: bridge
+
+volumes:
+  mariadb-data:
+  app-uploads:
+  app-dumps:
+  app-logs:
