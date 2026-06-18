@@ -1,0 +1,33 @@
+# ============================================================================
+# managesys - Caddy 리버스 프록시 (HTTPS 자동 발급)
+#
+#  - 공인 도메인(DuckDNS 등)으로 들어온 80/443 요청을 받아
+#    내부 네트워크의 app:8085 (Spring Boot)로 프록시한다.
+#  - Let's Encrypt 공인 인증서를 자동 발급/갱신 (포트 80/443 개방 필요).
+#  - 프론트(SPA)와 API가 같은 출처(443)로 서빙되어 CORS/혼합콘텐츠 문제 없음.
+#
+#  ★ 아래 your-domain.duckdns.org 를 실제 도메인으로 바꾸고,
+#    email 을 본인 이메일로 바꾼 뒤 저장할 것.
+# ============================================================================
+
+{
+	# 인증서 만료 알림/복구용 이메일 (Let's Encrypt 계정)
+	email oceankiruk@gmail.com
+}
+
+theonecompany.duckdns.org {
+	# 정적/응답 압축
+	encode gzip zstd
+
+	# 업로드 파일(고객 첨부 등) 용량 여유 — 필요 시 조정
+	request_body {
+		max_size 50MB
+	}
+
+	# 실제 클라이언트 IP/프로토콜을 백엔드로 전달
+	reverse_proxy app:8085 {
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

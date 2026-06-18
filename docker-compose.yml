@@ -59,14 +59,33 @@ services:
       # 파일/덤프 저장경로 → 컨테이너 내부 경로(=named volume)
       APP_UPLOAD_CUSTFILEDIR: /app/uploads/customer
       APP_LOGINHISTORY_DUMPPATH: /app/dumps
+      # CORS 허용 출처 — 운영 도메인만(정확한 호스트, 와일드카드 금지)
+      APP_CORS_ALLOWED_ORIGINS: https://theonecompany.duckdns.org
       SERVER_PORT: "8085"
       TZ: Asia/Seoul
     ports:
-      - "10000:8085"                          # 호스트 10000 → 컨테이너 8085 (프론트가 :10000 호출)
+      - "127.0.0.1:10000:8085"                # 로컬 디버그용(127.0.0.1 전용). 외부 접속은 caddy(443)가 담당
     volumes:
       - app-uploads:/app/uploads/customer      # 고객 첨부파일
       - app-dumps:/app/dumps                    # 로그인 이력 덤프 CSV
       - app-logs:/app/logs                      # 애플리케이션 로그
+    networks:
+      - managesys-net
+
+  caddy:
+    image: caddy:2                            # 공식 Caddy (자동 HTTPS)
+    container_name: managesys-caddy
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"                               # HTTP (인증서 발급/HTTPS 리다이렉트)
+      - "443:443"                             # HTTPS
+      - "443:443/udp"                         # HTTP/3 (QUIC)
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro   # 프록시 설정
+      - caddy-data:/data                      # 발급된 인증서 영속(★삭제 금지)
+      - caddy-config:/config
     networks:
       - managesys-net
 
@@ -79,3 +98,5 @@ volumes:
   app-uploads:
   app-dumps:
   app-logs:
+  caddy-data:
+  caddy-config:
