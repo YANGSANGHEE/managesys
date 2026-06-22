@@ -14,7 +14,7 @@
           <label>통신사</label>
           <select v-model="searchQuery.searchHpCarrier">
             <option value="">전체</option>
-            <option v-for="c in companyCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
+            <option v-for="c in hpCarrierCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
           </select>
         </div>
         <div class="status-period-wrap">
@@ -234,7 +234,7 @@
                   <div class="input-with-select">
                     <select v-model="form.customer.hpCarrier" class="carrier-select">
                       <option value="">통신사</option>
-                      <option v-for="c in companyCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
+                      <option v-for="c in hpCarrierCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
                     </select>
                     <input
                       :value="form.customer.hpNo"
@@ -603,7 +603,7 @@
                 <td>
                   <select v-model="form.mnp.prevCarrier">
                     <option value="">선택</option>
-                    <option v-for="c in companyCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
+                    <option v-for="c in hpCarrierCodes" :key="c.codeValue" :value="c.codeValue">{{ c.codeName }}</option>
                   </select>
                 </td>
                 <th>메모</th>
@@ -696,10 +696,11 @@ const isWriter = computed(() => {
 // 개발 환경 여부 (운영 빌드에서 테스트용 버튼 숨김)
 const isDev = process.env.NODE_ENV !== 'production';
 
-// 최신 상담구분이 '회신요청'인 고객 행은 노란색으로 강조 (상단 정렬은 백엔드 ORDER BY 처리)
+// 최신 상담구분이 '회신요청'/'상담요청'인 고객 행은 노란색으로 강조 (상단 정렬은 백엔드 ORDER BY 처리)
 function getRowStyle(params) {
-  if (params.data?.latestConsultType === 'REPLY_REQUEST') {
-    return { background: '#FFF59D' };
+  const t = params.data?.latestConsultType;
+  if (t === 'REPLY_REQUEST' || t === 'CONSULT_REQUEST') {
+    return { background: '#FFF59D', fontWeight: 600 };
   }
 }
 
@@ -722,7 +723,8 @@ const searchQuery = ref({
 // 본사 사은품: HEAD_GIFT | 지역 선택: REGION_CODE | 진행 상태(개통상태): CUST_STATUS
 // 고객 종류: CUST_TYPE | 고객 인증: CUST_AUTH | 통신사/회사: COMPANY_CODE
 const statusCodes = ref([]);     // CUST_STATUS - 진행 상태 (개통상태: 접수, 개통완료 등)
-const companyCodes = ref([]);    // COMPANY_CODE - 통신사/회사선택/기존통신사
+const companyCodes = ref([]);    // COMPANY_CODE - 상품 가입 회사선택
+const hpCarrierCodes = ref([]);  // HP_CARRIER - 고객 핸드폰 통신사/기존 통신사 (공통코드 '핸드폰 통신사' 란과 연동)
 const bankCodes = ref([]);       // BANK_CODE - 지급은행
 const billTypeCodes = ref([]);   // BILL_TYPE - 청구서 종류
 const discountTypeCodes = ref([]); // DISCOUNT_GB - 요금 감면
@@ -749,10 +751,10 @@ async function loadCodeList(groupCode) {
 /** 페이지/모달용 공통코드 일괄 로드 (axios 호출 10건) */
 async function loadCodes() {
   const [
-    status, company, bank, billType, discount, custAuth, paySource, headGift, region, custType, userRole
+    status, company, bank, billType, discount, custAuth, paySource, headGift, region, custType, userRole, hpCarrier
   ] = await Promise.all([
     loadCodeList('CUST_STATUS'),  // 진행 상태 (개통상태)
-    loadCodeList('COMPANY_CODE'), // 통신사/회사선택
+    loadCodeList('COMPANY_CODE'), // 상품 가입 회사선택
     loadCodeList('BANK_CODE'),    // 지급은행
     loadCodeList('BILL_TYPE'),    // 청구서 종류
     loadCodeList('DISCOUNT_GB'),  // 요금 감면
@@ -761,7 +763,8 @@ async function loadCodes() {
     loadCodeList('HEAD_GIFT'),    // 본사 사은품
     loadCodeList('REGION_CODE'),  // 지역 선택
     loadCodeList('CUST_TYPE'),    // 고객 종류
-    loadCodeList('USER_ROLE')     // 사용자 권한
+    loadCodeList('USER_ROLE'),    // 사용자 권한
+    loadCodeList('HP_CARRIER')    // 핸드폰 통신사
   ]);
   statusCodes.value = status?.length ? status : [
     { codeValue: 'RECEIPT', codeName: '접수' },
@@ -769,7 +772,7 @@ async function loadCodes() {
     { codeValue: 'COMPLETED', codeName: '개통완료' },
     { codeValue: 'CANCELLED', codeName: '취소' }
   ];
-  // 통신사/회사선택 (COMPANY_CODE) - API 실패 시 DB 기준 폴백
+  // 상품 가입 회사선택 (COMPANY_CODE) - API 실패 시 DB 기준 폴백
   companyCodes.value = (company?.length ? company : [
     { codeValue: 'SKB', codeName: 'SK브로드밴드' },
     { codeValue: 'KT', codeName: 'KT' },
@@ -777,6 +780,15 @@ async function loadCodes() {
     { codeValue: 'SKT', codeName: 'SKT' },
     { codeValue: 'HELLO', codeName: '헬로' },
     { codeValue: 'RENTAL', codeName: '렌탈' }
+  ]);
+  // 핸드폰 통신사 (HP_CARRIER) - API 실패 시 DB 기준 폴백
+  hpCarrierCodes.value = (hpCarrier?.length ? hpCarrier : [
+    { codeValue: 'SK', codeName: 'SK' },
+    { codeValue: 'LG', codeName: 'LG' },
+    { codeValue: 'KT', codeName: 'KT' },
+    { codeValue: 'SK_MVNO', codeName: 'SK알뜰폰' },
+    { codeValue: 'KT_MVNO', codeName: 'KT알뜰폰' },
+    { codeValue: 'LG_MVNO', codeName: 'LG알뜰폰' }
   ]);
   bankCodes.value = bank?.length ? bank : [];
   billTypeCodes.value = billType ?? [];
@@ -903,45 +915,31 @@ function joinSsn(s1, s2) {
   return a && b ? `${a}-${b}` : (a || b || null);
 }
 
-function fullAddress(params) {
-  const addr = params.data?.addr || '';
-  const detail = params.data?.addrDetail || '';
-  if (!addr && !detail) return '-';
-  return [addr, detail].filter(Boolean).join(' ');
-}
-
-// AG Grid: 헤더(컬럼)는 다 나오게 — 컬럼마다 width/minWidth 유지, sizeColumnsToFit() 미사용 → 가로 스크롤로 전부 표시
+// AG Grid: 컬럼은 sizeColumnsToFit()으로 화면 너비에 맞춤(가로 스크롤 없음). 최종상담내용에 flex 부여.
 const columnDefs = ref([
-  { headerName: 'No', valueGetter: 'node?.rowIndex != null ? node.rowIndex + 1 : ""', width: 60, minWidth: 60 },
-  { field: 'custName', headerName: '고객명', sortable: true, filter: true, flex: 1, minWidth: 90 },
+  { headerName: 'No', valueGetter: 'node?.rowIndex != null ? node.rowIndex + 1 : ""', width: 50, minWidth: 44 },
+  { field: 'custName', headerName: '고객명', sortable: true, filter: true, minWidth: 78 },
   {
     field: 'receiptDate',
     headerName: '접수일',
     valueFormatter: p => (p.value ? formatDate(p.value) : '-'),
-    width: 110,
-    minWidth: 100
+    width: 96,
+    minWidth: 86
   },
-  { field: 'creatorName', headerName: '등록자', sortable: true, width: 90, minWidth: 80 },
-  {
-    headerName: '거주지',
-    valueFormatter: fullAddress,
-    flex: 1,
-    minWidth: 120,
-    tooltipField: 'addr'
-  },
-  { field: 'hpCarrierName', headerName: '통신사', sortable: true, width: 80, minWidth: 70, valueFormatter: p => p.value ?? p.data?.hpCarrier ?? '' },
-  { field: 'prodName', headerName: '상품명', width: 100, minWidth: 80, valueFormatter: p => p.value ?? '-' },
-  { field: 'prodType', headerName: '유형', width: 80, minWidth: 60, valueFormatter: p => p.value ?? '-' },
-  { field: 'setInfo', headerName: '세트', width: 80, minWidth: 60, valueFormatter: p => p.value ?? '-' },
-  { field: 'subscriptionNo', headerName: '가입번호', width: 100, minWidth: 90, valueGetter: params => params.data?.subscriptionNo ?? '', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
-  { field: 'partner', headerName: '협력사', width: 90, minWidth: 70, valueFormatter: () => '더원컴퍼니' },
-  { field: 'acquirer', headerName: '유치자', width: 90, minWidth: 70, valueFormatter: () => '더원컴퍼니' },
-  { field: 'openDate', headerName: '개통일', width: 110, minWidth: 100, valueFormatter: p => (p.value ? formatDate(p.value) : '-') },
+  { field: 'creatorName', headerName: '등록자', sortable: true, width: 78, minWidth: 64 },
+  { field: 'hpCarrierName', headerName: '통신사', sortable: true, width: 70, minWidth: 58, valueFormatter: p => p.value ?? p.data?.hpCarrier ?? '' },
+  { field: 'prodName', headerName: '상품명', width: 90, minWidth: 70, valueFormatter: p => p.value ?? '-' },
+  { field: 'prodType', headerName: '유형', width: 64, minWidth: 50, valueFormatter: p => p.value ?? '-' },
+  { field: 'setInfo', headerName: '세트', width: 64, minWidth: 50, valueFormatter: p => p.value ?? '-' },
+  { field: 'subscriptionNo', headerName: '가입번호', width: 92, minWidth: 80, valueGetter: params => params.data?.subscriptionNo ?? '', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
+  { field: 'partner', headerName: '협력사', width: 78, minWidth: 60, valueFormatter: () => '더원컴퍼니' },
+  { field: 'acquirer', headerName: '유치자', width: 78, minWidth: 60, valueFormatter: () => '더원컴퍼니' },
+  { field: 'openDate', headerName: '개통일', width: 96, minWidth: 86, valueFormatter: p => (p.value ? formatDate(p.value) : '-') },
   {
     field: 'statusName',
     headerName: '개통상태',
-    width: 90,
-    minWidth: 80,
+    width: 84,
+    minWidth: 70,
     valueFormatter: p => p.value ?? p.data?.status ?? '',
     cellClass: params => {
       const v = (params.value || params.data?.status || '').toString();
@@ -950,18 +948,18 @@ const columnDefs = ref([
       return '';
     }
   },
-  { field: 'gift', headerName: '사은품', width: 80, minWidth: 70, valueFormatter: p => p.value ?? '-' },
-  { field: 'amount', headerName: '금액', width: 90, minWidth: 70, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
-  { field: 'addGift', headerName: '추가사은품', width: 90, minWidth: 80, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
-  { field: 'paySource', headerName: '지급처', width: 80, minWidth: 70, valueFormatter: p => p.value ?? '-' },
-  { field: 'payDone', headerName: '지급완료', width: 80, minWidth: 80, valueFormatter: p => (p.value ? formatDate(p.value) : '-') },
-  { field: 'contractPeriod', headerName: '약정', width: 90, minWidth: 70, valueFormatter: p => p.value ?? '-' },
-  { field: 'remark', headerName: '최종상담내용', flex: 1, minWidth: 120 },
+  { field: 'gift', headerName: '사은품', width: 70, minWidth: 58, valueFormatter: p => p.value ?? '-' },
+  { field: 'amount', headerName: '금액', width: 78, minWidth: 62, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
+  { field: 'addGift', headerName: '추가사은품', width: 80, minWidth: 66, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
+  { field: 'paySource', headerName: '지급처', width: 70, minWidth: 58, valueFormatter: p => p.value ?? '-' },
+  { field: 'payDone', headerName: '지급완료', width: 84, minWidth: 78, valueFormatter: p => (p.value ? formatDate(p.value) : '-') },
+  { field: 'contractPeriod', headerName: '약정', width: 70, minWidth: 58, valueFormatter: p => p.value ?? '-' },
+  { field: 'latestConsultContent', headerName: '최종상담내용', flex: 2, minWidth: 108, tooltipField: 'latestConsultContent', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
   {
     colId: 'manage',
     headerName: '관리',
-    width: 80,
-    minWidth: 70,
+    width: 64,
+    minWidth: 56,
     cellRenderer: params => {
       const container = document.createElement('div');
       container.style.display = 'flex';
@@ -986,8 +984,16 @@ const defaultColDef = { resizable: true, sortable: true };
 
 const onGridReady = params => {
   gridApi.value = params.api;
-  // 헤더는 다 나오게: sizeColumnsToFit() 사용 안 함 → 컬럼 너비 유지, 가로 스크롤로 전부 표시
+  fitColumnsToWidth();
 };
+
+/** 컬럼들을 화면 너비에 맞춰 정렬 — 가로 스크롤 없이 한 화면에 모두 표시. */
+function fitColumnsToWidth() {
+  const api = gridApi.value;
+  // 화면 전환으로 그리드가 파괴된 뒤 setTimeout이 늦게 실행되면 'grid destroyed' 경고가 나므로 가드
+  if (!api || (typeof api.isDestroyed === 'function' && api.isDestroyed())) return;
+  if (typeof api.sizeColumnsToFit === 'function') api.sizeColumnsToFit();
+}
 
 const onSearch = async () => {
   try {
@@ -995,6 +1001,8 @@ const onSearch = async () => {
     const res = await axios.post('/api/customers/list', payload);
     rowData.value = Array.isArray(res.data) ? res.data : [];
     totalCount.value = rowData.value.length;
+    await nextTick();
+    setTimeout(fitColumnsToWidth, 50);
   } catch (err) {
     console.error('고객 목록 조회 오류:', err);
     rowData.value = [];

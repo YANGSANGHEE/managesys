@@ -7,17 +7,37 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class JwtProvider {
-    // 서버 시작 시 랜덤 키 생성 → 재시작하면 기존 토큰 전부 무효화
-    private final SecretKey secretKey = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
+    /**
+     * JWT 서명 키. app.jwt.secret(환경변수 APP_JWT_SECRET) 로 고정하면 서버를 재시작해도 기존 토큰이 유효하다.
+     * 값이 없거나 32바이트 미만이면 부팅마다 랜덤 키로 폴백(개발 편의) → 이 경우 재시작 시 전체 토큰 무효화.
+     * ⚠ 운영은 APP_JWT_SECRET 환경변수로 32바이트 이상의 안전한 값을 주입할 것.
+     */
+    @Value("${app.jwt.secret:}")
+    private String jwtSecret;
+
+    private SecretKey secretKey;
     private final long expireTime = 1000 * 60 * 60; // 토큰 1시간 유지
+
+    @PostConstruct
+    void initSecretKey() {
+        if (jwtSecret != null && jwtSecret.getBytes(StandardCharsets.UTF_8).length >= 32) {
+            this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        } else {
+            // 설정 없음/너무 짧음 → 부팅마다 랜덤(재시작 시 토큰 무효화됨)
+            this.secretKey = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
+        }
+    }
 
     public static final String CLAIM_MUST_CHANGE_PASSWORD = "mustChangePassword";
 

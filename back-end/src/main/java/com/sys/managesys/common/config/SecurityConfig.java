@@ -29,7 +29,7 @@ public class SecurityConfig {
      * 운영에서는 환경변수 APP_CORS_ALLOWED_ORIGINS 로 운영 도메인만 주입(로컬 기본값 미포함).
      * 기본값은 로컬 개발용.
      */
-    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:8085}")
+    @Value("${app.cors.allowed-origins:http://localhost:3000,http://localhost:5173,http://localhost:8080,http://localhost:8085}")
     private String allowedOrigins;
 
     @Bean

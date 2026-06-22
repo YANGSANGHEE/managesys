@@ -78,6 +78,7 @@ public class CustomerDto {
     private Long searchAssignedUserId;
     private Integer limit;
     private String latestConsultType;
+    private String latestConsultContent;
 
     /** 서버 전용: 권한/부서 필터 (리스트 조회 시 WHERE 조건) */
     @JsonIgnore

@@ -796,7 +796,7 @@ const searchQuery = ref({
 // 본사 사은품: HEAD_GIFT | 지역 선택: REGION_CODE | 진행 상태(개통상태): CUST_STATUS
 // 고객 종류: CUST_TYPE | 고객 인증: CUST_AUTH | 통신사/회사: COMPANY_CODE
 const statusCodes = ref([]);     // CUST_STATUS - 진행 상태 (개통상태: 접수, 개통완료 등)
-const companyCodes = ref([]);    // COMPANY_CODE - 통신사/회사선택/기존통신사
+const companyCodes = ref([]);    // HP_CARRIER - 고객 핸드폰 통신사 (공통코드 '핸드폰 통신사' 란과 연동)
 const bankCodes = ref([]);       // BANK_CODE - 지급은행
 const billTypeCodes = ref([]);   // BILL_TYPE - 청구서 종류
 const discountTypeCodes = ref([]); // DISCOUNT_GB - 요금 감면
@@ -862,6 +862,52 @@ function getCascadeName(group, codeValue) {
   return f ? f.codeName : '';
 }
 
+/** 코드명 → 코드값 (저장된 텍스트로 cascade select 복원용 - 경로 인식형)
+ *  DB에는 상품 정보가 코드명 텍스트(COMP_NAME 등)로 저장되는데, PROD_* 코드는
+ *  코드명이 회사별로 대량 중복(예: '인터넷'이 여러 회사에 서로 다른 코드값)된다.
+ *  따라서 그룹 전체에서 코드명만 매칭하면 상위 회사 경로에 없는 코드값을 골라
+ *  드롭다운이 공란이 된다. 회사를 먼저 확정하고, 하위 단계는 '확정된 상위 경로로
+ *  필터링한 cascade rows' 안에서만 코드명을 매칭해 정확한 코드값을 복원한다.
+ *  texts: { company, product, productOption, contractPeriod, discountTab, vas } (코드명 텍스트)
+ *  반환: { companyCd, prodCd, optCd, contractCd, discountCd, vasCd } (코드값) */
+function resolveCascadeCodes(texts) {
+  const levels = [
+    { key: 'companyCd',  group: 'PROD_COMPANY',  text: texts.company },
+    { key: 'prodCd',     group: 'PROD_NAME',     text: texts.product },
+    { key: 'optCd',      group: 'PROD_OPT',      text: texts.productOption },
+    { key: 'contractCd', group: 'PROD_CONTRACT', text: texts.contractPeriod },
+    { key: 'discountCd', group: 'PROD_DISCOUNT', text: texts.discountTab },
+    { key: 'vasCd',      group: 'PROD_VAS',      text: texts.vas }
+  ];
+  const path = {};
+  levels.forEach((lv, i) => {
+    path[lv.key] = '';
+    const text = (lv.text ?? '').toString().trim();
+    if (!text) return;
+    const list = prodCascade.value.codes[lv.group] || [];
+    // 이 그룹에서 코드명이 일치하는 후보 코드값들
+    let candidates = list.filter(c => String(c.codeName) === text).map(c => String(c.codeValue));
+    // 레거시 호환: 코드명 매칭이 없으면 코드값으로 저장된 경우를 허용
+    if (candidates.length === 0) {
+      const byVal = list.find(c => String(c.codeValue) === text);
+      candidates = byVal ? [String(byVal.codeValue)] : [];
+    }
+    if (candidates.length === 0) return;
+    if (i === 0) {
+      // 회사(최상위): rows에 실제 존재하는 코드값 우선
+      path[lv.key] = candidates.find(v => prodCascade.value.rows.some(r => String(r.companyCd) === v)) || candidates[0];
+      return;
+    }
+    // 하위 단계: 확정된 상위 경로(companyCd..)로 rows를 필터링한 뒤 그 안에 존재하는 후보 선택
+    const parentKeys = levels.slice(0, i).map(l => l.key).filter(k => path[k]);
+    const inPath = candidates.find(v => prodCascade.value.rows.some(r =>
+      parentKeys.every(k => String(r[k]) === String(path[k])) && String(r[lv.key]) === v
+    ));
+    path[lv.key] = inPath || candidates[0];
+  });
+  return path;
+}
+
 /** axios로 TB_COMMON_CODE 조회 - POST /api/codes/list, body: { groupCode } */
 async function loadCodeList(groupCode) {
   if (!groupCode || !groupCode.trim()) return [];
@@ -881,7 +927,7 @@ async function loadCodes() {
     status, company, bank, billType, discount, custAuth, paySource, headGift, region, custType, userRole, consultType
   ] = await Promise.all([
     loadCodeList('CUST_STATUS'),   // 진행 상태 (개통상태)
-    loadCodeList('COMPANY_CODE'),  // 통신사/회사선택
+    loadCodeList('HP_CARRIER'),    // 핸드폰 통신사
     loadCodeList('BANK_CODE'),     // 지급은행
     loadCodeList('BILL_TYPE'),     // 청구서 종류
     loadCodeList('DISCOUNT_GB'),   // 요금 감면
@@ -900,14 +946,14 @@ async function loadCodes() {
     { codeValue: 'COMPLETED', codeName: '개통완료' },
     { codeValue: 'CANCELLED', codeName: '취소' }
   ];
-  // 통신사/회사선택 (COMPANY_CODE) - API 실패 시 DB 기준 폴백
+  // 핸드폰 통신사 (HP_CARRIER) - API 실패 시 DB 기준 폴백
   companyCodes.value = (company?.length ? company : [
-    { codeValue: 'SKB', codeName: 'SK브로드밴드' },
+    { codeValue: 'SK', codeName: 'SK' },
+    { codeValue: 'LG', codeName: 'LG' },
     { codeValue: 'KT', codeName: 'KT' },
-    { codeValue: 'LGU', codeName: 'LG U+' },
-    { codeValue: 'SKT', codeName: 'SKT' },
-    { codeValue: 'HELLO', codeName: '헬로' },
-    { codeValue: 'RENTAL', codeName: '렌탈' }
+    { codeValue: 'SK_MVNO', codeName: 'SK알뜰폰' },
+    { codeValue: 'KT_MVNO', codeName: 'KT알뜰폰' },
+    { codeValue: 'LG_MVNO', codeName: 'LG알뜰폰' }
   ]);
   bankCodes.value = bank?.length ? bank : [];
   billTypeCodes.value = billType ?? [];
@@ -1034,40 +1080,27 @@ function joinSsn(s1, s2) {
   return a && b ? `${a}-${b}` : (a || b || null);
 }
 
-function fullAddress(params) {
-  const addr = params.data?.addr || '';
-  const detail = params.data?.addrDetail || '';
-  if (!addr && !detail) return '-';
-  return [addr, detail].filter(Boolean).join(' ');
-}
-
-// AG Grid: 데이터 로드 후 autoSizeAllColumns()로 컬럼 너비를 셀 내용(글자 수)에 맞춰 자동 조정.
-// flex 미사용(내용 기준 너비) → 총 폭이 화면을 넘으면 가로 스크롤로 전부 표시.
+// AG Grid: 컬럼은 sizeColumnsToFit()으로 화면 너비에 맞춤(가로 스크롤 없음).
+// 최종상담내용 컬럼에 flex 부여 → 남는 공간 흡수. 나머지는 width/minWidth로 균형.
 const columnDefs = ref([
-  { headerName: 'No', valueGetter: 'node?.rowIndex != null ? node.rowIndex + 1 : ""', width: 60, minWidth: 60 },
-  { field: 'assignedUserName', headerName: '상담원', sortable: true, width: 90, minWidth: 80, valueFormatter: p => p.value ?? '-' },
-  { field: 'custName', headerName: '고객명', sortable: true, filter: true, minWidth: 90 },
+  { headerName: 'No', valueGetter: 'node?.rowIndex != null ? node.rowIndex + 1 : ""', width: 50, minWidth: 44 },
+  { field: 'assignedUserName', headerName: '상담원', sortable: true, width: 78, minWidth: 62, valueFormatter: p => p.value ?? '-' },
+  { field: 'custName', headerName: '고객명', sortable: true, filter: true, minWidth: 78 },
   {
     field: 'receiptDate',
     headerName: '접수일',
     valueFormatter: p => (p.value ? formatDate(p.value) : '-'),
-    width: 110,
-    minWidth: 100
+    width: 96,
+    minWidth: 86
   },
-  { field: 'creatorName', headerName: '등록자', sortable: true, width: 90, minWidth: 80 },
-  {
-    headerName: '거주지',
-    valueFormatter: fullAddress,
-    minWidth: 120,
-    tooltipField: 'addr'
-  },
-  { field: 'hpCarrierName', headerName: '통신사', sortable: true, width: 80, minWidth: 70, valueFormatter: p => p.value ?? p.data?.hpCarrier ?? '' },
-  { field: 'prodName', headerName: '상품명', width: 100, minWidth: 80, valueFormatter: p => p.value ?? '-' },
-  { field: 'prodType', headerName: '유형', width: 80, minWidth: 60, valueFormatter: p => p.value ?? '-' },
-  { field: 'setInfo', headerName: '세트', width: 80, minWidth: 60, valueFormatter: p => p.value ?? '-' },
-  { field: 'subscriptionNo', headerName: '가입번호', width: 100, minWidth: 90, editable: params => !!params.context?.canEdit, headerClass: 'editable-header', cellClass: params => params.context?.canEdit ? 'editable-cell' : '', valueGetter: params => params.data?.subscriptionNo ?? '', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
-  { field: 'partner', headerName: '협력사', width: 90, minWidth: 70, valueFormatter: () => '더원컴퍼니' },
-  { field: 'acquirer', headerName: '유치자', width: 90, minWidth: 70, valueFormatter: () => '더원컴퍼니' },
+  { field: 'creatorName', headerName: '등록자', sortable: true, width: 78, minWidth: 64 },
+  { field: 'hpCarrierName', headerName: '통신사', sortable: true, width: 70, minWidth: 58, valueFormatter: p => p.value ?? p.data?.hpCarrier ?? '' },
+  { field: 'prodName', headerName: '상품명', width: 90, minWidth: 70, valueFormatter: p => p.value ?? '-' },
+  { field: 'prodType', headerName: '유형', width: 64, minWidth: 50, valueFormatter: p => p.value ?? '-' },
+  { field: 'setInfo', headerName: '세트', width: 64, minWidth: 50, valueFormatter: p => p.value ?? '-' },
+  { field: 'subscriptionNo', headerName: '가입번호', width: 92, minWidth: 80, editable: params => !!params.context?.canEdit, headerClass: 'editable-header', cellClass: params => params.context?.canEdit ? 'editable-cell' : '', valueGetter: params => params.data?.subscriptionNo ?? '', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
+  { field: 'partner', headerName: '협력사', width: 78, minWidth: 60, valueFormatter: () => '더원컴퍼니' },
+  { field: 'acquirer', headerName: '유치자', width: 78, minWidth: 60, valueFormatter: () => '더원컴퍼니' },
   {
     field: 'openDate',
     headerName: '개통일',
@@ -1087,14 +1120,14 @@ const columnDefs = ref([
       afterGuiAttached() { this.input.focus(); this.input.showPicker?.(); }
       destroy() {}
     },
-    width: 110,
-    minWidth: 100
+    width: 96,
+    minWidth: 86
   },
   {
     field: 'statusName',
     headerName: '개통상태',
-    width: 90,
-    minWidth: 80,
+    width: 84,
+    minWidth: 70,
     editable: params => !!params.context?.canEdit,
     headerClass: 'editable-header',
     cellClass: params => {
@@ -1137,15 +1170,15 @@ const columnDefs = ref([
       return true;
     }
   },
-  { field: 'gift', headerName: '사은품', width: 80, minWidth: 70, valueFormatter: p => p.value ?? '-' },
-  { field: 'amount', headerName: '금액', width: 90, minWidth: 70, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
-  { field: 'addDeposit', headerName: '추가사은품', width: 90, minWidth: 80, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
-  { field: 'paySource', headerName: '지급처', width: 80, minWidth: 70, valueFormatter: p => p.value ?? '-' },
+  { field: 'gift', headerName: '사은품', width: 70, minWidth: 58, valueFormatter: p => p.value ?? '-' },
+  { field: 'amount', headerName: '금액', width: 78, minWidth: 62, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
+  { field: 'addDeposit', headerName: '추가사은품', width: 80, minWidth: 66, valueFormatter: p => (p.value != null && p.value !== '' ? formatAmount(p.value) : '-') },
+  { field: 'paySource', headerName: '지급처', width: 70, minWidth: 58, valueFormatter: p => p.value ?? '-' },
   {
     field: 'payDone',
     headerName: '지급완료',
-    width: 100,
-    minWidth: 90,
+    width: 88,
+    minWidth: 80,
     editable: params => !!params.context?.canEdit,
     headerClass: 'editable-header',
     cellClass: params => params.context?.canEdit ? 'editable-cell' : '',
@@ -1163,12 +1196,12 @@ const columnDefs = ref([
       destroy() {}
     }
   },
-  { field: 'remark', headerName: '최종상담내용', minWidth: 120 },
+  { field: 'latestConsultContent', headerName: '최종상담내용', flex: 2, minWidth: 110, tooltipField: 'latestConsultContent', valueFormatter: p => (p.value != null && String(p.value).trim() !== '' ? p.value : '-') },
   {
     colId: 'manage',
     headerName: '관리',
-    width: 80,
-    minWidth: 70,
+    width: 64,
+    minWidth: 56,
     cellRenderer: params => {
       const container = document.createElement('div');
       container.style.display = 'flex';
@@ -1192,22 +1225,26 @@ const defaultColDef = { resizable: true, sortable: true };
 const gridOptions = { singleClickEdit: true, stopEditingWhenCellsLoseFocus: true };
 
 function getRowStyle(params) {
-  // 최신 상담구분이 '회신요청'인 고객 행은 노란색으로 강조 (목록 상단 정렬은 백엔드 ORDER BY 처리)
-  if (params.data?.latestConsultType === 'REPLY_REQUEST') {
-    return { background: '#FFF59D' };
+  // 최신 상담구분이 '회신요청' 또는 '상담요청'인 고객 행은 노란색으로 강조
+  // (목록 상단 정렬은 백엔드 ORDER BY 에서 동일 두 타입을 최우선 처리)
+  const t = params.data?.latestConsultType;
+  if (t === 'REPLY_REQUEST' || t === 'CONSULT_REQUEST') {
+    return { background: '#FFF59D', fontWeight: 600 };
   }
 }
 
 const onGridReady = params => {
   gridApi.value = params.api;
+  fitColumnsToWidth();
 };
 
-/** 컬럼 너비를 셀 내용(글자 수)에 맞춰 자동 조정 — 헤더 텍스트도 포함. 데이터 렌더 후 호출. */
-function autoSizeAllColumns() {
+/** 컬럼들을 화면 너비에 맞춰 정렬 — 가로 스크롤 없이 한 화면에 모두 표시.
+ *  flex 지정 컬럼(최종상담내용 등)이 남는 공간을 흡수한다. */
+function fitColumnsToWidth() {
   const api = gridApi.value;
-  if (api && typeof api.autoSizeAllColumns === 'function') {
-    api.autoSizeAllColumns(false); // false: 헤더 너비도 계산에 포함
-  }
+  // 화면 전환으로 그리드가 파괴된 뒤 setTimeout이 늦게 실행되면 'grid destroyed' 경고가 나므로 가드
+  if (!api || (typeof api.isDestroyed === 'function' && api.isDestroyed())) return;
+  if (typeof api.sizeColumnsToFit === 'function') api.sizeColumnsToFit();
 }
 
 // 동일 고객의 여러 상품 행을 구분하기 위한 행 ID 생성
@@ -1268,9 +1305,9 @@ const onSearch = async () => {
     const res = await axios.post('/api/customers/list', payload);
     rowData.value = Array.isArray(res.data) ? res.data : [];
     totalCount.value = rowData.value.length;
-    // 셀 렌더 완료 후 내용 기준 너비 자동 조정
+    // 렌더 완료 후 컬럼을 화면 너비에 맞춰 정렬 (가로 스크롤 제거)
     await nextTick();
-    setTimeout(autoSizeAllColumns, 50);
+    setTimeout(fitColumnsToWidth, 50);
   } catch (err) {
     console.error('고객 목록 조회 오류:', err);
     rowData.value = [];
@@ -1859,16 +1896,38 @@ function mapDetailToForm(detail) {
     productRows.value = products.slice(0, required).map(p => {
       const cancelVal = p.cancelDate;
       const cancelStr = cancelVal ? (typeof cancelVal === 'string' ? cancelVal.slice(0, 10) : cancelVal) : '';
+      // 저장된 코드명 텍스트 → cascade 코드값 역변환 (드롭다운 선택 복원)
+      const companyText  = p.compName || '';
+      const productText  = p.prodName || '';
+      const optionText   = p.prodOpt || '';
+      const contractText = p.contractPeriod || '';
+      const discountText = p.discountTab || '';
+      const vasText      = p.vasName || '';
+      // 경로 인식형 역조회: 회사 경로 안에서만 코드명을 매칭해 정확한 코드값 복원
+      const cd = resolveCascadeCodes({
+        company: companyText, product: productText, productOption: optionText,
+        contractPeriod: contractText, discountTab: discountText, vas: vasText
+      });
       return {
-        company: p.compName || '',
+        // cascade select 바인딩용 코드값 (역조회로 복원)
+        companyCd:  cd.companyCd,
+        prodCd:     cd.prodCd,
+        optCd:      cd.optCd,
+        contractCd: cd.contractCd,
+        discountCd: cd.discountCd,
+        vasCd:      cd.vasCd,
+        // 표시/저장용 텍스트
+        company: companyText,
+        product: productText,
+        productOption: optionText,
+        contractPeriod: contractText,
+        discountTab: discountText,
+        vas: vasText,
         region: p.regionName || '',
         subscriptionNo: p.subscriptionNo || p.subscription_no || '',
-        product: p.prodName || '',
-        productOption: p.prodOpt || '',
         openStatus: p.openStatus || p.open_status || '',
         cancelDate: cancelStr,
-        setTop: p.stbType || '',
-        vas: p.vasName || ''
+        setTop: p.stbType || ''
       };
     });
     while (productRows.value.length < required) productRows.value.push(createEmptyProductRow());
@@ -2147,7 +2206,7 @@ function fillAllFieldsTestData() {
   c.addrDetail = '101동 1001호';
   c.telNo = '02-1234-5678';
   c.hpNo = '010-1234-5678';
-  c.hpCarrier = 'SKT';
+  c.hpCarrier = companyCodes.value[0]?.codeValue || 'SK'; // HP_CARRIER 유효 코드값(SK 등)
   c.email = 'test@example.com';
   c.custAuthType = 'PHONE';
   c.custAuthVal = '01012345678';
@@ -2199,18 +2258,28 @@ function fillAllFieldsTestData() {
   head.remark = '본사 사은품 비고';
 
   productType.value = 'S0';
-  commonRegion.value = '서울';
-  productRows.value = [{
-    company: 'SKT',
-    region: '서울',
-    subscriptionNo: 'SUB20250115001',
-    product: '5G 프리미엄',
-    productOption: '100GB',
-    openStatus: statusCodes.value[0]?.codeValue || 'RECEIPT',
-    cancelDate: '',
-    setTop: '일반',
-    vas: '넷플릭스'
-  }];
+  commonRegion.value = regionCodes.value.find(r => r.codeValue === 'SEOUL')?.codeValue
+      || regionCodes.value[0]?.codeValue || '';
+  // 상품 cascade: 실제 공통코드에서 유효한 경로(회사→상품→옵션→약정→할인탭→부가서비스)를 골라
+  // 코드값(*Cd) + 표시텍스트를 함께 채운다. (드롭다운이 정상 선택되고 저장 후 재진입 복원도 정상)
+  const sampleRow = createEmptyProductRow();
+  const pick = (level, parent) => getCascadeOptions(level, parent)[0]?.codeValue || '';
+  sampleRow.companyCd  = pick('company', {});
+  sampleRow.prodCd     = pick('prod',     { companyCd: sampleRow.companyCd });
+  sampleRow.optCd      = pick('opt',      { companyCd: sampleRow.companyCd, prodCd: sampleRow.prodCd });
+  sampleRow.contractCd = pick('contract', { companyCd: sampleRow.companyCd, prodCd: sampleRow.prodCd, optCd: sampleRow.optCd });
+  sampleRow.discountCd = pick('discount', { companyCd: sampleRow.companyCd, prodCd: sampleRow.prodCd, optCd: sampleRow.optCd, contractCd: sampleRow.contractCd });
+  sampleRow.vasCd      = pick('vas',      { companyCd: sampleRow.companyCd, prodCd: sampleRow.prodCd, optCd: sampleRow.optCd, contractCd: sampleRow.contractCd, discountCd: sampleRow.discountCd });
+  sampleRow.company        = getCascadeName('PROD_COMPANY',  sampleRow.companyCd);
+  sampleRow.product        = getCascadeName('PROD_NAME',     sampleRow.prodCd);
+  sampleRow.productOption  = getCascadeName('PROD_OPT',      sampleRow.optCd);
+  sampleRow.contractPeriod = getCascadeName('PROD_CONTRACT', sampleRow.contractCd);
+  sampleRow.discountTab    = getCascadeName('PROD_DISCOUNT', sampleRow.discountCd);
+  sampleRow.vas            = getCascadeName('PROD_VAS',      sampleRow.vasCd);
+  sampleRow.subscriptionNo = 'SUB20250115001';
+  sampleRow.openStatus = statusCodes.value[0]?.codeValue || 'RECEIPT';
+  sampleRow.setTop = '일반';
+  productRows.value = [sampleRow];
 
   c.mnpYn = 'Y';
 

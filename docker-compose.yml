@@ -56,6 +56,8 @@ services:
       # 개인정보 암호화 키 (필수 — 미설정 시 부팅 실패)
       APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY}
       APP_ENCRYPTION_MIGRATEONSTARTUP: "false"
+      # JWT 서명 키 (고정값 → 재시작해도 토큰 유지). 미설정 시 부팅마다 랜덤(로그아웃됨)
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
       # 파일/덤프 저장경로 → 컨테이너 내부 경로(=named volume)
       APP_UPLOAD_CUSTFILEDIR: /app/uploads/customer
       APP_LOGINHISTORY_DUMPPATH: /app/dumps
