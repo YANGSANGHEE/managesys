@@ -29,7 +29,10 @@ public class CodeController {
      * (프론트 라우터 가드의 ADMIN/MANAGER 정책과 일치)
      */
     private ResponseEntity<?> checkWritePermission(CustomUserDetails userDetails) {
-        if (userDetails == null || "MEMBER".equals(userDetails.getRoleCode())) {
+        String role = userDetails != null ? userDetails.getRoleCode() : null;
+        // allow-list: 관리자(ADMIN)·팀장(MANAGER)만 쓰기 허용. 미인증·알 수 없는 역할은 모두 차단.
+        // (deny-list("MEMBER"만 차단) 방식은 역할 코드가 추가/변경되면 의도치 않게 통과될 수 있어 allow-list로 전환)
+        if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
             return ResponseEntity.status(403).body("권한이 없습니다.");
         }
         return null;

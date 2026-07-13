@@ -335,15 +335,15 @@
          사은품(payDone)은 고객당 GENERAL 1건이므로 CUST_ID 기준 유지. -->
     <update id="quickUpdateSubscriptionNo">
         UPDATE TB_CUST_PRODUCT SET SUBSCRIPTION_NO = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
-        WHERE PROD_ID = #{prodId}
+        WHERE PROD_ID = #{prodId} AND CUST_ID = #{custId}
     </update>
     <update id="quickUpdateOpenDate">
         UPDATE TB_CUST_PRODUCT SET OPEN_DATE = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
-        WHERE PROD_ID = #{prodId}
+        WHERE PROD_ID = #{prodId} AND CUST_ID = #{custId}
     </update>
     <update id="quickUpdateStatus">
         UPDATE TB_CUST_PRODUCT SET OPEN_STATUS = #{value}, UPDATED_AT = CURRENT_TIMESTAMP
-        WHERE PROD_ID = #{prodId}
+        WHERE PROD_ID = #{prodId} AND CUST_ID = #{custId}
     </update>
     <update id="quickUpdatePayDone">
         UPDATE TB_CUST_GIFT SET PAY_DONE_DATE = #{value}, UPDATED_AT = CURRENT_TIMESTAMP

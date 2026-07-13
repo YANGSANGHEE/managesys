@@ -266,11 +266,11 @@ public class CustomerService {
         switch (field) {
             case "subscriptionNo":
                 if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
-                customerMapper.quickUpdateSubscriptionNo(prodId, value);
+                customerMapper.quickUpdateSubscriptionNo(prodId, custId, value);
                 break;
             case "openDate":
                 if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
-                customerMapper.quickUpdateOpenDate(prodId, value);
+                customerMapper.quickUpdateOpenDate(prodId, custId, value);
                 break;
             case "status":
                 if (prodId == null) throw new IllegalArgumentException("상품 ID가 없습니다.");
@@ -279,7 +279,7 @@ public class CustomerService {
                         .filter(p -> prodId.equals(p.getProdId()))
                         .map(CustProductDto::getOpenStatus)
                         .findFirst().orElse(null);
-                customerMapper.quickUpdateStatus(prodId, value);
+                customerMapper.quickUpdateStatus(prodId, custId, value);
                 if (!java.util.Objects.equals(prevStatus, value)) {
                     CustProdStatusHistDto hist = new CustProdStatusHistDto();
                     hist.setCustId(custId);

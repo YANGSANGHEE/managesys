@@ -47,11 +47,11 @@ public interface CustomerMapper {
     int deleteByCustId(@Param("custId") Long custId);
 
     /** 그리드 인라인 편집용 개별 필드 업데이트
-     *  상품 관련 필드는 PROD_ID 기준 (리스트가 상품 단위 행으로 분리됨).
+     *  상품 관련 필드는 PROD_ID 기준이되, 타 고객 상품 무단 수정(IDOR) 방지를 위해 CUST_ID 소속도 함께 검증한다.
      *  payDone(사은품)은 고객당 GENERAL 1건이므로 CUST_ID 기준 유지. */
-    int quickUpdateSubscriptionNo(@Param("prodId") Long prodId, @Param("value") String value);
-    int quickUpdateOpenDate(@Param("prodId") Long prodId, @Param("value") String value);
-    int quickUpdateStatus(@Param("prodId") Long prodId, @Param("value") String value);
+    int quickUpdateSubscriptionNo(@Param("prodId") Long prodId, @Param("custId") Long custId, @Param("value") String value);
+    int quickUpdateOpenDate(@Param("prodId") Long prodId, @Param("custId") Long custId, @Param("value") String value);
+    int quickUpdateStatus(@Param("prodId") Long prodId, @Param("custId") Long custId, @Param("value") String value);
     int quickUpdatePayDone(@Param("custId") Long custId, @Param("value") String value);
     int quickUpdateReceiptDate(@Param("custId") Long custId, @Param("value") String value);
 }

@@ -18,6 +18,19 @@ public class NoticeController {
 
     private final NoticeMapper noticeMapper;
 
+    /**
+     * 공지 쓰기(등록/수정/삭제) 권한 검증 - 관리자(ADMIN)·팀장(MANAGER)만 허용(allow-list).
+     * 권한이 없으면 403 ResponseEntity 를, 있으면 null 을 반환한다.
+     * (deny-list("MEMBER"만 차단) + userDetails 미인증 시 NPE 위험을 함께 해소)
+     */
+    private ResponseEntity<?> checkWritePermission(CustomUserDetails userDetails) {
+        String role = userDetails != null ? userDetails.getRoleCode() : null;
+        if (!"ADMIN".equals(role) && !"MANAGER".equals(role)) {
+            return ResponseEntity.status(403).body("권한이 없습니다.");
+        }
+        return null;
+    }
+
     /** 전체 조회 - 모든 로그인 사용자 */
     @PostMapping("/list")
     public List<NoticeDto> list(@RequestBody Map<String, Object> body) {
@@ -29,9 +42,8 @@ public class NoticeController {
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody NoticeDto dto,
                                       @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if ("MEMBER".equals(userDetails.getRoleCode())) {
-            return ResponseEntity.status(403).body("권한이 없습니다.");
-        }
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         if (dto.getTitle() == null || dto.getTitle().isBlank())
             return ResponseEntity.badRequest().body("제목을 입력해주세요.");
         if (dto.getContent() == null || dto.getContent().isBlank())
@@ -47,9 +59,8 @@ public class NoticeController {
     @PostMapping("/update")
     public ResponseEntity<?> update(@RequestBody NoticeDto dto,
                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if ("MEMBER".equals(userDetails.getRoleCode())) {
-            return ResponseEntity.status(403).body("권한이 없습니다.");
-        }
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         if (dto.getTitle() == null || dto.getTitle().isBlank())
             return ResponseEntity.badRequest().body("제목을 입력해주세요.");
         if (dto.getContent() == null || dto.getContent().isBlank())
@@ -67,9 +78,8 @@ public class NoticeController {
     @PostMapping("/remove")
     public ResponseEntity<?> remove(@RequestBody Map<String, Object> body,
                                     @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if ("MEMBER".equals(userDetails.getRoleCode())) {
-            return ResponseEntity.status(403).body("권한이 없습니다.");
-        }
+        ResponseEntity<?> denied = checkWritePermission(userDetails);
+        if (denied != null) return denied;
         Long noticeId = Long.parseLong(body.get("noticeId").toString());
         Long userId = userDetails.getUserId();
         boolean isAdmin = "ADMIN".equals(userDetails.getRoleCode());
