@@ -1284,6 +1284,22 @@ const onCellValueChanged = (params) => {
     field = 'status';
     value = data.status; // getValue()에서 data.status를 이미 코드값으로 세팅함
   }
+  // 고객(TB_CUSTOMER) 단위 필드는 같은 custId의 다른 상품 행에도 즉시 반영해야 화면 정합성이 맞는다.
+  // (그리드는 고객 1건이 상품 수만큼 여러 행으로 표시됨 — 편집한 행만 갱신하면 나머지 행이 옛 값을 보임.
+  //  백엔드 quick-update 는 custId 기준 1회 갱신이므로 PATCH 는 편집 행 1건이면 충분하고, 여기선 표시값만 동기화.)
+  const CUSTOMER_LEVEL_FIELDS = ['receiptDate', 'payDone'];
+  if (CUSTOMER_LEVEL_FIELDS.includes(field) && params.api) {
+    const siblings = [];
+    params.api.forEachNode(node => {
+      if (node.data && node.data.custId === data.custId && node.data !== data) {
+        node.data[colDef.field] = newValue;
+        siblings.push(node);
+      }
+    });
+    if (siblings.length) {
+      params.api.refreshCells({ rowNodes: siblings, columns: [colDef.field], force: true });
+    }
+  }
   // 상품 단위 행 키: 같은 고객의 다른 상품도 구분되도록 prodId 포함
   const prodId = data.prodId ?? null;
   const existing = pendingChanges.value.findIndex(p => p.custId === data.custId && p.prodId === prodId && p.field === field);

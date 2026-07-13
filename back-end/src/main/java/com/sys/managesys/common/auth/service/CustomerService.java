@@ -293,8 +293,18 @@ public class CustomerService {
                 customerMapper.quickUpdatePayDone(custId, value);
                 break;
             case "receiptDate":
-                // 접수일은 고객(TB_CUSTOMER) 단위 컬럼이므로 prodId 불필요, CUST_ID 기준 갱신
-                customerMapper.quickUpdateReceiptDate(custId, value);
+                // 접수일은 고객(TB_CUSTOMER) 단위 컬럼이므로 prodId 불필요, CUST_ID 기준 갱신.
+                // 빈 값은 접수일 해제(null)로 허용하고, 값이 있으면 yyyy-MM-dd(ISO) 형식만 허용해
+                // 잘못된 문자열이 0000-00-00 등으로 저장되는 것을 방지한다.
+                String receiptDt = (value == null || value.isBlank()) ? null : value.trim();
+                if (receiptDt != null) {
+                    try {
+                        LocalDate.parse(receiptDt);
+                    } catch (java.time.format.DateTimeParseException e) {
+                        throw new IllegalArgumentException("접수일 형식이 올바르지 않습니다(yyyy-MM-dd): " + value);
+                    }
+                }
+                customerMapper.quickUpdateReceiptDate(custId, receiptDt);
                 break;
             default:
                 throw new IllegalArgumentException("수정 불가능한 필드입니다: " + field);

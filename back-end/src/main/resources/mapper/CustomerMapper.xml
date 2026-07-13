@@ -119,8 +119,11 @@
                     <when test="filterDeptId != null">
                         AND (
                             C.DEPT_ID = #{filterDeptId}
-                            OR C.ASSIGNED_USER_ID IN (SELECT USER_ID FROM TB_USER WHERE DEPT_ID = #{filterDeptId} AND (USE_YN IS NULL OR USE_YN = 'Y'))
-                            OR C.CREATOR_ID IN (SELECT USER_ID FROM TB_USER WHERE DEPT_ID = #{filterDeptId} AND (USE_YN IS NULL OR USE_YN = 'Y'))
+                            OR EXISTS (
+                                SELECT 1 FROM TB_USER U
+                                 WHERE U.DEPT_ID = #{filterDeptId} AND (U.USE_YN IS NULL OR U.USE_YN = 'Y')
+                                   AND (U.USER_ID = C.ASSIGNED_USER_ID OR U.USER_ID = C.CREATOR_ID)
+                            )
                         )
                     </when>
                     <otherwise>
