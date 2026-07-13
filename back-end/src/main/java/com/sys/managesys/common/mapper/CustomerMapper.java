@@ -53,4 +53,5 @@ public interface CustomerMapper {
     int quickUpdateOpenDate(@Param("prodId") Long prodId, @Param("value") String value);
     int quickUpdateStatus(@Param("prodId") Long prodId, @Param("value") String value);
     int quickUpdatePayDone(@Param("custId") Long custId, @Param("value") String value);
+    int quickUpdateReceiptDate(@Param("custId") Long custId, @Param("value") String value);
 }

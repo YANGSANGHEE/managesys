@@ -696,9 +696,12 @@ const isWriter = computed(() => {
 // 개발 환경 여부 (운영 빌드에서 테스트용 버튼 숨김)
 const isDev = process.env.NODE_ENV !== 'production';
 
-// 최신 상담구분이 '회신요청'/'상담요청'인 고객 행은 노란색으로 강조 (상단 정렬은 백엔드 ORDER BY 처리)
+// 최신 상담구분에 따라 행 강조: VOC발행/SR발행=붉은색, 회신요청/상담요청=노란색 (상단 정렬은 백엔드 ORDER BY 처리)
 function getRowStyle(params) {
   const t = params.data?.latestConsultType;
+  if (t === 'VOC_ISSUE' || t === 'SR_ISSUE') {
+    return { background: '#ffcdd2', fontWeight: 600 };
+  }
   if (t === 'REPLY_REQUEST' || t === 'CONSULT_REQUEST') {
     return { background: '#FFF59D', fontWeight: 600 };
   }
@@ -1833,7 +1836,7 @@ function fillAllFieldsTestData() {
   c.addrDetail = '101동 1001호';
   c.telNo = '02-1234-5678';
   c.hpNo = '010-1234-5678';
-  c.hpCarrier = 'SKT';
+  c.hpCarrier = 'SK'; // HP_CARRIER 유효 코드값 (SK/LG/KT). 과거 'SKT'(COMPANY_CODE 값)는 통신사 표시 깨짐 유발
   c.email = 'test@example.com';
   c.custAuthType = 'PHONE';
   c.custAuthVal = '01012345678';

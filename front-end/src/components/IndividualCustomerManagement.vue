@@ -1089,7 +1089,22 @@ const columnDefs = ref([
   {
     field: 'receiptDate',
     headerName: '접수일',
+    editable: params => !!params.context?.canEdit,
+    headerClass: 'editable-header',
+    cellClass: params => params.context?.canEdit ? 'editable-cell' : '',
     valueFormatter: p => (p.value ? formatDate(p.value) : '-'),
+    cellEditor: class DateCellEditor {
+      init(params) {
+        this.input = document.createElement('input');
+        this.input.type = 'date';
+        this.input.value = params.value ? params.value.toString().slice(0, 10) : '';
+        this.input.style.cssText = 'width:100%;height:100%;border:none;outline:none;font-size:11px;padding:0 4px;box-sizing:border-box;';
+      }
+      getGui() { return this.input; }
+      getValue() { return this.input.value || null; }
+      afterGuiAttached() { this.input.focus(); this.input.showPicker?.(); }
+      destroy() {}
+    },
     width: 96,
     minWidth: 86
   },
@@ -1225,9 +1240,14 @@ const defaultColDef = { resizable: true, sortable: true };
 const gridOptions = { singleClickEdit: true, stopEditingWhenCellsLoseFocus: true };
 
 function getRowStyle(params) {
-  // 최신 상담구분이 '회신요청' 또는 '상담요청'인 고객 행은 노란색으로 강조
-  // (목록 상단 정렬은 백엔드 ORDER BY 에서 동일 두 타입을 최우선 처리)
+  // 최신 상담구분에 따라 행 강조:
+  //  - VOC발행/SR발행: 붉은색 (상부점이 하부점에 발행한 긴급 항목)
+  //  - 회신요청/상담요청: 노란색
+  // (목록 상단 정렬은 백엔드 ORDER BY 에서 동일 타입들을 최우선 처리)
   const t = params.data?.latestConsultType;
+  if (t === 'VOC_ISSUE' || t === 'SR_ISSUE') {
+    return { background: '#ffcdd2', fontWeight: 600 };
+  }
   if (t === 'REPLY_REQUEST' || t === 'CONSULT_REQUEST') {
     return { background: '#FFF59D', fontWeight: 600 };
   }
@@ -2445,11 +2465,15 @@ const CONSULT_TYPE_BADGE = {
   // 코드값
   REPLY_REQUEST:   { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' },
   CONSULT_REQUEST: { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' },
+  VOC_ISSUE:       { bg: '#fecaca', color: '#991b1b', border: '#f87171' },
+  SR_ISSUE:        { bg: '#fecaca', color: '#991b1b', border: '#f87171' },
   REPLY_ANSWER:    { bg: '#dbeafe', color: '#1d4ed8', border: '#93c5fd' },
   CUSTOMER_MEMO:   { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
   // 표시명 (코드값 불일치 시 폴백)
   '회신요청': { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' },
   '상담요청': { bg: '#fee2e2', color: '#b91c1c', border: '#fca5a5' },
+  'VOC발행': { bg: '#fecaca', color: '#991b1b', border: '#f87171' },
+  'SR발행':  { bg: '#fecaca', color: '#991b1b', border: '#f87171' },
   '회신답변': { bg: '#dbeafe', color: '#1d4ed8', border: '#93c5fd' },
   '고객메모': { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
 };

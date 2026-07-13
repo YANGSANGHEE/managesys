@@ -280,6 +280,10 @@ public class CustomerService {
             case "payDone":
                 customerMapper.quickUpdatePayDone(custId, value);
                 break;
+            case "receiptDate":
+                // 접수일은 고객(TB_CUSTOMER) 단위 컬럼이므로 prodId 불필요, CUST_ID 기준 갱신
+                customerMapper.quickUpdateReceiptDate(custId, value);
+                break;
             default:
                 throw new IllegalArgumentException("수정 불가능한 필드입니다: " + field);
         }
