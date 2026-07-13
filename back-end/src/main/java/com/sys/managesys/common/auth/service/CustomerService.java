@@ -73,10 +73,22 @@ public class CustomerService {
         boolean isAdmin = "admin".equalsIgnoreCase(user.getLoginId()) || "ADMIN".equalsIgnoreCase(user.getUserRole());
         if (isAdmin) return true;
         if ("MANAGER".equalsIgnoreCase(user.getUserRole()) && user.getDeptId() != null) {
-            if (customer.getAssignedUserId() == null) return false;
-            // 배정된 사용자의 현재 부서를 TB_USER에서 실시간 조회
-            UserDto assignedUser = userMapper.findByUserId(customer.getAssignedUserId());
-            return assignedUser != null && user.getDeptId().equals(assignedUser.getDeptId());
+            // 목록 스코프(CustomerMapper.xml MANAGER 분기)와 동일 규칙으로 통일한다.
+            // 목록엔 보이지만 상세/수정에서 403 나던 불일치(미배정 팀 접수건 등)를 해소:
+            //  ① 고객 담당부서(C.DEPT_ID)가 팀장 부서이거나
+            //  ② 배정자(ASSIGNED_USER_ID)의 현재 부서가 팀장 부서이거나
+            //  ③ 등록자(CREATOR_ID)의 현재 부서가 팀장 부서이면 접근 허용.
+            Long deptId = user.getDeptId();
+            if (deptId.equals(customer.getDeptId())) return true;
+            if (customer.getAssignedUserId() != null) {
+                UserDto assignedUser = userMapper.findByUserId(customer.getAssignedUserId());
+                if (assignedUser != null && deptId.equals(assignedUser.getDeptId())) return true;
+            }
+            if (customer.getCreatorId() != null) {
+                UserDto creator = userMapper.findByUserId(customer.getCreatorId());
+                if (creator != null && deptId.equals(creator.getDeptId())) return true;
+            }
+            return false;
         }
         // MEMBER: 본인에게 배정된 고객만 접근
         return user.getUserId() != null && user.getUserId().equals(customer.getAssignedUserId());
